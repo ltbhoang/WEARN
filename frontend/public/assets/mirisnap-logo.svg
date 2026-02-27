@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Outer rounded square background -->
+  <defs>
+    <linearGradient id="outerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E8956B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D85B3B;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="innerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5D897;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E8C55D;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Outer rounded square -->
+  <rect x="10" y="10" width="180" height="180" rx="35" ry="35" fill="url(#outerGradient)" filter="url(#shadow)"/>
+  
+  <!-- First ring (golden) -->
+  <circle cx="100" cy="100" r="85" fill="none" stroke="url(#innerGradient)" stroke-width="20" opacity="0.8"/>
+  
+  <!-- Second ring (light golden) -->
+  <circle cx="100" cy="100" r="75" fill="none" stroke="#FCE5C1" stroke-width="12" opacity="0.6"/>
+  
+  <!-- Third ring (white) -->
+  <circle cx="100" cy="100" r="68" fill="none" stroke="#FFFFFF" stroke-width="8" opacity="0.5"/>
+  
+  <!-- Center red circle -->
+  <circle cx="100" cy="100" r="58" fill="#E6425C" filter="url(#shadow)"/>
+  
+  <!-- Red circle shine effect -->
+  <circle cx="100" cy="100" r="58" fill="url(#redGradient)" opacity="0.3"/>
+  
+  <!-- Chinese character (高) centered -->
+  <text x="100" y="118" font-family="serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">
+    高
+  </text>
+  
+  <defs>
+    <radialGradient id="redGradient">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.5" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+</svg>
