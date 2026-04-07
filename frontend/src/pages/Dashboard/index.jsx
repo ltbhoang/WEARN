@@ -1,19 +1,16 @@
-import React from 'react';
-import {
-  Home,
-  LayoutGrid,
-  Camera,
-  GraduationCap,
-  User,
-} from 'lucide-react';
+import React from "react";
+import { Home, LayoutGrid, Camera, GraduationCap, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Import icon custom
-import ScanHistoryIcon from '../../components/icons/ScanHistoryIcon';
-import StoryModeIcon from '../../components/icons/StoryModeIcon';
-import PracticeIcon from '../../components/icons/PracticeIcon';
-import { useAuthStore } from '../../store/authStore';
+import ScanHistoryIcon from "../../components/icons/ScanHistoryIcon";
+import StoryModeIcon from "../../components/icons/StoryModeIcon";
+import PracticeIcon from "../../components/icons/PracticeIcon";
+import { useAuthStore } from "../../store/authStore";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
   const user = useAuthStore((state) => state.user);
   return (
     <div className="min-h-screen bg-[#FAF9F8] pb-28 font-sans">
@@ -25,7 +22,8 @@ const Dashboard = () => {
           </div>
           <div>
             <h1 className="text-3xl font-black text-[#474747] leading-tight">
-              Xin chào, <span className="text-[#E85A4F]">{user?.username || 'Bạn'}</span>
+              Xin chào,{" "}
+              <span className="text-[#E85A4F]">{user?.username || "Bạn"}</span>
             </h1>
             <p className="text-base text-[#8E8D8A] font-medium mt-1">
               Cùng học điều gì đó mới mẻ nào
@@ -40,8 +38,12 @@ const Dashboard = () => {
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl" />
           <div className="flex items-center justify-between">
             <div className="space-y-3">
-              <h2 className="text-3xl font-black tracking-tight">Lịch sử quét</h2>
-              <p className="text-base font-medium opacity-90 max-w-45">Xem lại bộ sưu tập đã quét trước đó </p>
+              <h2 className="text-3xl font-black tracking-tight">
+                Lịch sử quét
+              </h2>
+              <p className="text-base font-medium opacity-90 max-w-45">
+                Xem lại bộ sưu tập đã quét trước đó{" "}
+              </p>
               <button className="mt-2 bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full font-black text-sm inline-flex items-center gap-2 transition-all hover:bg-white/30">
                 Xem →
               </button>
@@ -50,28 +52,43 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* Story Mode Card */}
-        <section className="group relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-[#D8B4A0] to-[#C49A8C] p-7 text-white shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02]">
+        {/* Kana Practice Card */}
+        <section
+          onClick={() => navigate("/kana-lessons")}
+          className="group relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-[#D8B4A0] to-[#C49A8C] p-7 text-white shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02] cursor-pointer"
+        >
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl" />
           <div className="flex items-center justify-between">
             <div className="space-y-3">
-              <h2 className="text-3xl font-black tracking-tight">Story time</h2>
-              <p className="text-base font-medium opacity-90 max-w-45">Tạo câu chuyện với bộ sưu tập</p>
+              <h2 className="text-3xl font-black tracking-tight">
+                Luyện tập Kana
+              </h2>
+              <p className="text-base font-medium opacity-90 max-w-45">
+                Khởi đầu với tiếng Nhật một cách thuận lợi
+              </p>
               <button className="mt-2 bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full font-black text-sm inline-flex items-center gap-2 transition-all hover:bg-white/30">
-                Tạo Story →
+                Bắt đầu →
               </button>
             </div>
-            <StoryModeIcon size={160} className="opacity-90 drop-shadow-lg ml-5" />
+            <StoryModeIcon
+              size={160}
+              className="opacity-90 drop-shadow-lg ml-5"
+            />
           </div>
         </section>
 
         {/* Practice Card */}
-        <section className="group relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-[#A5A58D] to-[#8E8D8A] p-7 text-white shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02]">
+        <section
+          onClick={() => navigate("/flashcard")}
+          className="group relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-[#A5A58D] to-[#8E8D8A] p-7 text-white shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02]"
+        >
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl" />
           <div className="flex items-center justify-between">
             <div className="space-y-3">
               <h2 className="text-3xl font-black tracking-tight">Luyện tập</h2>
-              <p className="text-base font-medium opacity-90 max-w-50">Học từ vựng thông qua flashcard</p>
+              <p className="text-base font-medium opacity-90 max-w-50">
+                Học từ vựng thông qua flashcard
+              </p>
               <button className="mt-2 bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full font-black text-sm inline-flex items-center gap-2 transition-all hover:bg-white/30">
                 Luyện tập →
               </button>

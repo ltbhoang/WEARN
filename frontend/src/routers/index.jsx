@@ -7,6 +7,11 @@ import Dashboard from "../pages/Dashboard";
 import Collection from "../pages/Collection";
 import CollectionDetail from "../pages/CollectionDetail";
 import StreakPage from "../pages/Streak";
+import FlashcardSetsPage from "../pages/Flashcard";
+import FlashcardPracticePage from "../pages/FlashcardMode";
+import CreateFlashcardSetPage from "../pages/CreateFlashcardSetPage";
+import KanaLessonsPage from "../pages/KanaLessonsPage";
+import KanaPracticePage from "../pages/KanaPracticePage";
 
 const AppRoutes = () => {
   return (
@@ -17,6 +22,11 @@ const AppRoutes = () => {
       <Route path="/collection" element={<Collection />} />
       <Route path="/collection/:id" element={<CollectionDetail />} />
       <Route path="/streak" element={<StreakPage />} />
+      <Route path="/flashcard" element={<FlashcardSetsPage />} />
+      <Route path="/flashcard/create" element={<CreateFlashcardSetPage />} />
+      <Route path="/flashcard/:id" element={<FlashcardPracticePage />} />
+      <Route path="/kana-lessons" element={<KanaLessonsPage />} />
+      <Route path="/kana-practice/:kanaId" element={<KanaPracticePage />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />

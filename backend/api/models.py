@@ -27,7 +27,9 @@ class UserProfile(models.Model):
     current_streak = models.IntegerField(default=0)
     longest_streak = models.IntegerField(default=0)
     last_activity_date = models.DateField(null=True, blank=True)
-    total_vocab_learned = models.IntegerField(default=0) # Cache tổng số từ đã học
+    total_vocab_learned = models.IntegerField(default=0)  # Cache tổng số từ đã học
+    # --- Bổ sung cho tính năng Kana ---
+    has_passed_kana_test = models.BooleanField(default=False)  # Đã vượt qua bài test 10 câu random chưa
 
     def __str__(self):
         return f"Profile of {self.user.username}"
@@ -83,7 +85,7 @@ class Achievement(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     icon = models.CharField(max_length=50) 
-    requirement_type = models.CharField(max_length=50) # 'streak' hoặc 'total_vocab'
+    requirement_type = models.CharField(max_length=50)  # 'streak' hoặc 'total_vocab'
     requirement_value = models.IntegerField()
 
     def __str__(self):
@@ -98,8 +100,125 @@ class UserAchievement(models.Model):
     class Meta:
         unique_together = ('user', 'achievement')
 
-# --- LOGIC TỰ ĐỘNG (SIGNALS) ---
+# 8. Bộ Flashcard do người dùng tự tạo
+class FlashcardSet(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='flashcard_sets')
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        unique_together = ('user', 'name')
+        indexes = [models.Index(fields=['user', 'created_at'])]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.name}"
+
+# 9. Từ vựng trong một bộ Flashcard
+class FlashcardSetItem(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    flashcard_set = models.ForeignKey(FlashcardSet, on_delete=models.CASCADE, related_name='items')
+    saved_vocab = models.ForeignKey(SavedVocabulary, on_delete=models.CASCADE, related_name='flashcard_set_items')
+    order = models.PositiveIntegerField(default=0)
+    memorized = models.BooleanField(default=False)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('flashcard_set', 'saved_vocab')
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.flashcard_set.name} - {self.saved_vocab.vocabulary.word}"
+
+# 10. Bảng chứa dữ liệu Hiragana / Katakana (dùng cho luyện viết và test)
+class KanaCharacter(models.Model):
+    KANA_TYPES = [
+        ('hiragana', 'Hiragana'),
+        ('katakana', 'Katakana'),
+    ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    character = models.CharField(max_length=5)   # ký tự, ví dụ 'あ'
+    type = models.CharField(max_length=10, choices=KANA_TYPES)
+    romanji = models.CharField(max_length=50, blank=True)     # cách đọc, ví dụ 'a'
+    svg_content = models.TextField()                          # nội dung file SVG
+    unicode_decimal = models.IntegerField(unique=True, null=True, blank=True)
+    # --- Bổ sung cho vẽ nét ---
+    strokes = models.JSONField(default=list, blank=True)      # [{"order":1, "svg":"<svg>..."}, ...]
+    total_strokes = models.IntegerField(default=0)            # số lượng nét
+
+    def __str__(self):
+        return f"{self.character} ({self.get_type_display()})"
+
+# 11a. Bảng trung gian Lesson-Kana (có thứ tự)
+class LessonKana(models.Model):
+    lesson = models.ForeignKey('Lesson', on_delete=models.CASCADE)
+    kana = models.ForeignKey('KanaCharacter', on_delete=models.CASCADE)
+    order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+        unique_together = ('lesson', 'kana')
+
+    def __str__(self):
+        return f"{self.lesson.name} - {self.kana.character} ({self.order})"
+
+# 11. Bài học (Lesson)
+class Lesson(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    order = models.IntegerField(default=0)
+    kanas = models.ManyToManyField(KanaCharacter, through='LessonKana', related_name='lessons')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['order']
+
+# 12. Tiến độ bài học của user
+class UserLessonProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lesson_progress')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('user', 'lesson')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.lesson.name} - {'Completed' if self.completed else 'In progress'}"
+
+
+# 13. Tiến độ vẽ nét cho từng kana
+class UserKanaStrokeProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='kana_stroke_progress')
+    kana = models.ForeignKey(KanaCharacter, on_delete=models.CASCADE)
+    completed_strokes = models.JSONField(default=list)
+    completed = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'kana')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.kana.character} - {len(self.completed_strokes)}/{self.kana.total_strokes} strokes"
+# ------------------ HÀM KIỂM TRA VÀ GÁN DANH HIỆU ------------------
+def check_and_assign_achievements(profile):
+    """
+    Kiểm tra và gán danh hiệu cho user dựa trên streak và tổng số từ đã học.
+    """
+    user = profile.user
+    achieved_ids = UserAchievement.objects.filter(user=user).values_list('achievement_id', flat=True)
+    potential_achievements = Achievement.objects.exclude(id__in=achieved_ids)
+
+    for ach in potential_achievements:
+        if ach.requirement_type == 'streak' and profile.longest_streak >= ach.requirement_value:
+            UserAchievement.objects.create(user=user, achievement=ach)
+        elif ach.requirement_type == 'total_vocab' and profile.total_vocab_learned >= ach.requirement_value:
+            UserAchievement.objects.create(user=user, achievement=ach)
+
+# ------------------ SIGNAL CẬP NHẬT STREAK ------------------
 @receiver(post_save, sender=SavedVocabulary)
 def update_user_stats(sender, instance, created, **kwargs):
     """
@@ -108,35 +227,25 @@ def update_user_stats(sender, instance, created, **kwargs):
     if created:
         user = instance.collection.user
         with transaction.atomic():
-            # Đảm bảo Profile luôn tồn tại
             profile, _ = UserProfile.objects.get_or_create(user=user)
             today = date.today()
             
-            # 1. Tăng tổng số từ đã học
             profile.total_vocab_learned += 1
             
-            # 2. Tính toán Streak
             if profile.last_activity_date:
                 if profile.last_activity_date == today:
-                    # Nếu hôm nay đã học rồi thì không tăng thêm streak nữa
                     pass
                 elif profile.last_activity_date == today - timedelta(days=1):
-                    # Nếu hôm qua có học (liên tiếp) -> tăng streak
                     profile.current_streak += 1
                 else:
-                    # Nếu bỏ bẵng 1 ngày trở lên -> reset streak về 1
                     profile.current_streak = 1
             else:
-                # Lần đầu tiên học trong đời
                 profile.current_streak = 1
             
-            # 3. Cập nhật kỷ lục Streak cao nhất
             if profile.current_streak > profile.longest_streak:
                 profile.longest_streak = profile.current_streak
             
-            # 4. Cập nhật ngày hoạt động cuối cùng
             profile.last_activity_date = today
             profile.save()
 
-            # 5. Tự động kiểm tra danh hiệu (Tùy chọn thêm sau này)
-            # check_and_assign_achievements(profile)
+            check_and_assign_achievements(profile)

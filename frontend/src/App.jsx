@@ -4,14 +4,14 @@ import Header from "./layouts/Header";
 import Sidebar from "./layouts/Sidebar";
 import Footer from "./layouts/Footer";
 import AppRoutes from "./routers/index";
-import { axiosPrivate } from "./apis/axios"; 
+import { axiosPrivate } from "./apis/axios";
 import { useAuthStore } from "./store/authStore";
 import "./App.css";
 
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  
+
   // Lấy hàm refresh và token từ Store
   const refreshAccessToken = useAuthStore((state) => state.refreshAccessToken);
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -34,13 +34,13 @@ function AppContent() {
       (response) => response, // Nếu OK thì cho qua
       async (error) => {
         const prevRequest = error?.config;
-        
+
         // Nếu lỗi 401 (Hết hạn) và chưa từng thử gửi lại request này
         if (error?.response?.status === 401 && !prevRequest?.sent) {
           prevRequest.sent = true; // Đánh dấu để tránh lặp vô tận
 
           const newAccessToken = await refreshAccessToken(); // Gọi hàm refresh trong Store
-          
+
           if (newAccessToken) {
             // Gắn token mới vào request cũ và chạy lại lần nữa
             prevRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
@@ -56,13 +56,16 @@ function AppContent() {
       axiosPrivate.interceptors.request.eject(requestIntercept);
       axiosPrivate.interceptors.response.eject(responseIntercept);
     };
-  }, [accessToken, refreshAccessToken]); 
-
+  }, [accessToken, refreshAccessToken]);
 
   // --- LOGIC HIỂN THỊ UI ---
   const showHeader = location.pathname === "/";
-  const noFooterRoutes = ["/", "/login", "/signup"];
-  const showFooter = !noFooterRoutes.includes(location.pathname);
+  const noFooterRoutes = ["/", "/login", "/signup", "/flashcard/create"];
+
+  const isFlashcardDetail = /^\/flashcard\/[^/]+$/.test(location.pathname);
+
+  const showFooter =
+    !noFooterRoutes.includes(location.pathname) && !isFlashcardDetail;
 
   return (
     <div className="h-screen flex flex-col">
@@ -73,10 +76,14 @@ function AppContent() {
         ></div>
       )}
 
-      {showHeader && <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />}
+      {showHeader && (
+        <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+      )}
 
       <div className="flex flex-1 overflow-hidden">
-        {showHeader && <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
+        {showHeader && (
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        )}
 
         <main className="flex-1 overflow-y-auto">
           <AppRoutes />
