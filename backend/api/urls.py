@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CollectionViewSet, StreakView, VocabularyViewSet, 
     LearningProgressViewSet, RegisterView, FlashcardSetViewSet,
-    FlashcardSetItemViewSet, SavedVocabularyViewSet,
+    FlashcardSetItemViewSet, SavedVocabularyViewSet, 
     # --- Import các view mới cho Kana/Lesson ---
     LessonViewSet,
     kana_detail,
@@ -14,14 +14,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 router = DefaultRouter()
 router.register(r'collections', CollectionViewSet)
-router.register(r'vocabularies', VocabularyViewSet)
 router.register(r'learning-progress', LearningProgressViewSet)
 router.register(r'flashcard-sets', FlashcardSetViewSet, basename='flashcardset')
 router.register(r'flashcard-items', FlashcardSetItemViewSet, basename='flashcarditem')
 router.register(r'saved-vocabularies', SavedVocabularyViewSet, basename='savedvocabulary')
 # --- Đăng ký LessonViewSet (ReadOnly) ---
 router.register(r'lessons', LessonViewSet, basename='lesson')
-
+router.register(r'vocabularies', VocabularyViewSet, basename='vocabulary')
 urlpatterns = [
     path('', include(router.urls)),
     

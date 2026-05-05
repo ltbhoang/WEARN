@@ -1,12 +1,16 @@
 # ========================
 # Python (Django backend)
 # ========================
-backend/venv/
+# Bỏ qua tất cả thư mục venv (venv, venv2, venv3, ...)
+backend/venv*/
+venv/
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
+*.so
 *.pyd
-*.sqlite3
 
 # Django
 db.sqlite3
@@ -26,7 +30,9 @@ package-lock.json
 # Environment variables
 # ========================
 .env
+.env2
 .env.*
+*.env
 
 # ========================
 # OS / Editor
@@ -35,10 +41,17 @@ package-lock.json
 Thumbs.db
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # ========================
 # AI folder (tạm chưa push)
 # ========================
 ai/
-
 data/animCJK/
+
+# ========================
+# Other generated files
+# ========================
+*.log
+*.tmp

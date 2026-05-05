@@ -12,7 +12,10 @@ import FlashcardPracticePage from "../pages/FlashcardMode";
 import CreateFlashcardSetPage from "../pages/CreateFlashcardSetPage";
 import KanaLessonsPage from "../pages/KanaLessonsPage";
 import KanaPracticePage from "../pages/KanaPracticePage";
-
+import KanaLessonDetailPage from "../pages/KanaLessonDetailPage";
+import KanaTestPage from "../pages/KanaTestPage";
+import TopicListPage from "../pages/TopicListPage"; 
+import GroupDetailPage from "../pages/GroupDetailPage";
 const AppRoutes = () => {
   return (
     <Routes>
@@ -26,7 +29,11 @@ const AppRoutes = () => {
       <Route path="/flashcard/create" element={<CreateFlashcardSetPage />} />
       <Route path="/flashcard/:id" element={<FlashcardPracticePage />} />
       <Route path="/kana-lessons" element={<KanaLessonsPage />} />
+      <Route path="/kana-lesson/:lessonId" element={<KanaLessonDetailPage />} />
       <Route path="/kana-practice/:kanaId" element={<KanaPracticePage />} />
+      <Route path="/kana-test/:lessonId" element={<KanaTestPage />} />
+      <Route path="/topics" element={<TopicListPage />} />
+      <Route path="/vocabulary/group/:groupName" element={<GroupDetailPage />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />

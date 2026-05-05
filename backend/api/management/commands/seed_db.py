@@ -20,7 +20,7 @@ class Command(BaseCommand):
             }
         )
         if created:
-            user.set_password('demo123')
+            user.set_password('demo123456')
             user.save()
             self.stdout.write(self.style.SUCCESS('Created demo user'))
 

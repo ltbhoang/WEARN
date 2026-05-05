@@ -12,6 +12,7 @@ from skimage.metrics import structural_similarity as ssim
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
+from rest_framework import filters  # thêm dòng này nếu chưa có
 
 from api.serializers.collection_serializers import CollectionDetailSerializer
 from .models import Collection, UserProfile, Vocabulary, LearningProgress, SavedVocabulary, FlashcardSet, FlashcardSetItem, Lesson, KanaCharacter, UserLessonProgress, UserKanaStrokeProgress
@@ -25,7 +26,8 @@ from .serializers import (
     SavedVocabularySerializer,
     LessonSerializer,
     KanaStrokeSerializer,
-    UserKanaProgressSerializer
+    UserKanaProgressSerializer,
+    AddVocabularyToSetSerializer  
 )
 
 # 1. Vocabulary: Từ điển chung, chỉ đọc
@@ -33,12 +35,32 @@ class VocabularyViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Vocabulary.objects.all()
     serializer_class = VocabularySerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+    lookup_field = 'class_name'  # dùng class_name thay vì id để xem chi tiết
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['word', 'meaning', 'pronunciation', 'reading_hiragana']
+
     def get_queryset(self):
-        class_name = self.request.query_params.get('class_name')
-        if class_name:
-            return Vocabulary.objects.filter(class_name=class_name)
-        return self.queryset
+        queryset = super().get_queryset()
+        topic = self.request.query_params.get('topic')
+        if topic:
+            queryset = queryset.filter(topic=topic)
+        return queryset
+
+    @action(detail=False, methods=['get'], url_path='topics')
+    def list_topics(self, request):
+        """
+        Trả về danh sách các topic (chủ đề) có từ vựng, sắp xếp theo alphabet.
+        Ví dụ: ["tinhtu", "dongtu", "giaothong", ...]
+        """
+        topics = (
+            Vocabulary.objects
+            .exclude(topic__isnull=True)
+            .exclude(topic='')
+            .values_list('topic', flat=True)
+            .distinct()
+            .order_by('topic')
+        )
+        return Response(list(topics))
 
 # 2. Collection: Của ai người đó thấy
 class CollectionViewSet(viewsets.ModelViewSet):
@@ -97,46 +119,16 @@ class FlashcardSetViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def add_vocab(self, request, pk=None):
-        """Thêm từ vựng vào flashcard set"""
+        """Thêm từ vựng (camera hoặc hệ thống) vào flashcard set"""
         flashcard_set = self.get_object()
-        saved_vocab_id = request.data.get('saved_vocab_id')
-        
-        if not saved_vocab_id:
-            return Response(
-                {'error': 'saved_vocab_id is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        try:
-            saved_vocab = SavedVocabulary.objects.get(
-                id=saved_vocab_id,
-                collection__user=request.user
-            )
-        except SavedVocabulary.DoesNotExist:
-            return Response(
-                {'error': 'Saved vocabulary not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        if FlashcardSetItem.objects.filter(
-            flashcard_set=flashcard_set, 
-            saved_vocab=saved_vocab
-        ).exists():
-            return Response(
-                {'error': 'This vocabulary already exists in the set'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        max_order = flashcard_set.items.aggregate(models.Max('order'))['order__max'] or -1
-        
-        item = FlashcardSetItem.objects.create(
-            flashcard_set=flashcard_set,
-            saved_vocab=saved_vocab,
-            order=max_order + 1
+        serializer = AddVocabularyToSetSerializer(
+            data=request.data,
+            context={'request': request, 'set_id': flashcard_set.id}
         )
-        
-        serializer = FlashcardSetItemSerializer(item)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer.is_valid(raise_exception=True)
+        item = serializer.save()
+        item_serializer = FlashcardSetItemSerializer(item)
+        return Response(item_serializer.data, status=status.HTTP_201_CREATED)
     
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def remove_vocab(self, request, pk=None):

@@ -5,21 +5,24 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import transaction
 from datetime import date, timedelta
+from django.db.models import Q  # thêm dòng này cho UniqueConstraint
 
 # 1. Bảng từ điển gốc (Dữ liệu chuẩn của hệ thống)
 class Vocabulary(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    word = models.CharField(max_length=255, unique=True)
-    meaning = models.TextField()
-    image_url = models.URLField(max_length=500, blank=True, null=True)
-    example_sentence = models.TextField(blank=True, null=True)
-    example_translation = models.TextField(blank=True, null=True)
-    pronunciation = models.CharField(max_length=255, blank=True, null=True)
-    class_name = models.CharField(max_length=100, unique=True)
+    word = models.CharField(max_length=255)               # chữ Nhật (kanji + hiragana)
+    meaning = models.TextField()                                        # nghĩa tiếng Việt
+    image_url = models.URLField(max_length=500, blank=True, null=True) # ảnh minh họa
+    example_sentence = models.TextField(blank=True, null=True)         # câu ví dụ tiếng Nhật
+    example_translation = models.TextField(blank=True, null=True)      # dịch câu ví dụ
+    pronunciation = models.CharField(max_length=255, blank=True, null=True)  # romaji (cách đọc Latin)
+    class_name = models.CharField(max_length=100, unique=True)         # mã định danh (n5_adj_abunai)
+    topic = models.CharField(max_length=50, blank=True, null=True)      # chủ đề (tinhtu, dongtu...)
+    reading_hiragana = models.CharField(max_length=255, blank=True, null=True) # cách đọc hiragana
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.word
+        return f"{self.word} ({self.meaning})"
 
 # 2. Thông tin bổ sung của User (Dùng để cache chỉ số Streak & Thống kê)
 class UserProfile(models.Model):
@@ -74,10 +77,16 @@ class LearningProgress(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='learning')
     review_count = models.IntegerField(default=0)
     last_reviewed = models.DateTimeField(null=True, blank=True)
+    next_review_date = models.DateField(null=True, blank=True, db_index=True)   # thêm db_index
+    ease_factor = models.FloatField(default=2.5)                 # hệ số dễ
+    interval = models.IntegerField(default=1)                    # khoảng cách (ngày)
 
     class Meta:
         unique_together = ('user', 'vocabulary')
-        indexes = [models.Index(fields=['user', 'status', 'last_reviewed'])]
+        indexes = [
+            models.Index(fields=['user', 'status', 'last_reviewed']),
+            models.Index(fields=['user', 'next_review_date']),   # thêm index cho next_review_date
+        ]
 
 # 6. Danh sách Danh hiệu hệ thống (Achievement Master Data)
 class Achievement(models.Model):
@@ -120,17 +129,26 @@ class FlashcardSet(models.Model):
 class FlashcardSetItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     flashcard_set = models.ForeignKey(FlashcardSet, on_delete=models.CASCADE, related_name='items')
-    saved_vocab = models.ForeignKey(SavedVocabulary, on_delete=models.CASCADE, related_name='flashcard_set_items')
+    # Cho phép null vì khi dùng từ hệ thống thì không có saved_vocab
+    saved_vocab = models.ForeignKey(SavedVocabulary, on_delete=models.CASCADE, null=True, blank=True, related_name='flashcard_set_items')
+    vocabulary = models.ForeignKey(Vocabulary, on_delete=models.CASCADE, null=True, blank=True, related_name='flashcard_set_items')
     order = models.PositiveIntegerField(default=0)
     memorized = models.BooleanField(default=False)
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('flashcard_set', 'saved_vocab')
         ordering = ['order']
+        constraints = [
+            models.UniqueConstraint(fields=['flashcard_set', 'saved_vocab'], name='unique_set_saved_vocab'),
+            models.UniqueConstraint(fields=['flashcard_set', 'vocabulary'], condition=Q(vocabulary__isnull=False), name='unique_set_vocabulary'),
+        ]
 
     def __str__(self):
-        return f"{self.flashcard_set.name} - {self.saved_vocab.vocabulary.word}"
+        if self.saved_vocab:
+            return f"{self.flashcard_set.name} - {self.saved_vocab.vocabulary.word}"
+        elif self.vocabulary:
+            return f"{self.flashcard_set.name} - {self.vocabulary.word}"
+        return f"{self.flashcard_set.name} - unknown"
 
 # 10. Bảng chứa dữ liệu Hiragana / Katakana (dùng cho luyện viết và test)
 class KanaCharacter(models.Model):
@@ -203,6 +221,7 @@ class UserKanaStrokeProgress(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.kana.character} - {len(self.completed_strokes)}/{self.kana.total_strokes} strokes"
+
 # ------------------ HÀM KIỂM TRA VÀ GÁN DANH HIỆU ------------------
 def check_and_assign_achievements(profile):
     """

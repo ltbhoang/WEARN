@@ -33,26 +33,8 @@ const Dashboard = () => {
       </header>
 
       <main className="px-6 max-w-2xl mx-auto space-y-5">
-        {/* Scan History Card */}
-        <section className="group relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-[#E98074] to-[#ff9189] p-7 text-white shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02]">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl" />
-          <div className="flex items-center justify-between">
-            <div className="space-y-3">
-              <h2 className="text-3xl font-black tracking-tight">
-                Lịch sử quét
-              </h2>
-              <p className="text-base font-medium opacity-90 max-w-45">
-                Xem lại bộ sưu tập đã quét trước đó{" "}
-              </p>
-              <button className="mt-2 bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full font-black text-sm inline-flex items-center gap-2 transition-all hover:bg-white/30">
-                Xem →
-              </button>
-            </div>
-            <ScanHistoryIcon size={120} className="opacity-90 drop-shadow-lg" />
-          </div>
-        </section>
 
-        {/* Kana Practice Card */}
+         {/* Kana Practice Card */}
         <section
           onClick={() => navigate("/kana-lessons")}
           className="group relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-[#D8B4A0] to-[#C49A8C] p-7 text-white shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02] cursor-pointer"
@@ -64,7 +46,7 @@ const Dashboard = () => {
                 Luyện tập Kana
               </h2>
               <p className="text-base font-medium opacity-90 max-w-45">
-                Khởi đầu với tiếng Nhật một cách thuận lợi
+                Khởi đầu với tiếng bảng chữ cái tiếng Nhật
               </p>
               <button className="mt-2 bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full font-black text-sm inline-flex items-center gap-2 transition-all hover:bg-white/30">
                 Bắt đầu →
@@ -74,6 +56,27 @@ const Dashboard = () => {
               size={160}
               className="opacity-90 drop-shadow-lg ml-5"
             />
+          </div>
+        </section>
+
+        {/* Scan History Card */}
+        <section 
+        onClick={() => navigate("/topics")}
+        className="group relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-[#E98074] to-[#ff9189] p-7 text-white shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02]">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl" />
+          <div className="flex items-center justify-between">
+            <div className="space-y-3">
+              <h2 className="text-3xl font-black tracking-tight">
+                Học từ vựng
+              </h2>
+              <p className="text-base font-medium opacity-90 max-w-45">
+                Khám phá các chủ đề và ghi nhớ từ mới mỗi ngày
+              </p>
+              <button className="mt-2 bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full font-black text-sm inline-flex items-center gap-2 transition-all hover:bg-white/30">
+                Xem →
+              </button>
+            </div>
+            <ScanHistoryIcon size={120} className="opacity-90 drop-shadow-lg" />
           </div>
         </section>
 
@@ -144,3 +147,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+

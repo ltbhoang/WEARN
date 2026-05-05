@@ -6,7 +6,8 @@ from .flashcard_serializers import (
     FlashcardSetSerializer,
     CreateFlashcardSetSerializer,
     FlashcardSetItemSerializer,
-    UpdateFlashcardSetItemSerializer
+    UpdateFlashcardSetItemSerializer,
+    AddVocabularyToSetSerializer
 )
 from .kana_serializers import (
     KanaSimpleSerializer,

@@ -1,5 +1,6 @@
+// src/components/WordDetailModal.jsx
 import React, { useState } from "react";
-import { X, Star, Trash2 } from "lucide-react";
+import { X, Star, Trash2, BookOpen } from "lucide-react"; // thêm BookOpen
 
 const WordDetailModal = ({
   item,
@@ -7,12 +8,14 @@ const WordDetailModal = ({
   onToggleMemorized,
   onDelete,
   relatedWords = [],
+  hideRelated = false,
+  isSystem = false,          // true: từ hệ thống, false: từ user tạo
+  onAddToFlashcard,          // callback khi thêm vào flashcard (chỉ dùng khi isSystem=true)
 }) => {
   const [showRelatedSection, setShowRelatedSection] = useState(false);
 
   if (!item) return null;
 
-  // Dữ liệu mẫu cho relatedWords nếu không được truyền vào
   const defaultRelatedWords = [
     { id: 101, emoji: "🪑", kanji: "机", furigana: "つくえ", meaning: "Cái bàn" },
     { id: 102, emoji: "📚", kanji: "本", furigana: "ほん", meaning: "Quyển sách" },
@@ -89,57 +92,77 @@ const WordDetailModal = ({
           )}
         </div>
 
-        {/* Nút bật/tắt từ vựng liên quan */}
-        <div className="mt-4">
-          <button
-            onClick={() => setShowRelatedSection(!showRelatedSection)}
-            className="w-full py-3 border border-gray-200 text-[#4A4A4A] rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
-          >
-            <span>📚</span>
-            {showRelatedSection ? "Ẩn từ liên quan" : "Xem từ liên quan"}
-          </button>
-        </div>
-
-        {/* Từ vựng liên quan (hiện tất cả nếu showRelatedSection = true) */}
-        {showRelatedSection && (
-          <div className="mt-4">
-            <h3 className="text-lg font-bold text-[#2D2D2D] mb-3">
-              Từ vựng liên quan
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {wordsToShow.map((word) => (
-                <div
-                  key={word.id}
-                  className="bg-[#FAF9F8] p-3 rounded-xl border border-gray-100"
-                >
-                  <div className="text-2xl mb-1">{word.emoji}</div>
-                  <div className="font-bold text-[#333]">{word.kanji}</div>
-                  <div className="text-xs text-[#E85A4F] font-medium">
-                    {word.furigana}
-                  </div>
-                  <div className="text-xs text-[#8E8D8A] mt-1 line-clamp-1">
-                    {word.meaning}
-                  </div>
-                </div>
-              ))}
+        {/* Chỉ hiển thị phần "Từ liên quan" nếu không bị ẩn */}
+        {!hideRelated && (
+          <>
+            <div className="mt-4">
+              <button
+                onClick={() => setShowRelatedSection(!showRelatedSection)}
+                className="w-full py-3 border border-gray-200 text-[#4A4A4A] rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+              >
+                <span>📚</span>
+                {showRelatedSection ? "Ẩn từ liên quan" : "Xem từ liên quan"}
+              </button>
             </div>
-          </div>
+
+            {showRelatedSection && (
+              <div className="mt-4">
+                <h3 className="text-lg font-bold text-[#2D2D2D] mb-3">
+                  Từ vựng liên quan
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {wordsToShow.map((word) => (
+                    <div
+                      key={word.id}
+                      className="bg-[#FAF9F8] p-3 rounded-xl border border-gray-100"
+                    >
+                      <div className="text-2xl mb-1">{word.emoji}</div>
+                      <div className="font-bold text-[#333]">{word.kanji}</div>
+                      <div className="text-xs text-[#E85A4F] font-medium">
+                        {word.furigana}
+                      </div>
+                      <div className="text-xs text-[#8E8D8A] mt-1 line-clamp-1">
+                        {word.meaning}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
-        {/* Nút xóa */}
+        {/* Nút hành động: Thêm vào Flashcard (hệ thống) hoặc Xóa từ (user tạo) */}
         <div className="mt-6">
-          <button
-            onClick={() => {
-              if (window.confirm("Bạn có chắc muốn xóa từ này khỏi danh sách?")) {
-                onDelete(item.id);
-                onClose();
-              }
-            }}
-            className="w-full py-3 border border-gray-300 text-gray-600 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
-          >
-            <Trash2 className="w-5 h-5" />
-            Xóa từ
-          </button>
+          {isSystem ? (
+            <button
+              onClick={() => {
+                if (onAddToFlashcard) {
+                  onAddToFlashcard(item);
+                } else {
+                  console.log("Thêm vào flashcard", item);
+                  alert(`Đã thêm "${item.ja}" vào flashcard!`);
+                }
+              }}
+              className="w-full py-3 bg-[#E85A4F] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#d94b3f] transition-colors"
+            >
+              <BookOpen className="w-5 h-5" />
+              Thêm vào Flashcard
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                if (window.confirm("Bạn có chắc muốn xóa từ này khỏi danh sách?")) {
+                  onDelete(item.id);
+                  onClose();
+                }
+              }}
+              className="w-full py-3 border border-gray-300 text-gray-600 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
+            >
+              <Trash2 className="w-5 h-5" />
+              Xóa từ
+            </button>
+          )}
         </div>
       </div>
     </div>

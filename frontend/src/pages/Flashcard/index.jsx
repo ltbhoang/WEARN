@@ -11,29 +11,24 @@ import {
   Search,
 } from "lucide-react";
 
-// Import store (giả sử bạn có flashcardStore)
 import { useFlashcardStore } from "../../store/flashcardStore";
 
 const FlashcardSetsPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Lấy data và action từ store
   const { flashcardSets, fetchFlashcardSets, loading } = useFlashcardStore();
 
-  // Gọi API khi component mount
   useEffect(() => {
     fetchFlashcardSets();
   }, [fetchFlashcardSets]);
 
-  // Lọc bộ flashcard theo từ khóa tìm kiếm
   const filteredSets = flashcardSets.filter(
     (set) =>
       set.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       set.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Format ngày tạo
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("vi-VN", {
@@ -71,7 +66,6 @@ const FlashcardSetsPage = () => {
             </h1>
           </div>
 
-          {/* Nút tạo bộ mới */}
           <button
             onClick={() => navigate("/flashcard/create")}
             className="w-12 h-12 rounded-full bg-[#E85A4F] flex items-center justify-center text-white shadow-lg hover:bg-[#d14b41] transition-colors"
@@ -120,8 +114,8 @@ const FlashcardSetsPage = () => {
             <div
               key={set.id}
               onClick={() => {
-                console.log("Danh sách từ trong bộ:", set.items); // In ra items
-                // Hoặc in toàn bộ set để xem cấu trúc: console.log(set);
+                // Debug: xem cấu trúc items
+                console.log("Bộ flashcard:", set);
                 navigate(`/flashcard/${set.id}`);
               }}
               className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow border border-gray-100 cursor-pointer"
@@ -210,7 +204,7 @@ const FlashcardSetsPage = () => {
         )}
       </div>
 
-      {/* Nút float cho mobile (thay thế cho nút ở header) */}
+      {/* Nút float cho mobile */}
       {filteredSets.length > 0 && (
         <button
           onClick={() => navigate("/flashcard/create")}

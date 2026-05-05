@@ -12,13 +12,10 @@ function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  // Lấy hàm refresh và token từ Store
   const refreshAccessToken = useAuthStore((state) => state.refreshAccessToken);
   const accessToken = useAuthStore((state) => state.accessToken);
 
-  // --- BỘ CẢM BIẾN AXIOS (INTERCEPTORS) ---
   useEffect(() => {
-    // 1. Trước khi gửi request: Tự gắn Access Token mới nhất vào Header
     const requestIntercept = axiosPrivate.interceptors.request.use(
       (config) => {
         if (!config.headers["Authorization"]) {
@@ -29,13 +26,11 @@ function AppContent() {
       (error) => Promise.reject(error)
     );
 
-    // 2. Khi nhận phản hồi: Nếu lỗi 401 thì tự đi refresh token
     const responseIntercept = axiosPrivate.interceptors.response.use(
-      (response) => response, // Nếu OK thì cho qua
+      (response) => response, 
       async (error) => {
         const prevRequest = error?.config;
 
-        // Nếu lỗi 401 (Hết hạn) và chưa từng thử gửi lại request này
         if (error?.response?.status === 401 && !prevRequest?.sent) {
           prevRequest.sent = true; // Đánh dấu để tránh lặp vô tận
 
