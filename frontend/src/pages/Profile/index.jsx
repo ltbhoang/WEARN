@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
@@ -10,9 +10,14 @@ import {
   TrendingUp,
   Award,
   Lock,
+  Loader2,
 } from "lucide-react";
+import { useAuthStore } from "../../store/authStore";
+import { useFlashcardStore } from "../../store/flashcardStore";
+import { useDataStore } from "../../store/dataStore";
+import { axiosPrivate } from "../../apis/axios";
 
-// Import avatar images (giả sử các file ảnh nằm trong thư mục assets/islands)
+// Import avatar images (giữ nguyên)
 import avatar107 from "../../assets/islands/107.c3e123902d831a9.jpg";
 import avatar108 from "../../assets/islands/108.3b3090077134db3.jpg";
 import avatar109 from "../../assets/islands/109.5b75ca8158c771c.jpg";
@@ -36,87 +41,145 @@ const avatarOptions = [
   avatar120, avatar121, avatar122,
 ];
 
-// Mock user data
-const mockUser = {
-  fullName: "Nguyễn Văn A",
-  email: "nguyenvana@example.com",
-  bio: "Tôi yêu tiếng Nhật và đang chinh phục JLPT N2.",
-  avatarUrl: avatar107,
-};
-
-// Mock stats
-const mockStats = {
-  streakDays: 7,
-  totalScans: 42,
-  totalFlashcards: 128,
-  totalKanjiLearned: 128, // fallback
-};
-
 const Profile = () => {
   const navigate = useNavigate();
+  const { user, updateUser, fetchUserProfile, loading: authLoading } = useAuthStore();
+  const { flashcardSets, fetchFlashcardSets } = useFlashcardStore();
+  const { streakData, fetchStreak } = useDataStore();
 
-  // State
   const [editMode, setEditMode] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Form data
   const [formData, setFormData] = useState({
-    fullName: mockUser.fullName,
-    bio: mockUser.bio,
+    fullName: "",
+    bio: "",
   });
-
-  // Password data
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+  const [avatarUrl, setAvatarUrl] = useState(avatar107);
 
-  // Avatar preview (giả sử sau khi chọn, cập nhật avatarUrl)
-  const [avatarUrl, setAvatarUrl] = useState(mockUser.avatarUrl);
+  // Lấy dữ liệu thống kê
+  useEffect(() => {
+    fetchFlashcardSets();
+    fetchStreak();
+  }, []);
 
-  // Handlers
+  // Cập nhật form data khi user thay đổi
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        fullName: user.first_name || "",
+        bio: user.bio || "",
+      });
+      setAvatarUrl(user.avatar || avatar107);
+    }
+  }, [user]);
+
+  // Lấy user profile nếu chưa có
+  useEffect(() => {
+    if (!user) {
+      fetchUserProfile().catch(console.error);
+    }
+  }, []);
+
+  const totalFlashcards = flashcardSets.reduce((sum, set) => sum + (set.item_count || 0), 0);
+  const streakDays = streakData?.current_streak || 0;
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswordData(prev => ({ ...prev, [name]: value }));
+  const handleSaveProfile = async () => {
+    setLoading(true);
+    try {
+      await axiosPrivate.patch('/api/profile/', {
+        fullName: formData.fullName,
+        bio: formData.bio,
+      });
+      updateUser({ first_name: formData.fullName, bio: formData.bio });
+      setEditMode(false);
+    } catch (err) {
+      console.error(err);
+      alert("Cập nhật thất bại");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert("Mật khẩu xác nhận không khớp");
       return;
     }
-    // Giả lập đổi mật khẩu thành công
-    setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-    setShowPasswordModal(false);
+    setLoading(true);
+    try {
+      await axiosPrivate.post('/api/change-password/', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      alert("Đổi mật khẩu thành công");
+      setShowPasswordModal(false);
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (err) {
+      alert(err.response?.data?.error || "Đổi mật khẩu thất bại");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAvatarSelect = (avatar) => {
+  const handleAvatarSelect = async (avatar) => {
+  setLoading(true);
+  try {
+    await axiosPrivate.patch('/api/profile/', { avatar_url: avatar });
     setAvatarUrl(avatar);
+    updateUser({ avatar: avatar });
     setShowAvatarModal(false);
-    setShowFileUpload(false);
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Không thể cập nhật ảnh đại diện");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    // Giả lập upload: tạo URL tạm thời từ file
-    const url = URL.createObjectURL(file);
-    setAvatarUrl(url);
+const handleFileUpload = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('avatar', file);
+  setLoading(true);
+  try {
+    const res = await axiosPrivate.post('/api/upload-avatar/', formData);
+    setAvatarUrl(res.data.avatar_url);
+    updateUser({ avatar: res.data.avatar_url });
     setShowAvatarModal(false);
     setShowFileUpload(false);
-  };
-  
+  } catch (err) {
+    console.error(err);
+    alert("Upload thất bại");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  if (authLoading && !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FDFDFD]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#E85A4F]" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FDFDFD] font-sans pb-28">
-      {/* Header giống StreakPage */}
       <div className="bg-[#FEE9E7] px-6 pt-10 pb-6">
         <div className="flex items-center gap-4 mb-6">
           <button
@@ -128,7 +191,6 @@ const Profile = () => {
           <h1 className="text-2xl font-bold text-[#2D2D2D]">Hồ sơ cá nhân</h1>
         </div>
 
-        {/* Avatar và tên */}
         <div className="bg-white rounded-3xl p-6 shadow-lg flex items-center gap-6">
           <div className="relative">
             <img
@@ -145,48 +207,62 @@ const Profile = () => {
             </button>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-[#2D2D2D]">{mockUser.fullName}</h2>
-            <p className="text-sm text-[#8E8D8A]">{mockUser.email}</p>
+            <h2 className="text-2xl font-bold text-[#2D2D2D]">{user?.first_name || user?.username || "Người dùng"}</h2>
+            <p className="text-sm text-[#8E8D8A]">{user?.email}</p>
           </div>
         </div>
       </div>
 
-      {/* Stats cards - giống StreakPage */}
       <div className="px-6 -mt-4">
         <div className="bg-white rounded-2xl p-5 grid grid-cols-3 gap-4 shadow-md">
           <div className="text-center">
             <Flame className="w-6 h-6 text-[#E85A4F] mx-auto mb-1" />
             <p className="text-xs text-[#8E8D8A]">Streak</p>
-            <p className="text-xl font-bold text-[#2D2D2D]">{mockStats.streakDays} ngày</p>
+            <p className="text-xl font-bold text-[#2D2D2D]">{streakDays} ngày</p>
           </div>
           <div className="text-center">
             <Camera className="w-6 h-6 text-[#E85A4F] mx-auto mb-1" />
             <p className="text-xs text-[#8E8D8A]">Số lần scan</p>
-            <p className="text-xl font-bold text-[#2D2D2D]">{mockStats.totalScans}</p>
+            <p className="text-xl font-bold text-[#2D2D2D]">0</p>
           </div>
           <div className="text-center">
             <Award className="w-6 h-6 text-[#E85A4F] mx-auto mb-1" />
             <p className="text-xs text-[#8E8D8A]">Flashcard</p>
-            <p className="text-xl font-bold text-[#2D2D2D]">{mockStats.totalFlashcards}</p>
+            <p className="text-xl font-bold text-[#2D2D2D]">{totalFlashcards}</p>
           </div>
         </div>
       </div>
 
-      {/* Thông tin cá nhân */}
       <div className="px-6 mt-6">
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-[#2D2D2D]">Thông tin cá nhân</h2>
-            <button
-              onClick={() => setEditMode(!editMode)}
-              className="text-[#E85A4F] hover:text-[#D94F3E] transition"
-            >
-              {editMode ? <X className="w-5 h-5" /> : <Edit2 className="w-5 h-5" />}
-            </button>
+            {!editMode ? (
+              <button
+                onClick={() => setEditMode(true)}
+                className="text-[#E85A4F] hover:text-[#D94F3E] transition"
+              >
+                <Edit2 className="w-5 h-5" />
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditMode(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={loading}
+                  className="text-green-600 hover:text-green-700"
+                >
+                  <Save className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </div>
-
           <div className="space-y-4">
-            {/* Tên */}
             <div>
               <label className="text-sm font-medium text-[#8E8D8A] block mb-1">Tên</label>
               {editMode ? (
@@ -198,17 +274,13 @@ const Profile = () => {
                   className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E85A4F]"
                 />
               ) : (
-                <p className="text-[#2D2D2D] font-medium">{mockUser.fullName}</p>
+                <p className="text-[#2D2D2D] font-medium">{formData.fullName || "Chưa cập nhật"}</p>
               )}
             </div>
-
-            {/* Email */}
             <div>
               <label className="text-sm font-medium text-[#8E8D8A] block mb-1">Email</label>
-              <p className="text-[#2D2D2D] font-medium">{mockUser.email}</p>
+              <p className="text-[#2D2D2D] font-medium">{user?.email}</p>
             </div>
-
-            {/* Bio */}
             <div>
               <label className="text-sm font-medium text-[#8E8D8A] block mb-1">Giới thiệu</label>
               {editMode ? (
@@ -220,14 +292,13 @@ const Profile = () => {
                   className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E85A4F]"
                 />
               ) : (
-                <p className="text-[#2D2D2D]">{mockUser.bio}</p>
+                <p className="text-[#2D2D2D]">{formData.bio || "Chưa có giới thiệu"}</p>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Đổi mật khẩu */}
       <div className="px-6 mt-4">
         <div className="bg-white rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
@@ -243,15 +314,17 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Nút hành động chính */}
       <div className="px-6 mt-6">
-        <button className="w-full py-4 bg-gradient-to-r from-slate-500 to-[#E85A4F] text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2">
+        <button
+          onClick={() => navigate("/streak")}
+          className="w-full py-4 bg-gradient-to-r from-slate-500 to-[#E85A4F] text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2"
+        >
           <TrendingUp className="w-5 h-5" />
           Tiếp tục học để cải thiện thành tích
         </button>
       </div>
 
-      {/* Modal chọn avatar */}
+      {/* Avatar modal */}
       {showAvatarModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto">
@@ -264,7 +337,6 @@ const Profile = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-
             {!showFileUpload ? (
               <>
                 <div className="grid grid-cols-4 md:grid-cols-6 gap-3 mb-4">
@@ -317,7 +389,7 @@ const Profile = () => {
         </div>
       )}
 
-      {/* Modal đổi mật khẩu */}
+      {/* Password modal */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6">
@@ -330,7 +402,6 @@ const Profile = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[#8E8D8A] mb-1">Mật khẩu hiện tại</label>
@@ -338,9 +409,8 @@ const Profile = () => {
                   type="password"
                   name="currentPassword"
                   value={passwordData.currentPassword}
-                  onChange={handlePasswordChange}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E85A4F]"
-                  placeholder="••••••"
                 />
               </div>
               <div>
@@ -349,9 +419,8 @@ const Profile = () => {
                   type="password"
                   name="newPassword"
                   value={passwordData.newPassword}
-                  onChange={handlePasswordChange}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E85A4F]"
-                  placeholder="••••••"
                 />
               </div>
               <div>
@@ -360,12 +429,10 @@ const Profile = () => {
                   type="password"
                   name="confirmPassword"
                   value={passwordData.confirmPassword}
-                  onChange={handlePasswordChange}
+                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E85A4F]"
-                  placeholder="••••••"
                 />
               </div>
-
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowPasswordModal(false)}
@@ -375,7 +442,8 @@ const Profile = () => {
                 </button>
                 <button
                   onClick={handleChangePassword}
-                  className="flex-1 py-3 bg-[#E85A4F] text-white rounded-xl font-semibold hover:bg-[#D94F3E]"
+                  disabled={loading}
+                  className="flex-1 py-3 bg-[#E85A4F] text-white rounded-xl font-semibold hover:bg-[#D94F3E] disabled:opacity-50"
                 >
                   Xác nhận
                 </button>

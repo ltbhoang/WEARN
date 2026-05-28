@@ -8,7 +8,14 @@ from .views import (
     LessonViewSet,
     kana_detail,
     user_kana_progress,
-    complete_stroke
+    complete_stroke,
+    # --- Import các view cho Profile ---
+    UpdateProfileView,
+    ChangePasswordView,
+    UploadAvatarView,
+    UserProfileDetailView,
+    UploadTempImageView,
+    DeleteTempImageView,
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -21,6 +28,7 @@ router.register(r'saved-vocabularies', SavedVocabularyViewSet, basename='savedvo
 # --- Đăng ký LessonViewSet (ReadOnly) ---
 router.register(r'lessons', LessonViewSet, basename='lesson')
 router.register(r'vocabularies', VocabularyViewSet, basename='vocabulary')
+
 urlpatterns = [
     path('', include(router.urls)),
     
@@ -40,7 +48,19 @@ urlpatterns = [
     path('kana/<uuid:pk>/', kana_detail, name='kana-detail'),
     path('kana-progress/<uuid:kana_id>/', user_kana_progress, name='kana-progress'),
     path('complete-stroke/', complete_stroke, name='complete-stroke'),
+    
+    # --- Các API cho Profile ---
+    path('profile/', UpdateProfileView.as_view(), name='profile'),
+    path('change-password/', ChangePasswordView.as_view(), name='change-password'),
+    path('upload-avatar/', UploadAvatarView.as_view(), name='upload-avatar'),
+    path('user-profile/', UserProfileDetailView.as_view(), name='user-profile'),
+    
+    path('upload-temp-image/', UploadTempImageView.as_view(), name='upload-temp-image'),
+    path('delete-temp-image/', DeleteTempImageView.as_view(), name='delete-temp-image'),
+
 ]
+
+# (Giữ nguyên các comment hướng dẫn phía dưới nếu bạn muốn)
 # Các URL pattern chi tiết cho FlashcardSet (đã được router xử lý):
 # GET /api/flashcard-sets/ - Danh sách bộ flashcard
 # POST /api/flashcard-sets/ - Tạo bộ mới

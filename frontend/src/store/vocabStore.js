@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { axiosPrivate } from "../apis/axios";
 
+// eslint-disable-next-line no-unused-vars
 export const useVocabStore = create((set, get) => ({
   // --- STATE ---
   topics: [], // danh sách các topic (chủ đề)
@@ -93,6 +94,7 @@ export const useVocabStore = create((set, get) => ({
       );
 
       set({ topics: topicsWithData, loading: false });
+    // eslint-disable-next-line no-unused-vars
     } catch (err) {
       set({ error: "Không thể tải danh sách chủ đề kèm ảnh", loading: false });
     }

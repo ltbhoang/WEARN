@@ -69,7 +69,7 @@ const GroupDetailPage = () => {
     exampleTranslation: word.example_translation || "",
     img: word.image_url || "",
     memorized: word.is_memorized || false,
-    // Lưu topicId để phục vụ xóa/toggle nếu cần
+    audio_url: word.audio_url || word.audio,
     topicId: word.topic,
   });
 

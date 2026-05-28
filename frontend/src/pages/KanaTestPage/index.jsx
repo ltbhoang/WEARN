@@ -3,13 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useKanaStore } from "../../store/kanaStore";
-import {
-  ChevronLeft,
-  Eye,
-  EyeOff,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+import { ChevronLeft, Eye, EyeOff, CheckCircle, XCircle } from "lucide-react";
 
 // ================== CUSTOM CANVAS (giữ nguyên) ==================
 const CustomCanvas = React.forwardRef(
@@ -22,7 +16,7 @@ const CustomCanvas = React.forwardRef(
     useEffect(() => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      
+
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext("2d");
@@ -148,8 +142,14 @@ const compareImages = (userImageDataURL, templateSvgString) => {
         }
       }
       const dirs = [
-        [-1, 0], [1, 0], [0, -1], [0, 1],
-        [-1, -1], [-1, 1], [1, -1], [1, 1],
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1],
+        [-1, -1],
+        [-1, 1],
+        [1, -1],
+        [1, 1],
       ];
       while (queue.length) {
         const idx = queue.shift();
@@ -157,7 +157,8 @@ const compareImages = (userImageDataURL, templateSvgString) => {
         const y = Math.floor(idx / size);
         const cur = dist[idx];
         for (const [dx, dy] of dirs) {
-          const nx = x + dx, ny = y + dy;
+          const nx = x + dx,
+            ny = y + dy;
           if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
             const nidx = ny * size + nx;
             const nd = cur + Math.sqrt(dx * dx + dy * dy);
@@ -188,7 +189,8 @@ const compareImages = (userImageDataURL, templateSvgString) => {
         }
 
         const distUserToTemplate = computeDistanceMap(templateMap, size);
-        let totalUser = 0, goodUser = 0;
+        let totalUser = 0,
+          goodUser = 0;
         for (let i = 0; i < userMap.length; i++) {
           if (userMap[i] === 1) {
             totalUser++;
@@ -197,7 +199,8 @@ const compareImages = (userImageDataURL, templateSvgString) => {
         }
 
         const distTemplateToUser = computeDistanceMap(userMap, size);
-        let totalTemplate = 0, coveredTemplate = 0;
+        let totalTemplate = 0,
+          coveredTemplate = 0;
         for (let i = 0; i < templateMap.length; i++) {
           if (templateMap[i] === 1) {
             totalTemplate++;
@@ -259,8 +262,14 @@ const getHintSvgForStroke = (fullSvg, strokeIndex) => {
     if (targetClipPath) defs.appendChild(targetClipPath.cloneNode(true));
   }
 
-  const useHref = targetStroke.querySelector("use")?.getAttribute("href") ||
-    (clipPathAttr ? svg.querySelector(`#${clipPathAttr.replace(/url\(#|\)/g, "")}`)?.querySelector("use")?.getAttribute("href") : null);
+  const useHref =
+    targetStroke.querySelector("use")?.getAttribute("href") ||
+    (clipPathAttr
+      ? svg
+          .querySelector(`#${clipPathAttr.replace(/url\(#|\)/g, "")}`)
+          ?.querySelector("use")
+          ?.getAttribute("href")
+      : null);
 
   if (useHref) {
     const outlineId = useHref.replace("#", "");
@@ -314,8 +323,14 @@ const completedStrokeStyle = (fullSvg, strokeIndex) => {
     if (targetClipPath) defs.appendChild(targetClipPath.cloneNode(true));
   }
 
-  const useHref = targetStroke.querySelector("use")?.getAttribute("href") ||
-    (clipPathAttr ? svg.querySelector(`#${clipPathAttr.replace(/url\(#|\)/g, "")}`)?.querySelector("use")?.getAttribute("href") : null);
+  const useHref =
+    targetStroke.querySelector("use")?.getAttribute("href") ||
+    (clipPathAttr
+      ? svg
+          .querySelector(`#${clipPathAttr.replace(/url\(#|\)/g, "")}`)
+          ?.querySelector("use")
+          ?.getAttribute("href")
+      : null);
 
   if (useHref) {
     const outlineId = useHref.replace("#", "");
@@ -401,7 +416,10 @@ const KanaTestPage = () => {
     // 2. Xáo trộn danh sách
     for (let i = selectedKanas.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [selectedKanas[i], selectedKanas[j]] = [selectedKanas[j], selectedKanas[i]];
+      [selectedKanas[i], selectedKanas[j]] = [
+        selectedKanas[j],
+        selectedKanas[i],
+      ];
     }
 
     // 3. Gán loại câu hỏi cho mỗi kana, đảm bảo không trùng lặp loại cho cùng một chữ
@@ -414,50 +432,51 @@ const KanaTestPage = () => {
     const newQuestions = selectedKanas.map((kanaItem) => {
       const usage = kanaUsage.get(kanaItem.id);
       usage.count++;
-      
+
       // Xác định loại câu hỏi
       let type = null;
       let subType = null;
-      
+
       // Nếu đã dùng writing rồi thì chỉ dùng multiple
-      if (usage.usedTypes.has('writing')) {
-        type = 'multiple';
-        subType = Math.random() < 0.5 ? 'chooseRomaji' : 'chooseKana';
-      } 
-      // Nếu đã dùng cả hai loại multiple (chooseRomaji và chooseKana) thì ưu tiên writing hoặc random
-      else if (usage.usedTypes.has('chooseRomaji') && usage.usedTypes.has('chooseKana')) {
-        type = 'writing';
+      if (usage.usedTypes.has("writing")) {
+        type = "multiple";
+        subType = Math.random() < 0.5 ? "chooseRomaji" : "chooseKana";
       }
-      else {
+      // Nếu đã dùng cả hai loại multiple (chooseRomaji và chooseKana) thì ưu tiên writing hoặc random
+      else if (
+        usage.usedTypes.has("chooseRomaji") &&
+        usage.usedTypes.has("chooseKana")
+      ) {
+        type = "writing";
+      } else {
         // Ưu tiên xen kẽ: nếu count lẻ -> writing, chẵn -> multiple (hoặc ngược lại)
-        const preferWriting = (usage.count % 2 === 1); // lần xuất hiện đầu tiên (count=1) ưu tiên writing
-        if (preferWriting && !usage.usedTypes.has('writing')) {
-          type = 'writing';
+        const preferWriting = usage.count % 2 === 1; // lần xuất hiện đầu tiên (count=1) ưu tiên writing
+        if (preferWriting && !usage.usedTypes.has("writing")) {
+          type = "writing";
         } else {
-          type = 'multiple';
+          type = "multiple";
           // Chọn subtype chưa dùng nếu có thể
-          if (!usage.usedTypes.has('chooseRomaji')) subType = 'chooseRomaji';
-          else if (!usage.usedTypes.has('chooseKana')) subType = 'chooseKana';
-          else subType = Math.random() < 0.5 ? 'chooseRomaji' : 'chooseKana';
+          if (!usage.usedTypes.has("chooseRomaji")) subType = "chooseRomaji";
+          else if (!usage.usedTypes.has("chooseKana")) subType = "chooseKana";
+          else subType = Math.random() < 0.5 ? "chooseRomaji" : "chooseKana";
         }
       }
-      
+
       // Lưu lại loại đã dùng
-      if (type === 'writing') usage.usedTypes.add('writing');
+      if (type === "writing") usage.usedTypes.add("writing");
       else if (subType) usage.usedTypes.add(subType);
-      
+
       // Tạo câu hỏi
-      if (type === 'writing') {
+      if (type === "writing") {
         return {
           id: kanaItem.id,
           type: "writing",
           question: `Hãy viết chữ "${kanaItem.romanji}" vào khung bên dưới.`,
-          display: kanaItem.character,
           kana: kanaItem,
           totalStrokes: kanaItem.total_strokes || kanaItem.strokes?.length || 1,
         };
       } else {
-        if (subType === 'chooseRomaji') {
+        if (subType === "chooseRomaji") {
           const correct = kanaItem.romanji;
           const options = getRandomWrongOptions(correct, kanas, "romanji", 3);
           return {
@@ -496,14 +515,27 @@ const KanaTestPage = () => {
   };
 
   const getRandomWrongOptions = (correct, kanas, field, count = 3) => {
-    const others = kanas.filter((k) => k[field] !== correct).map((k) => k[field]);
-    let result = [...others];
-    while (result.length < count) {
-      const randomKana = kanas[Math.floor(Math.random() * kanas.length)];
-      if (!result.includes(randomKana[field]) && randomKana[field] !== correct) {
-        result.push(randomKana[field]);
+    // 1. Lấy tất cả các chữ khác trong lesson hiện tại
+    const others = kanas
+      .filter((k) => k[field] !== correct)
+      .map((k) => k[field]);
+    let result = [...new Set(others)]; // Dùng Set để đảm bảo không trùng
+
+    // 2. Nếu vẫn thiếu option (do lesson quá ít chữ), lấy thêm từ tất cả lessons
+    if (result.length < count) {
+      const allPossibleKanas = lessons.flatMap((l) => l.kanas || []);
+      const backupOptions = allPossibleKanas
+        .filter((k) => k[field] !== correct && !result.includes(k[field]))
+        .map((k) => k[field]);
+
+      // Trộn ngẫu nhiên danh sách dự phòng và lấy số lượng còn thiếu
+      const additional = backupOptions.sort(() => Math.random() - 0.5);
+      while (result.length < count && additional.length > 0) {
+        result.push(additional.pop());
       }
     }
+
+    // 3. Trả về kết quả (cắt đúng số lượng yêu cầu)
     return result.sort(() => Math.random() - 0.5).slice(0, count);
   };
 
@@ -524,7 +556,11 @@ const KanaTestPage = () => {
   const toggleShowGuide = () => {
     const newState = !showGuide;
     setShowGuide(newState);
-    showTemporaryHint(newState ? "Đã bật hướng dẫn nét vẽ" : "Đã tắt hướng dẫn, hãy vẽ theo trí nhớ!");
+    showTemporaryHint(
+      newState
+        ? "Đã bật hướng dẫn nét vẽ"
+        : "Đã tắt hướng dẫn, hãy vẽ theo trí nhớ!"
+    );
   };
 
   const handleStrokeComplete = async (userImageData, templateSvg) => {
@@ -538,13 +574,14 @@ const KanaTestPage = () => {
       const newDone = currentDone + 1;
 
       if (isCorrect) {
-        setWritingStrokeProgress((prev) => ({ ...prev, [currentIndex]: newDone }));
-        showTemporaryHint(`✅ Nét ${newDone}/${currentQ.totalStrokes} chính xác!`);
+        setWritingStrokeProgress((prev) => ({
+          ...prev,
+          [currentIndex]: newDone,
+        }));
         canvasRef.current?.clear();
 
         if (newDone === currentQ.totalStrokes) {
           setScore((prev) => prev + 1);
-          showTemporaryHint(`🎉 Hoàn thành chữ ${currentQ.display}!`);
 
           setTimeout(() => {
             if (currentIndex + 1 < questions.length) {
@@ -555,7 +592,7 @@ const KanaTestPage = () => {
           }, 1200);
         }
       } else {
-        showTemporaryHint("✏️ Nét vẽ chưa chính xác. Hãy vẽ đè lên nét xanh!");
+        showTemporaryHint("✏️ Nét vẽ chưa chính xác!");
         canvasRef.current?.clear();
       }
     } catch (err) {
@@ -615,8 +652,12 @@ const KanaTestPage = () => {
               <div className="mx-auto w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
                 <CheckCircle className="w-16 h-16 text-green-500" />
               </div>
-              <h2 className="text-3xl font-black text-[#474747] mb-2">Chúc mừng!</h2>
-              <p className="text-xl text-green-600 font-semibold mb-1">Bạn đã hoàn thành bài kiểm tra</p>
+              <h2 className="text-3xl font-black text-[#474747] mb-2">
+                Chúc mừng!
+              </h2>
+              <p className="text-xl text-green-600 font-semibold mb-1">
+                Bạn đã hoàn thành bài kiểm tra
+              </p>
               <p className="text-[#8E8D8A] mb-6">
                 Điểm số:{" "}
                 <span className="font-bold text-3xl text-[#474747]">
@@ -635,10 +676,14 @@ const KanaTestPage = () => {
               <div className="mx-auto w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-6">
                 <XCircle className="w-16 h-16 text-red-500" />
               </div>
-              <h2 className="text-3xl font-black text-[#474747] mb-2">Chưa đạt yêu cầu</h2>
+              <h2 className="text-3xl font-black text-[#474747] mb-2">
+                Chưa đạt yêu cầu
+              </h2>
               <p className="text-[#8E8D8A] mb-2">
                 Điểm số của bạn:{" "}
-                <span className="font-bold text-3xl">{finalScore}/{questions.length}</span>
+                <span className="font-bold text-3xl">
+                  {finalScore}/{questions.length}
+                </span>
               </p>
               <p className="text-red-500 mb-8">
                 Cần đạt ít nhất <strong>7/10</strong> để hoàn thành bài học
@@ -683,10 +728,15 @@ const KanaTestPage = () => {
 
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="px-6 py-4 flex items-center gap-4 max-w-2xl mx-auto">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-gray-100">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-full hover:bg-gray-100"
+          >
             <ChevronLeft className="w-6 h-6 text-[#474747]" />
           </button>
-          <h1 className="text-xl font-black text-[#474747]">Kiểm tra: {lesson.name}</h1>
+          <h1 className="text-xl font-black text-[#474747]">
+            Kiểm tra: {lesson.name}
+          </h1>
         </div>
       </header>
 
@@ -695,11 +745,15 @@ const KanaTestPage = () => {
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-[#E85A4F] transition-all duration-300"
-              style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+              style={{
+                width: `${((currentIndex + 1) / questions.length) * 100}%`,
+              }}
             />
           </div>
           <div className="flex justify-between text-sm text-gray-500 mt-1">
-            <span>Câu {currentIndex + 1}/{questions.length}</span>
+            <span>
+              Câu {currentIndex + 1}/{questions.length}
+            </span>
             <span>Điểm: {score}</span>
           </div>
         </div>
@@ -710,7 +764,9 @@ const KanaTestPage = () => {
           </h2>
 
           <div className="text-center mb-8">
-            <div className="text-8xl font-black text-[#E85A4F]">{currentQ.display}</div>
+            <div className="text-8xl font-black text-[#E85A4F]">
+              {currentQ.display}
+            </div>
           </div>
 
           {!isWriting ? (
@@ -741,7 +797,10 @@ const KanaTestPage = () => {
             <div className="space-y-6">
               <div className="text-center">
                 <span className="inline-block bg-white px-5 py-2 rounded-full border text-sm">
-                  Tiến độ nét: <span className="font-bold text-[#E85A4F]">{strokesDone}/{totalStrokes}</span>
+                  Tiến độ nét:{" "}
+                  <span className="font-bold text-[#E85A4F]">
+                    {strokesDone}/{totalStrokes}
+                  </span>
                 </span>
               </div>
 
@@ -749,7 +808,9 @@ const KanaTestPage = () => {
                 {showGuide && kana?.svg_content && (
                   <div
                     className="absolute inset-0 p-10 pointer-events-none"
-                    dangerouslySetInnerHTML={{ __html: bgSvgStyle(kana.svg_content) }}
+                    dangerouslySetInnerHTML={{
+                      __html: bgSvgStyle(kana.svg_content),
+                    }}
                   />
                 )}
 
@@ -758,16 +819,25 @@ const KanaTestPage = () => {
                     <div
                       key={`completed-${idx}`}
                       className="absolute inset-0 p-10 pointer-events-none"
-                      dangerouslySetInnerHTML={{ __html: completedStrokeStyle(kana.svg_content, idx) }}
+                      dangerouslySetInnerHTML={{
+                        __html: completedStrokeStyle(kana.svg_content, idx),
+                      }}
                     />
                   ))}
 
-                {showGuide && kana?.svg_content && strokesDone < totalStrokes && (
-                  <div
-                    className="absolute inset-0 p-10 pointer-events-none"
-                    dangerouslySetInnerHTML={{ __html: getHintSvgForStroke(kana.svg_content, strokesDone) }}
-                  />
-                )}
+                {showGuide &&
+                  kana?.svg_content &&
+                  strokesDone < totalStrokes && (
+                    <div
+                      className="absolute inset-0 p-10 pointer-events-none"
+                      dangerouslySetInnerHTML={{
+                        __html: getHintSvgForStroke(
+                          kana.svg_content,
+                          strokesDone
+                        ),
+                      }}
+                    />
+                  )}
 
                 <div className="absolute inset-0 p-10">
                   <CustomCanvas
@@ -785,10 +855,16 @@ const KanaTestPage = () => {
                 <button
                   onClick={toggleShowGuide}
                   className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all ${
-                    showGuide ? "bg-[#FEE9E7] text-[#E85A4F]" : "bg-gray-100 text-gray-600"
+                    showGuide
+                      ? "bg-[#FEE9E7] text-[#E85A4F]"
+                      : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  {showGuide ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showGuide ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                   {showGuide ? "Ẩn mẫu" : "Hiện mẫu"}
                 </button>
               </div>

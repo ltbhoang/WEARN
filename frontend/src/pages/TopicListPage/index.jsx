@@ -71,23 +71,17 @@ Object.entries(GROUP_MAPPING).forEach(([groupName, topics]) => {
 // ---------- Gán ảnh local cho từng nhóm (cập nhật theo nhóm mới) ----------
 const groupImageMap = {
   "Đại từ & Từ để hỏi": localTopicImageMap["daitu"],
-  "Gia đình & Quan hệ":
-    localTopicImageMap["giadinh"] || localTopicImageMap["connguoi"],
-  "Cuộc sống & Nhà cửa":
-    localTopicImageMap["nhacua"] || localTopicImageMap["dodung"],
+  "Gia đình & Quan hệ": localTopicImageMap["giadinh"] || localTopicImageMap["connguoi"],
+  "Cuộc sống & Nhà cửa": localTopicImageMap["nhacua"] || localTopicImageMap["dodung"],
   "Ăn uống & Thực phẩm": localTopicImageMap["doan"],
-  "Thời gian": localTopicImageMap["thoigian"],
-  "Động vật & Thiên nhiên":
-    localTopicImageMap["thegioi"] || localTopicImageMap["dongvat"],
-  "Địa điểm & Phương hướng":
-    localTopicImageMap["diadiem"] || localTopicImageMap["giaothong"],
-  "Giao thông & Du lịch": localTopicImageMap["giaothong"],
+  "Thời gian": localTopicImageMap["thoigian"] || localTopicImageMap["thoitiet"], // fallback
+  "Động vật & Thiên nhiên": localTopicImageMap["thegioi"] || localTopicImageMap["dongvat"],
+  "Địa điểm & Phương hướng": localTopicImageMap["diadiem"],
+  "Giao thông & Du lịch": localTopicImageMap["giaothong"] || localTopicImageMap["giaitri"],
   "Hành động (Động từ)": localTopicImageMap["dongtu"],
   "Tính chất (Tính từ)": localTopicImageMap["trangthai"],
-  "Trường học & Công việc":
-    localTopicImageMap["congty"] || localTopicImageMap["nghenghiep"],
-  "Màu sắc & Đồ vật & Khác":
-    localTopicImageMap["dodung"] || localTopicImageMap["mausac"],
+  "Trường học & Công việc": localTopicImageMap["congty"] || localTopicImageMap["nghenghiep"],
+  "Màu sắc & Đồ vật & Khác": localTopicImageMap["dodung"] || localTopicImageMap["mausac"],
 };
 
 const TopicListPage = () => {

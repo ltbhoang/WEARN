@@ -304,6 +304,18 @@ const KanaPracticePage = () => {
     }
   };
 
+  const playAudio = () => {
+    if (kana?.audio_url) {
+      const audio = new Audio(kana.audio_url);
+      audio.play().catch((err) => {
+        console.error("Không thể phát âm thanh:", err);
+        showTemporaryHint("Không thể phát âm thanh, hãy thử lại sau.");
+      });
+    } else {
+      showTemporaryHint("Chưa có file âm thanh cho chữ này.");
+    }
+  };
+
   const handleReset = () => {
     canvasRef.current?.clear();
     setCurrentDrawnStroke(null);
@@ -485,7 +497,10 @@ const KanaPracticePage = () => {
               <RotateCcw className="w-5 h-5" />
               Xóa nét
             </button>
-            <button className="flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-[#E85A4F] to-[#E98074] rounded-xl font-medium text-white active:scale-95 transition-transform shadow-md hover:shadow-lg">
+            <button
+              onClick={playAudio} // Gắn hàm playAudio vào đây
+              className="flex items-center justify-center gap-2 py-3 bg-linear-to-r from-[#E85A4F] to-[#E98074] rounded-xl font-medium text-white active:scale-95 transition-transform shadow-md hover:shadow-lg"
+            >
               <Volume2 className="w-5 h-5" />
               Nghe
             </button>

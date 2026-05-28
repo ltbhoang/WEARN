@@ -1,7 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const BASE_URL = "http://10.183.94.14:8000";
+const BASE_URL = "http://192.168.1.13:8000";
 
 export const axiosPublic = axios.create({
   baseURL: BASE_URL,

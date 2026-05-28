@@ -1,11 +1,9 @@
-#!/usr/bin/env python
 import os
 import sys
 import django
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 
-# Sửa đường dẫn: thêm /app vào sys.path
 sys.path.append('/app')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
@@ -13,7 +11,6 @@ django.setup()
 from api.models import KanaCharacter
 
 def extract_strokes(svg_content):
-    """Trích xuất từng nét từ SVG AnimCJK, gộp các path cùng thời gian animation thành một nét"""
     try:
         root = ET.fromstring(svg_content)
     except ET.ParseError:

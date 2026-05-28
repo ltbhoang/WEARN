@@ -1,38 +1,49 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useDataStore } from "../../store/dataStore"; // Import Store xịn
+import { useDataStore } from "../../store/dataStore";
 import {
   ChevronLeft,
   BookOpen,
   Star,
-  Filter,
-  Calendar,
-  TrendingUp,
   Loader2,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import WordDetailModal from "../../components/WordDetail";
+import { axiosPrivate } from "../../apis/axios";
 
 const WEEKLY_PALETTE = [
-  { main: "#E85A4F", bg: "#FEE9E7" }, // CN
-  { main: "#E98074", bg: "#FEF0ED" }, // T2
-  { main: "#D4A373", bg: "#FEF5E9" }, // T3
-  { main: "#A7C4A0", bg: "#F3F9F1" }, // T4
-  { main: "#7C9EB2", bg: "#F0F5F9" }, // T5
-  { main: "#B185A7", bg: "#F9F2F7" }, // T6
-  { main: "#D98C8C", bg: "#FEF2F2" }, // T7
+  { main: "#E85A4F", bg: "#FEE9E7" },
+  { main: "#E98074", bg: "#FEF0ED" },
+  { main: "#D4A373", bg: "#FEF5E9" },
+  { main: "#A7C4A0", bg: "#F3F9F1" },
+  { main: "#7C9EB2", bg: "#F0F5F9" },
+  { main: "#B185A7", bg: "#F9F2F7" },
+  { main: "#D98C8C", bg: "#FEF2F2" },
 ];
 
 const CollectionDetail = () => {
-  const { id } = useParams(); // Lấy ID từ URL (ví dụ: /collection/5)
+  const { id } = useParams();
   const navigate = useNavigate();
+  const { fetchCollectionDetail, getVocabulariesByCollection, loadingStates } =
+    useDataStore();
 
-  // 1. Kết nối Store
-  const { fetchCollectionDetail, vocabularies, loading } = useDataStore();
   const [collectionInfo, setCollectionInfo] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedItem, setSelectedItem] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState(null);
 
-  // 2. Fetch dữ liệu khi vào trang
+  const isLoading = loadingStates.detail?.[id] || false;
+  const vocabularies = getVocabulariesByCollection(id) || [];
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
+  };
+
   useEffect(() => {
     const loadData = async () => {
       const res = await fetchCollectionDetail(id);
@@ -41,22 +52,23 @@ const CollectionDetail = () => {
     loadData();
   }, [id, fetchCollectionDetail]);
 
-  // 3. Xử lý Theme dựa trên date_key của Collection trả về từ Backend
-  const theme = collectionInfo 
-    ? WEEKLY_PALETTE[new Date(collectionInfo.date_key).getDay()] 
-    : WEEKLY_PALETTE[new Date().getDay()];
+  let theme = WEEKLY_PALETTE[new Date().getDay()];
+  if (collectionInfo?.date_key) {
+    const date = new Date(collectionInfo.date_key);
+    if (!isNaN(date.getDay())) theme = WEEKLY_PALETTE[date.getDay()];
+  }
 
-  // 4. Lọc items (Map lại data từ Backend sang format giao diện của má)
-  const formattedItems = vocabularies.map(v => ({
+  const formattedItems = vocabularies.map((v) => ({
     id: v.id,
     ja: v.word,
     reading: v.pronunciation,
-    romaji: "", // Backend chưa có trường này thì để trống
+    romaji: "",
     vi: v.meaning,
     example: v.example_sentence,
     exampleTranslation: v.example_translation,
-    img: v.user_image, // Ảnh má chụp
-    memorized: v.is_memorized || false, // Giả sử má có trường này ở Backend
+    img: v.user_image,
+    memorized: v.is_memorized || false,
+    audio_url: v.audio_url,
   }));
 
   const filteredItems = formattedItems.filter((item) => {
@@ -67,150 +79,118 @@ const CollectionDetail = () => {
   });
 
   const totalWords = formattedItems.length;
-  const memorizedCount = formattedItems.filter((i) => i.memorized).length;
-  const learningCount = totalWords - memorizedCount;
 
-  // 5. Các hàm xử lý (Tạm thời gọi API hoặc update local tùy má)
   const handleToggleMemorized = (id) => {
-     // Sau này má nên viết hàm updateMemorized trong store
-     console.log("Toggle memorized cho id:", id);
+    console.log("Toggle memorized:", id);
   };
 
-  // eslint-disable-next-line no-unused-vars
-  const handleDeleteWord = (id) => {
-     // Dùng hàm removeItem từ store
-     // removeItem('vocabularies', id);
+  const handleDeleteWord = async () => {
+    if (!deletingItemId) return;
+    try {
+      await axiosPrivate.delete(`/api/saved-vocabularies/${deletingItemId}/`);
+      const refreshed = await fetchCollectionDetail(id, true);
+      if (refreshed) setCollectionInfo(refreshed);
+      setSelectedItem(null);
+      setShowDeleteConfirm(false);
+      setDeletingItemId(null);
+      showToast("Đã xóa từ thành công!", "success");
+    } catch (error) {
+      console.error("Lỗi xóa:", error);
+      setShowDeleteConfirm(false);
+      showToast("Xóa thất bại. Vui lòng thử lại.", "error");
+    }
   };
 
-  if (loading && !collectionInfo) {
+  const openDeleteConfirm = (itemId) => {
+    setDeletingItemId(itemId);
+    setShowDeleteConfirm(true);
+  };
+
+  if (isLoading && !collectionInfo) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FDFDFD]">
+      <div className="min-h-screen flex items-center justify-center bg-[#F4F4F6]">
         <Loader2 className="w-10 h-10 animate-spin text-[#E85A4F]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] font-sans pb-28">
-      <div className="relative" style={{ backgroundColor: theme.bg }}>
-        <div className="px-6 pt-10 pb-8">
-          <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={() => navigate(-1)}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-white/80 backdrop-blur-sm text-[#4A4A4A] shadow-md active:scale-90 transition-transform"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm text-[#4A4A4A]">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>
-                  {collectionInfo ? new Date(collectionInfo.date_key).toLocaleDateString("vi-VN", { weekday: "long" }) : "..."}
-                </span>
-              </div>
-              <div className="flex items-center gap-1 bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm text-[#4A4A4A]">
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>{memorizedCount}/{totalWords}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-[#2D2D2D]">
-                {collectionInfo?.title || "Đang tải..."}
-              </h1>
-              <div className="flex items-center gap-3 mt-2">
-                <span
-                  className="px-4 py-1.5 rounded-full text-sm font-semibold"
-                  style={{ backgroundColor: theme.main + "20", color: theme.main }}
-                >
-                  {totalWords} từ vựng
-                </span>
-                <span className="text-[#8E8D8A] text-sm flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  {memorizedCount} đã thuộc
-                </span>
-              </div>
-            </div>
-            <div className="w-16 h-16 bg-white/40 backdrop-blur-sm rounded-3xl flex items-center justify-center text-4xl shadow-sm border border-white/50">
-              📖
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-white/40">
-          <div
-            className="h-full transition-all duration-500"
-            style={{
-              width: `${totalWords > 0 ? (memorizedCount / totalWords) * 100 : 0}%`,
-              backgroundColor: theme.main,
+    /* Đổi nền thành màu #F4F4F6 trầm dịu, giảm chói mắt triệt để */
+    <div className="min-h-screen bg-[#F4F4F6] font-sans pb-16">
+      
+      {/* Header Section */}
+      <header className="px-6 pt-12 pb-4 flex flex-col gap-2 relative">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-transform active:scale-90"
+            style={{ 
+              backgroundColor: theme.main, 
+              opacity: 0.9 
             }}
-          />
+          >
+            <ChevronLeft className="w-5 h-5 text-white stroke-[3]" />
+          </button>
+          
+          <h1 
+            className="text-[36px] font-bold tracking-tight"
+            style={{ color: theme.main }}
+          >
+            {collectionInfo?.title || "Hôm nay"}
+          </h1>
         </div>
-      </div>
 
-      <div className="px-6 py-5 flex gap-3">
-        <button
-          className="flex-1 py-3.5 rounded-2xl font-semibold text-white shadow-md flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-          style={{ backgroundColor: theme.main }}
-        >
-          <BookOpen className="w-5 h-5" />
-          Luyện tập ngay
-        </button>
-        <button className="py-3.5 px-5 rounded-2xl border border-[#E0E0E0] font-semibold text-[#8E8D8A] bg-white shadow-sm flex items-center gap-1 active:scale-[0.98] transition-transform">
-          <Filter className="w-4 h-4" />
-          Lọc
-        </button>
-      </div>
-
-      {/* Tabs Section */}
-      <div className="px-6 border-b border-[#F0F0F0]">
-        <div className="flex gap-6">
-          {["all", "learning", "memorized"].map((tab) => (
-            <button
-              key={tab}
-              className={`pb-3 text-base font-semibold border-b-2 transition-colors capitalize`}
-              style={{
-                borderColor: activeTab === tab ? theme.main : "transparent",
-                color: activeTab === tab ? theme.main : "#8E8D8A",
-              }}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab === "all" ? "Tất cả" : tab === "learning" ? "Đang học" : "Đã nhớ"} (
-              {tab === "all" ? totalWords : tab === "learning" ? learningCount : memorizedCount})
-            </button>
-          ))}
+        <div className="pl-[52px]">
+          <span 
+            className="px-3 py-1 rounded-lg text-[14px] font-medium"
+            style={{ 
+              backgroundColor: theme.bg, 
+              color: theme.main 
+            }}
+          >
+            {totalWords} từ
+          </span>
         </div>
-      </div>
+        
+        {/* Đường kẻ ngang nhạt mờ tự nhiên hơn trên nền mới */}
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gray-200/50" />
+      </header>
 
-      {/* Grid danh sách từ vựng từ Backend */}
-      <main className="px-6 mt-6 grid grid-cols-2 gap-4">
+      {/* Grid danh sách từ vựng */}
+      <main className="px-5 mt-6 grid grid-cols-2 gap-x-5 gap-y-6">
         {filteredItems.map((item) => (
           <div
             key={item.id}
-            className="bg-white rounded-3xl overflow-hidden shadow-[0_8px_20px_rgba(0,0,0,0.03)] border border-gray-50 p-3 transition-all active:scale-[0.97] cursor-pointer"
+            /* Đổ shadow-sm dịu mắt giúp nổi bật card trắng tinh trên nền xám sữa nhạt */
+            className="bg-white rounded-[28px] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] p-3.5 flex flex-col transition-all active:scale-[0.97] cursor-pointer"
             onClick={() => setSelectedItem(item)}
           >
-            <div className="relative">
-              <div className="w-full aspect-square rounded-2xl overflow-hidden bg-[#F9F9F9]">
-                <img
-                  src={item.img}
-                  alt={item.ja}
-                  className="w-full h-full object-cover"
+            {/* Vùng chứa ảnh: đồng bộ nền xám siêu nhạt dịu mắt */}
+            <div className="relative w-full aspect-[4/3] rounded-[20px] overflow-hidden bg-[#F8F8FA] flex items-center justify-center p-2">
+              {item.img ? (
+                <img 
+                  src={item.img} 
+                  alt={item.ja} 
+                  className="max-w-full max-h-full object-contain mix-blend-multiply" 
                 />
-              </div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                  <BookOpen size={28} />
+                </div>
+              )}
               {item.memorized && (
-                <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1 shadow-sm">
+                  <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
                 </div>
               )}
             </div>
 
-            <div className="text-center mt-3">
-              <div className="text-lg font-bold text-[#333]">{item.ja}</div>
-              <div className="text-xs text-[#888] mt-0.5 line-clamp-1">
+            {/* Vùng chữ */}
+            <div className="mt-4 px-1 text-left flex flex-col gap-1">
+              <div className="text-[23px] font-bold text-[#1C1C1E] tracking-tight leading-snug">
+                {item.ja}
+              </div>
+              <div className="text-[14px] text-[#8E8E93] font-normal truncate leading-normal">
                 {item.vi}
               </div>
             </div>
@@ -219,18 +199,71 @@ const CollectionDetail = () => {
       </main>
 
       {filteredItems.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-[#8E8D8A]">
-          <p className="text-lg font-medium opacity-50">Bộ sưu tập này chưa có từ nào</p>
+        <div className="flex flex-col items-center justify-center py-28 text-gray-400">
+          <p className="text-base font-medium opacity-50">Bộ sưu tập này chưa có từ nào</p>
         </div>
       )}
 
-      {/* Modal chi tiết - Truyền data thật vào đây */}
-      <WordDetailModal
-        item={selectedItem}
-        onClose={() => setSelectedItem(null)}
-        onToggleMemorized={handleToggleMemorized}
-        onDelete={handleDeleteWord}
-      />
+      {selectedItem && (
+        <WordDetailModal
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          onToggleMemorized={handleToggleMemorized}
+          onDelete={openDeleteConfirm}
+        />
+      )}
+
+      {/* Modal xác nhận xóa */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[60] flex items-center justify-center p-5">
+          <div className="bg-white rounded-[32px] max-w-sm w-full p-6 shadow-2xl text-center border border-gray-50">
+            <div className="mx-auto w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 mb-4">
+              <AlertTriangle className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Xóa từ vựng</h3>
+            <p className="text-sm text-gray-500 leading-relaxed mb-6">
+              Bạn có chắc chắn muốn xóa từ này khỏi bộ sưu tập không? Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeletingItemId(null);
+                }}
+                className="flex-1 py-3.5 bg-gray-100 text-gray-600 rounded-2xl font-bold active:scale-95 transition-all text-sm"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={handleDeleteWord}
+                className="flex-1 py-3.5 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-2xl font-bold shadow-md active:scale-95 transition-all text-sm"
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast thông báo */}
+      {toast.show && (
+        <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[70] px-4 w-full max-w-sm transition-all duration-300">
+          <div
+            className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md ${
+              toast.type === "success"
+                ? "bg-emerald-500 text-white border-emerald-400/20"
+                : "bg-rose-500 text-white border-rose-400/20"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+            ) : (
+              <XCircle className="w-5 h-5 flex-shrink-0" />
+            )}
+            <p className="text-sm font-semibold flex-1">{toast.message}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

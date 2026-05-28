@@ -27,15 +27,8 @@ class FlashcardSetItemSerializer(serializers.ModelSerializer):
             vocabulary = obj.vocabulary
         else:
             return None
-        return {
-            'id': vocabulary.id,
-            'word': vocabulary.word,
-            'meaning': vocabulary.meaning,
-            'pronunciation': vocabulary.pronunciation,
-            'example_sentence': vocabulary.example_sentence,
-            'example_translation': vocabulary.example_translation,
-            'image_url': vocabulary.image_url,
-        }
+        # 👇 Quan trọng: dùng VocabularySerializer để có audio_url
+        return VocabularySerializer(vocabulary, context=self.context).data
 
     def get_user_image(self, obj):
         return obj.saved_vocab.user_image if obj.saved_vocab else None
