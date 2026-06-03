@@ -1,0 +1,41 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: wearn_mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: wearn
+      MYSQL_ROOT_PASSWORD: den123456
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: wearn_django
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+    environment:
+      - DB_HOST=db
+      - DB_NAME=wearn
+      - DB_USER=root
+      - DB_PASSWORD=den123456
+      - DB_PORT=3306
+
+volumes:
+  mysql_data:

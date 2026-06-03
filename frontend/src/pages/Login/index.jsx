@@ -1,33 +1,27 @@
 import React, { useState } from "react";
 import { Mail, Lock, Chrome, Apple } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../store/authStore"; // Import Store má vừa gộp
+import { useAuthStore } from "../../store/authStore";
 
 export default function Login() {
-  const [username, setUsername] = useState(""); // Django mặc định dùng username
+  const [username, setUsername] = useState(""); 
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState(""); // Để hiện thông báo lỗi
+  const [errorMessage, setErrorMessage] = useState("");
   
   const navigate = useNavigate();
   
-  // 2. Lấy hàm login và trạng thái loading từ Zustand
   const { login, loading } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage(""); // Xóa lỗi cũ trước khi thử lại
+    setErrorMessage("");
 
-    // 3. Gọi hàm login trong Store
-    // Django REST Framework (SimpleJWT) cần 'username' và 'password'
     const result = await login(username, password);
 
     if (result.success) {
-      // Đăng nhập thành công, nhảy về Home
-      // Lúc này Cookies đã được Store tự động lưu rồi
       navigate("/dashboard");
     } else {
-      // Đăng nhập thất bại, hiện lỗi cho user biết
-      setErrorMessage("Tên đăng nhập hoặc mật khẩu không đúng má ơi!");
+      setErrorMessage("Tên đăng nhập hoặc mật khẩu không đúng!");
     }
   };
 
@@ -73,7 +67,7 @@ export default function Login() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Nhập username của má"
+                  placeholder="Nhập username"
                   className="w-full pl-12 pr-6 py-4 bg-[#FAF9F8] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#E85A4F]/20 focus:bg-white transition-all text-[#474747] font-medium"
                   required
                   disabled={loading}

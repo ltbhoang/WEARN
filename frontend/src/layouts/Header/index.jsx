@@ -36,7 +36,7 @@ export default function Header({ onMenuClick }) {
           onClick={() => navigate("/login")} // Click để qua trang Login
           className="px-6 py-2.5 text-sm font-black text-white bg-[#474747] hover:bg-[#E85A4F] rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all uppercase tracking-wider"
         >
-          Sign In
+          Đăng nhập
         </button>
       </div>
     </header>

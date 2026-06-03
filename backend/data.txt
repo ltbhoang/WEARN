@@ -1,0 +1,532 @@
+class_name,topic,word,meaning,romaji,ex,trans,image_url
+n5_adj_abunai,tinhtu,危ない,nguy hiểm,abunai,危ないですよ！,Nguy hiểm đấy!,https://source.unsplash.com/featured/400x400?dangerous
+n5_adj_akarui,tinhtu_i,明るい,sáng,akarui,明るい部屋。,Căn phòng sáng.,https://source.unsplash.com/featured/400x400?bright
+n5_adj_amai,tinhtu_i,甘い,ngọt,amai,甘いお菓子。,Bánh kẹo ngọt.,https://source.unsplash.com/featured/400x400?sweet
+n5_adj_atarashii,tinhtu,新しい,mới,atarashii,新しい靴。,Giày mới.,https://source.unsplash.com/featured/400x400?new
+n5_adj_atsui,tinhtu,暑い,nóng (thời tiết),atsui,今日は暑い。,Hôm nay nóng.,https://source.unsplash.com/featured/400x400?hot+weather
+n5_adj_atsui,tinhtu_i,熱い,nóng (khi chạm vào),atsui,スープが熱い。,Súp nóng.,https://source.unsplash.com/featured/400x400?hot
+n5_adj_atatakai,tinhtu_i,暖かい,ấm áp (thời tiết),atatakai,春は暖かい。,Mùa xuân ấm áp.,https://source.unsplash.com/featured/400x400?warm+weather
+n5_adj_chiisai,tinhtu,小さい,nhỏ,chiisai,小さい猫。,Con mèo nhỏ.,https://source.unsplash.com/featured/400x400?small
+n5_adj_furui,tinhtu,古い,cũ,furui,古い車。,Xe cũ.,https://source.unsplash.com/featured/400x400?old
+n5_adj_futoi,tinhtu_i,太い,to/béo,futoi,腕が太い。,Cánh tay to.,https://source.unsplash.com/featured/400x400?fat
+n5_adj_hikui,tinhtu,低い,thấp,hikui,背が低い。,Dáng thấp.,https://source.unsplash.com/featured/400x400?short
+n5_adj_hiroi,tinhtu_i,広い,rộng,hiroi,広い部屋。,Căn phòng rộng.,https://source.unsplash.com/featured/400x400?wide
+n5_adj_hoshii,tinhtu_i,欲しい,muốn có,hoshii,車が欲しい。,Tôi muốn có ô tô.,https://source.unsplash.com/featured/400x400?want
+n5_adj_hosoi,tinhtu_i,細い,mỏng/gầy,hosoi,足が細い。,Chân thon.,https://source.unsplash.com/featured/400x400?thin
+n5_adj_isogashii,tinhtu,忙しい,bận rộn,isogashii,仕事が忙しい。,Công việc bận rộn.,https://source.unsplash.com/featured/400x400?busy
+n5_adj_itai,tinhtu_i,痛い,đau,itai,お腹が痛い。,Đau bụng.,https://source.unsplash.com/featured/400x400?pain
+n5_adj_kanashii,tinhtu_i,悲しい,buồn,kanashii,悲しい映画。,Bộ phim buồn.,https://source.unsplash.com/featured/400x400?sad
+n5_adj_karai,tinhtu_i,辛い,cay,karai,カレーは辛い。,Cà ri cay.,https://source.unsplash.com/featured/400x400?spicy
+n5_adj_karui,tinhtu_i,軽い,nhẹ,karui,軽いカバン。,Cái túi nhẹ.,https://source.unsplash.com/featured/400x400?light
+n5_adj_kibishii,tinhtu_i,厳しい,nghiêm khắc,kibishii,厳しい父。,Người bố nghiêm khắc.,https://source.unsplash.com/featured/400x400?strict
+n5_adj_kurai,tinhtu_i,暗い,tối,kurai,暗い道。,Con đường tối.,https://source.unsplash.com/featured/400x400?dark
+n5_adj_marui,tinhtu_i,丸い,tròn,marui,丸いテーブル。,Cái bàn tròn.,https://source.unsplash.com/featured/400x400?round
+n5_adj_mazui,tinhtu_i,まずい,dở/không ngon,mazui,このスープはまずい。,Súp này dở quá.,https://source.unsplash.com/featured/400x400?bad+taste
+n5_adj_mijikai,tinhtu,短い,ngắn,mijikai,髪が短い。,Tóc ngắn.,https://source.unsplash.com/featured/400x400?short
+n5_adj_muzukashii,tinhtu,難しい,khó,muzukashii,試験は難しい。,Kỳ thi khó.,https://source.unsplash.com/featured/400x400?difficult
+n5_adj_nagai,tinhtu,長い,dài,nagai,足が長い。,Chân dài.,https://source.unsplash.com/featured/400x400?long
+n5_adj_nemui,tinhtu_i,眠い,buồn ngủ,nemui,とても眠い。,Rất buồn ngủ.,https://source.unsplash.com/featured/400x400?sleepy
+n5_adj_nigai,tinhtu_i,苦い,đắng,nigai,薬は苦い。,Thuốc đắng.,https://source.unsplash.com/featured/400x400?bitter
+n5_adj_omoi,tinhtu_i,重い,nặng,omoi,この荷物は重い。,Hành lý này nặng.,https://source.unsplash.com/featured/400x400?heavy
+n5_adj_omoshiroi,tinhtu,面白い,thú vị,omoshiroi,面白い本。,Cuốn sách thú vị.,https://source.unsplash.com/featured/400x400?interesting
+n5_adj_ookii,tinhtu,大きい,to lớn,ookii,大きい家。,Ngôi nhà lớn.,https://source.unsplash.com/featured/400x400?big
+n5_adj_sabishii,tinhtu_i,寂しい,cô đơn,sabishii,寂しい気持ち。,Cảm giác cô đơn.,https://source.unsplash.com/featured/400x400?lonely
+n5_adj_samui,tinhtu,寒い,lạnh (thời tiết),samui,冬は寒い。,Mùa đông lạnh.,https://source.unsplash.com/featured/400x400?cold+weather
+n5_adj_semai,tinhtu_i,狭い,hẹp,semai,狭い道。,Con đường hẹp.,https://source.unsplash.com/featured/400x400?narrow
+n5_adj_suzushii,tinhtu_i,涼しい,mát mẻ,suzushii,秋は涼しい。,Mùa thu mát mẻ.,https://source.unsplash.com/featured/400x400?cool
+n5_adj_suppai,tinhtu_i,酸っぱい,chua,suppai,レモンは酸っぱい。,Chanh chua.,https://source.unsplash.com/featured/400x400?sour
+n5_adj_takai,tinhtu,高い,cao/đắt,takai,背が高い。,Dáng cao.,https://source.unsplash.com/featured/400x400?high+expensive
+n5_adj_tanoshii,tinhtu_i,楽しい,vui vẻ,tanoshii,旅行は楽しい。,Đi du lịch rất vui.,https://source.unsplash.com/featured/400x400?happy
+n5_adj_tsumetai,tinhtu,冷たい,lạnh (cảm giác),tsumetai,冷たい水。,Nước lạnh.,https://source.unsplash.com/featured/400x400?cold
+n5_adj_tsuyoi,tinhtu_i,強い,mạnh,tsuyoi,風が強い。,Gió mạnh.,https://source.unsplash.com/featured/400x400?strong
+n5_adj_ureshii,tinhtu_i,嬉しい,vui mừng,ureshii,とても嬉しいです。,Tôi rất vui.,https://source.unsplash.com/featured/400x400?joyful
+n5_adj_wakai,tinhtu_i,若い,trẻ,wakai,若い人。,Người trẻ.,https://source.unsplash.com/featured/400x400?young
+n5_adj_warui,tinhtu,悪い,xấu/tệ,warui,気分が悪い。,Cảm thấy không khỏe.,https://source.unsplash.com/featured/400x400?bad
+n5_adj_yasashii,tinhtu,易しい,dễ,yasashii,易しい問題。,Vấn đề dễ.,https://source.unsplash.com/featured/400x400?easy
+n5_adj_yasashii,tinhtu_i,優しい,hiền lành/tốt bụng,yasashii,優しい先生。,Giáo viên hiền lành.,https://source.unsplash.com/featured/400x400?kind
+n5_adj_yowai,tinhtu_i,弱い,yếu,yowai,体が弱い。,Cơ thể yếu.,https://source.unsplash.com/featured/400x400?weak
+n5_adj_ii,tinhtu,いい,tốt,ii,天気がいい。,Thời tiết tốt.,https://source.unsplash.com/featured/400x400?good
+n5_adj_benri,tinhtu,便利な,tiện lợi,benri,便利な道具。,Dụng cụ tiện lợi.,https://source.unsplash.com/featured/400x400?convenient
+n5_adj_jouzu,tinhtu_na,上手,giỏi,jouzu,歌が上手ですね。,Bạn hát giỏi nhỉ.,https://source.unsplash.com/featured/400x400?skillful
+n5_adj_heta,tinhtu_na,下手,kém/dở,heta,テニスが下手だ。,Tôi chơi tennis dở.,https://source.unsplash.com/featured/400x400?poor
+n5_adj_hima,tinhtu,暇な,rảnh rỗi,hima,明日は暇だ。,Mai tôi rảnh.,https://source.unsplash.com/featured/400x400?free
+n5_adj_jiyuu,tinhtu_na,自由,tự do,jiyuu,自由な時間。,Thời gian tự do.,https://source.unsplash.com/featured/400x400?free
+n5_adj_kirei,tinhtu,綺麗な,đẹp/sạch,kirei,綺麗な花。,Bông hoa đẹp.,https://source.unsplash.com/featured/400x400?beautiful+clean
+n5_adj_kirai,tinhtu_na,嫌い,ghét,kirai,肉が嫌いだ。,Tôi ghét thịt.,https://source.unsplash.com/featured/400x400?hate
+n5_adj_nigiyaka,tinhtu,賑やかな,náo nhiệt,nigiyaka,賑やかな通り。,Con phố náo nhiệt.,https://source.unsplash.com/featured/400x400?lively
+n5_adj_shinsetsu,tinhtu_na,親切,tử tế,shinsetsu,親切な人。,Người tử tế.,https://source.unsplash.com/featured/400x400?kind
+n5_adj_shizuka,tinhtu,静かな,yên tĩnh,shizuka,静かな町。,Thị trấn yên tĩnh.,https://source.unsplash.com/featured/400x400?quiet
+n5_adj_suki,tinhtu_na,好き,thích,suki,りんごが好きだ。,Tôi thích táo.,https://source.unsplash.com/featured/400x400?like
+n5_adj_taihen,tinhtu_na,大変,vất vả,taihen,仕事は大変だ。,Công việc vất vả.,https://source.unsplash.com/featured/400x400?hard
+n5_adj_teinei,tinhtu_na,丁寧,lịch sự,teinei,丁寧な言葉。,Lời nói lịch sự.,https://source.unsplash.com/featured/400x400?polite
+n5_verb_akeru,dongtu,開ける,mở,akeru,ドアを開ける。,Mở cửa.,https://source.unsplash.com/featured/400x400?open
+n5_sta_aru,dongtu,ある,có (vật),aru,本がある。,Có quyển sách.,https://source.unsplash.com/featured/400x400?there+is
+n5_v_arau,dongtu,洗う,rửa,arau,手を洗う。,Rửa tay.,https://source.unsplash.com/featured/400x400?wash
+n5_v_aruku,dongtu,歩く,đi bộ,aruku,公園を歩く。,Đi bộ ở công viên.,https://source.unsplash.com/featured/400x400?walk
+n5_verb_asobu,dongtu,遊ぶ,chơi,asobu,公園で遊ぶ。,Chơi ở công viên.,https://source.unsplash.com/featured/400x400?play
+n5_verb_au,dongtu,会う,gặp,au,友達に会う。,Gặp bạn.,https://source.unsplash.com/featured/400x400?meet
+n5_verb_benkyou,dongtu,勉強する,học tập,benkyou suru,日本語を勉強する。,Học tiếng Nhật.,https://source.unsplash.com/featured/400x400?study
+n5_verb_dasu,dongtu,出す,lấy ra/nộp,dasu,宿題を出す。,Nộp bài tập.,https://source.unsplash.com/featured/400x400?submit
+n5_sta_dekiru,dongtu,できる,có thể,dekiru,テニスができる。,Có thể chơi tennis.,https://source.unsplash.com/featured/400x400?can
+n5_verb_deru,dongtu,出る,ra ngoài,deru,部屋を出る。,Ra khỏi phòng.,https://source.unsplash.com/featured/400x400?go+out
+n5_v_erabu,dongtu,選ぶ,chọn,erabu,色を選ぶ。,Chọn màu sắc.,https://source.unsplash.com/featured/400x400?choose
+n5_verb_hairu,dongtu,入る,vào,hairu,お風呂に入る。,Vào bồn tắm.,https://source.unsplash.com/featured/400x400?enter
+n5_v_hajimeru,dongtu,始める,bắt đầu,hajimeru,勉強を始める。,Bắt đầu học.,https://source.unsplash.com/featured/400x400?start
+n5_v_hakobu,dongtu,運ぶ,vận chuyển,hakobu,荷物を運ぶ。,Vận chuyển hành lý.,https://source.unsplash.com/featured/400x400?carry
+n5_v_haku,dongtu,履く,mặc (quần/giày),haku,ズボンを履く。,Mặc quần.,https://source.unsplash.com/featured/400x400?wear
+n5_v_hanasu,dongtu,話す,nói chuyện,hanasu,英語で話す。,Nói bằng tiếng Anh.,https://source.unsplash.com/featured/400x400?talk
+n5_v_hashiru,dongtu,走る,chạy,hashiru,速く走る。,Chạy nhanh.,https://source.unsplash.com/featured/400x400?run
+n5_v_hataraku,dongtu,働く,làm việc,hataraku,会社で働く。,Làm việc ở công ty.,https://source.unsplash.com/featured/400x400?work
+n5_v_hiku,dongtu,弾く,chơi (nhạc cụ),hiku,ピアノを弾く。,Chơi piano.,https://source.unsplash.com/featured/400x400?play+instrument
+n5_v_homeru,dongtu,褒める,khen,homeru,先生に褒められた。,Được giáo viên khen.,https://source.unsplash.com/featured/400x400?praise
+n5_verb_iku,dongtu,行く,đi,iku,学校へ行く。,Đi đến trường.,https://source.unsplash.com/featured/400x400?go
+n5_sta_iru,dongtu,いる,có (người/vật),iru,猫がいる。,Có con mèo.,https://source.unsplash.com/featured/400x400?there+is
+n5_verb_isogu,dongtu,急ぐ,vội,isogu,急いで行く。,Đi vội.,https://source.unsplash.com/featured/400x400?hurry
+n5_v_iu,dongtu,言う,nói,iu,名前を言う。,Nói tên.,https://source.unsplash.com/featured/400x400?say
+n5_v_kaburu,dongtu,かぶる,đội (mũ),kaburu,帽子をかぶる。,Đội mũ.,https://source.unsplash.com/featured/400x400?wear+hat
+n5_verb_kaku,dongtu,書く,viết,kaku,手紙を書く。,Viết thư.,https://source.unsplash.com/featured/400x400?write
+n5_v_kangaeru,dongtu,考える,suy nghĩ,kangaeru,よく考える。,Suy nghĩ kỹ.,https://source.unsplash.com/featured/400x400?think
+n5_v_kariru,dongtu,借りる,mượn,kariru,本を借りる。,Mượn sách.,https://source.unsplash.com/featured/400x400?borrow
+n5_v_kasu,dongtu,貸す,cho mượn,kasu,ペンを貸す。,Cho mượn bút.,https://source.unsplash.com/featured/400x400?lend
+n5_verb_kau,dongtu,買う,mua,kau,パンを買う。,Mua bánh mì.,https://source.unsplash.com/featured/400x400?buy
+n5_v_kekkon,dongtu,結婚する,kết hôn,kekkon,結婚しています。,Đã kết hôn.,https://source.unsplash.com/featured/400x400?marry
+n5_v_kesu,dongtu,消す,tắt/xóa,kesu,テレビを消す。,Tắt tivi.,https://source.unsplash.com/featured/400x400?turn+off
+n5_verb_kiku,dongtu,聞く,nghe/hỏi,kiku,音楽を聞く。,Nghe nhạc.,https://source.unsplash.com/featured/400x400?listen+ask
+n5_v_kotaeru,dongtu,答える,trả lời,kotaeru,質問に答える。,Trả lời câu hỏi.,https://source.unsplash.com/featured/400x400?answer
+n5_verb_kuru,dongtu,来る,đến,kuru,友達が来る。,Bạn đến chơi.,https://source.unsplash.com/featured/400x400?come
+n5_v_magaru,dongtu,曲がる,rẽ,magaru,右に曲がります。,Rẽ phải.,https://source.unsplash.com/featured/400x400?turn
+n5_verb_matsu,dongtu,待つ,đợi,matsu,駅で待つ。,Đợi ở ga.,https://source.unsplash.com/featured/400x400?wait
+n5_verb_miru,dongtu,見る,xem/nhìn,miru,映画を見る。,Xem phim.,https://source.unsplash.com/featured/400x400?watch
+n5_v_miseru,dongtu,見せる,cho xem,miseru,写真を見せる。,Cho xem ảnh.,https://source.unsplash.com/featured/400x400?show
+n5_v_motsu,dongtu,持つ,cầm/có,motsu,荷物を持つ。,Cầm hành lý.,https://source.unsplash.com/featured/400x400?hold
+n5_v_nageru,dongtu,投げる,ném,nageru,ボールを投げる。,Ném bóng.,https://source.unsplash.com/featured/400x400?throw
+n5_v_narau,dongtu,習う,học (từ người khác),narau,ピアノを習う。,Học piano.,https://source.unsplash.com/featured/400x400?learn
+n5_v_naru,dongtu,なる,trở nên,naru,医者になりたい。,Muốn thành bác sĩ.,https://source.unsplash.com/featured/400x400?become
+n5_verb_neru,dongtu,寝る,ngủ,neru,早く寝る。,Ngủ sớm.,https://source.unsplash.com/featured/400x400?sleep
+n5_verb_nomu,dongtu,飲む,uống,nomu,水を飲む。,Uống nước.,https://source.unsplash.com/featured/400x400?drink
+n5_v_noru,dongtu,乗る,lên xe,noru,バスに乗る。,Lên xe buýt.,https://source.unsplash.com/featured/400x400?ride
+n5_v_nugu,dongtu,脱ぐ,cởi (đồ),nugu,靴を脱ぐ。,Tháo giày.,https://source.unsplash.com/featured/400x400?take+off
+n5_verb_oboeru,dongtu,覚える,nhớ,oboeru,漢字を覚える。,Nhớ chữ Kanji.,https://source.unsplash.com/featured/400x400?remember
+n5_verb_okiru,dongtu,起きる,thức dậy,okiru,六時に起きる。,Thức dậy lúc 6h.,https://source.unsplash.com/featured/400x400?wake+up
+n5_v_okuru,dongtu,送る,gửi,okuru,手紙を送る。,Gửi thư.,https://source.unsplash.com/featured/400x400?send
+n5_v_omou,dongtu,思う,nghĩ,omou,そう思う。,Cũng nghĩ vậy.,https://source.unsplash.com/featured/400x400?think
+n5_v_oriru,dongtu,降りる,xuống xe,oriru,電車を降りる。,Xuống tàu điện.,https://source.unsplash.com/featured/400x400?get+off
+n5_v_oshieru,dongtu,教える,dạy,oshieru,日本語を教える。,Dạy tiếng Nhật.,https://source.unsplash.com/featured/400x400?teach
+n5_v_owaru,dongtu,終わる,kết thúc,owaru,仕事が終わる。,Công việc kết thúc.,https://source.unsplash.com/featured/400x400?end
+n5_v_oyogu,dongtu,泳ぐ,bơi,oyogu,海で泳ぐ。,Bơi ở biển.,https://source.unsplash.com/featured/400x400?swim
+n5_v_renshu,dongtu,練習する,luyện tập,renshuu,毎日練習する。,Luyện tập mỗi ngày.,https://source.unsplash.com/featured/400x400?practice
+n5_v_shimeru,dongtu,閉める,đóng,shimeru,窓を閉める。,Đóng cửa sổ.,https://source.unsplash.com/featured/400x400?close
+n5_v_shinu,dongtu,死ぬ,chết,shinu,花が死ぬ。,Hoa héo chết.,https://source.unsplash.com/featured/400x400?die
+n5_v_shiraberu,dongtu,調べる,tra cứu,shiraberu,辞書で調べる。,Tra từ điển.,https://source.unsplash.com/featured/400x400?search
+n5_v_shiru,dongtu,知る,biết,shiru,答えを知っている。,Biết câu trả lời.,https://source.unsplash.com/featured/400x400?know
+n5_v_sumu,dongtu,住む,sống,sumu,ベトナムに住む。,Sống ở Việt Nam.,https://source.unsplash.com/featured/400x400?live
+n5_verb_suru,dongtu,する,làm,suru,勉強する。,Học bài.,https://source.unsplash.com/featured/400x400?do
+n5_v_suwaru,dongtu,座る,ngồi,suwaru,椅子に座る。,Ngồi xuống ghế.,https://source.unsplash.com/featured/400x400?sit
+n5_verb_taberu,dongtu,食べる,ăn,taberu,りんごを食べる。,Ăn táo.,https://source.unsplash.com/featured/400x400?eat
+n5_v_tatsu,dongtu,立つ,đứng,tatsu,そこに立つ。,Đứng ở đó.,https://source.unsplash.com/featured/400x400?stand
+n5_v_tetsudau,dongtu,手伝う,giúp đỡ,tetsudau,仕事を手伝う。,Giúp một tay.,https://source.unsplash.com/featured/400x400?help
+n5_v_tomaru,dongtu,止まる,dừng lại,tomaru,車が止まる。,Xe dừng lại.,https://source.unsplash.com/featured/400x400?stop
+n5_verb_toru,dongtu,撮る,chụp (ảnh),toru,写真を撮る。,Chụp ảnh.,https://source.unsplash.com/featured/400x400?take+photo
+n5_v_tsukau,dongtu,使う,dùng,tsukau,ペンを使う。,Dùng bút.,https://source.unsplash.com/featured/400x400?use
+n5_v_tsukeru,dongtu,つける,bật,tsukeru,電気をつける。,Bật điện.,https://source.unsplash.com/featured/400x400?turn+on
+n5_v_tsuku,dongtu,着く,đến nơi,tsuku,駅に着く。,Đến ga.,https://source.unsplash.com/featured/400x400?arrive
+n5_v_tsukuru,dongtu,作る,làm/nấu,tsukuru,ケーキを作る。,Làm bánh kem.,https://source.unsplash.com/featured/400x400?cook
+n5_v_tsutaeru,dongtu,伝える,truyền đạt,tsutaeru,ニュースを伝える。,Truyền đạt tin tức.,https://source.unsplash.com/featured/400x400?convey
+n5_v_tsutomeru,dongtu,勤める,làm việc cho,tsutomeru,銀行に勤める。,Làm việc cho ngân hàng.,https://source.unsplash.com/featured/400x400?work+for
+n5_v_utau,dongtu,歌う,hát,utau,歌を歌う。,Hát.,https://source.unsplash.com/featured/400x400?sing
+n5_v_wakaru,dongtu,分かる,hiểu,wakaru,意味がわかる。,Hiểu ý nghĩa.,https://source.unsplash.com/featured/400x400?understand
+n5_v_wasureru,dongtu,忘れる,quên,wasureru,宿題を忘れた。,Quên bài tập.,https://source.unsplash.com/featured/400x400?forget
+n5_v_wataru,dongtu,渡る,băng qua,wataru,道を渡る。,Băng qua đường.,https://source.unsplash.com/featured/400x400?cross
+n5_v_watasu,dongtu,渡す,trao/đưa,watasu,手紙を渡す。,Đưa thư.,https://source.unsplash.com/featured/400x400?hand+over
+n5_v_yasumu,dongtu,休む,nghỉ,yasumu,少し休む。,Nghỉ một chút.,https://source.unsplash.com/featured/400x400?rest
+n5_v_yobu,dongtu,呼ぶ,gọi,yobu,タクシーを呼ぶ。,Gọi taxi.,https://source.unsplash.com/featured/400x400?call
+n5_v_yomu,dongtu,読む,đọc,yomu,本を読む。,Đọc sách.,https://source.unsplash.com/featured/400x400?read
+n5_v_ageru,dongtu,上げる,nâng/tặng,ageru,手を上げる。,Giơ tay lên.,https://source.unsplash.com/featured/400x400?raise+give
+n5_v_abiru,dongtu,浴びる,tắm vòi sen,abiru,シャワーを浴びる。,Tắm vòi sen.,https://source.unsplash.com/featured/400x400?shower
+n5_v_shikaru,dongtu,叱る,mắng,shikaru,先生に叱られた。,Bị giáo viên mắng.,https://source.unsplash.com/featured/400x400?scold
+n5_v_shimau,dongtu,しまう,cất đi,shimau,道具をしまう。,Cất dụng cụ.,https://source.unsplash.com/featured/400x400?put+away
+n5_ppl_ane,giadinh,姉,chị gái (mình),ane,姉が一人います。,Có một chị gái.,https://source.unsplash.com/featured/400x400?older+sister+my
+n5_ppl_ani,giadinh,兄,anh trai (mình),ani,兄は大学生です。,Anh trai là sinh viên.,https://source.unsplash.com/featured/400x400?older+brother+my
+n5_ppl_chichi,giadinh,父,bố (mình),chichi,父は医者です。,Bố là bác sĩ.,https://source.unsplash.com/featured/400x400?father+my
+n5_ppl_imouto,giadinh,妹,em gái,imouto,妹はかわいいです。,Em gái dễ thương.,https://source.unsplash.com/featured/400x400?younger+sister
+n5_ppl_kazoku,giadinh,家族,gia đình,kazoku,家族は四人です。,Gia đình 4 người.,https://source.unsplash.com/featured/400x400?family
+n5_ppl_kodomo,giadinh,子供,trẻ con,kodomo,子供が遊んでいる。,Trẻ đang chơi.,https://source.unsplash.com/featured/400x400?child
+n5_ppl_otouto,giadinh,弟,em trai,otouto,弟は中学生です。,Em trai học cấp 2.,https://source.unsplash.com/featured/400x400?younger+brother
+n5_ppl_otousan,giadinh,お父さん,bố (người khác),otousan,お父さんはお元気ですか。,Bố bạn có khỏe không?,https://source.unsplash.com/featured/400x400?father+other
+n5_ppl_okaasan,giadinh,お母さん,mẹ (người khác),okaasan,お母さんは優しいです。,Mẹ bạn rất hiền.,https://source.unsplash.com/featured/400x400?mother+other
+n5_ppl_oneesan,giadinh,お姉さん,chị gái (người khác),oneesan,お姉さんはきれいです。,Chị bạn xinh quá.,https://source.unsplash.com/featured/400x400?older+sister+other
+n5_ppl_oniisan,giadinh,お兄さん,anh trai (người khác),oniisan,お兄さんはスポーツが得意です。,Anh bạn giỏi thể thao.,https://source.unsplash.com/featured/400x400?older+brother+other
+n5_ppl_sofu,giadinh,祖父,ông (mình),sofu,私の祖父は元気です。,Ông tôi khỏe.,https://source.unsplash.com/featured/400x400?grandfather+my
+n5_ppl_sobo,giadinh,祖母,bà (mình),sobo,祖母は料理が上手です。,Bà tôi nấu ăn ngon.,https://source.unsplash.com/featured/400x400?grandmother+my
+n5_ppl_ojiisan,giadinh,お爺さん,ông (người khác),ojiisan,お爺さんは静かに読書をしている。,Ông ấy đang đọc sách.,https://source.unsplash.com/featured/400x400?grandfather+other
+n5_ppl_obaasan,giadinh,お婆さん,bà (người khác),obaasan,お婆さんは優しく微笑んだ。,Bà ấy mỉm cười hiền.,https://source.unsplash.com/featured/400x400?grandmother+other
+n5_ppl_kyoudai,giadinh,兄弟,anh chị em ruột,kyoudai,兄弟がいますか。,Có anh chị em ruột không?,https://source.unsplash.com/featured/400x400?siblings
+n5_ppl_shimai,giadinh,姉妹,chị em gái,shimai,私たちは仲の良い姉妹です。,Chúng tôi là chị em thân.,https://source.unsplash.com/featured/400x400?sisters
+n5_ppl_hito,connguoi,人,người,hito,あの人はだれですか。,Người kia là ai?,https://source.unsplash.com/featured/400x400?person
+n5_ppl_onna,connguoi,女,nữ giới,onna,女の人。,Người phụ nữ.,https://source.unsplash.com/featured/400x400?woman
+n5_ppl_otoko,connguoi,男,nam giới,otoko,男の人。,Người đàn ông.,https://source.unsplash.com/featured/400x400?man
+n5_ppl_tomodachi,connguoi,友達,bạn bè,tomodachi,友達と映画に行く。,Đi xem phim với bạn.,https://source.unsplash.com/featured/400x400?friends
+n5_ppl_kyaku,connguoi,客,khách hàng,kyaku,客が来た。,Khách đến.,https://source.unsplash.com/featured/400x400?customer
+n5_ppl_kaisatsu,connguoi,改札,cổng soát vé,kaisatsu,改札を通る。,Qua cổng soát vé.,https://source.unsplash.com/featured/400x400?ticket+gate
+n5_ppl_kaisha,congty,会社,công ty,kaisha,会社で働く。,Làm việc ở công ty.,https://source.unsplash.com/featured/400x400?company
+n5_bld_apa-to,kientruc,アパート,căn hộ,apāto,アパートに住む。,Sống ở căn hộ.,https://source.unsplash.com/featured/400x400?apartment
+n5_bld_biru,kientruc,ビル,tòa nhà,biru,高いビル。,Tòa nhà cao.,https://source.unsplash.com/featured/400x400?building
+n5_bld_genkan,kientruc,玄関,lối vào,genkan,玄関で靴を脱ぐ。,Tháo giày ở cửa.,https://source.unsplash.com/featured/400x400?entrance
+n5_bld_kaidan,kientruc,階段,cầu thang,kaidan,階段を上る。,Leo cầu thang.,https://source.unsplash.com/featured/400x400?stairs
+n5_bld_niwa,kientruc,庭,sân vườn,niwa,庭に花が咲く。,Hoa nở trong vườn.,https://source.unsplash.com/featured/400x400?garden
+n5_bld_rouka,kientruc,廊下,hành lang,rouka,廊下を歩く。,Đi bộ hành lang.,https://source.unsplash.com/featured/400x400?hallway
+n5_house_beddo,dovan,ベッド,giường,beddo,ベッドで寝る。,Ngủ trên giường.,https://source.unsplash.com/featured/400x400?bed
+n5_house_denwa,dovan,電話,điện thoại,denwa,電話をかける。,Gọi điện.,https://source.unsplash.com/featured/400x400?phone
+n5_house_doa,nhacua,ドア,cửa ra vào,doa,ドアを開ける。,Mở cửa.,https://source.unsplash.com/featured/400x400?door
+n5_house_heya,nhacua,部屋,phòng,heya,明るい部屋。,Phòng sáng.,https://source.unsplash.com/featured/400x400?room
+n5_house_ie,nhacua,家,nhà,ie,家に帰る。,Về nhà.,https://source.unsplash.com/featured/400x400?house
+n5_house_kappu,dovan,カップ,cốc,kappu,カップを洗う。,Rửa cốc.,https://source.unsplash.com/featured/400x400?cup
+n5_house_pasokon,dovan,パソコン,máy tính,pasokon,パソコンを使う。,Dùng máy tính.,https://source.unsplash.com/featured/400x400?computer
+n5_house_reizouko,dovan,冷蔵庫,tủ lạnh,reizouko,冷蔵庫に牛乳がある。,Tủ lạnh có sữa.,https://source.unsplash.com/featured/400x400?refrigerator
+n5_house_sentakuki,dovan,洗濯機,máy giặt,sentakuki,洗濯機を回す。,Chạy máy giặt.,https://source.unsplash.com/featured/400x400?washing+machine
+n5_house_tebi,dovan,テレビ,tivi,terebi,テレビを見る。,Xem tivi.,https://source.unsplash.com/featured/400x400?tv
+n5_house_teburu,dovan,テーブル,bàn,teburu,テーブルの上。,Trên bàn.,https://source.unsplash.com/featured/400x400?table
+n5_hou_daidokoro,nhacua,台所,nhà bếp,daidokoro,台所で料理する。,Nấu ăn ở bếp.,https://source.unsplash.com/featured/400x400?kitchen
+n5_hou_mado,nhacua,窓,cửa sổ,mado,窓を開ける。,Mở cửa sổ.,https://source.unsplash.com/featured/400x400?window
+n5_hou_niwa,nhacua,庭,vườn,niwa,庭を掃除する。,Dọn vườn.,https://source.unsplash.com/featured/400x400?garden
+n5_hou_rouka,nhacua,廊下,hành lang,rouka,廊下を走らない。,Không chạy hành lang.,https://source.unsplash.com/featured/400x400?hallway
+n5_hou_shindotsu,nhacua,寝室,phòng ngủ,shinshitsu,寝室で寝る。,Ngủ phòng ngủ.,https://source.unsplash.com/featured/400x400?bedroom
+n5_kit_chawan,dodung,茶碗,bát,chawan,ご飯茶碗。,Bát cơm.,https://source.unsplash.com/featured/400x400?bowl
+n5_kit_fo-ku,dodung,フォーク,nĩa,fōku,フォークを使う。,Dùng nĩa.,https://source.unsplash.com/featured/400x400?fork
+n5_kit_furaipan,dodung,フライパン,chảo,furaipan,フライパンで焼く。,Rán bằng chảo.,https://source.unsplash.com/featured/400x400?frying+pan
+n5_kit_hashi,dodung,箸,đũa,hashi,箸で食べる。,Ăn bằng đũa.,https://source.unsplash.com/featured/400x400?chopsticks
+n5_kit_koppu,dodung,コップ,cốc/ly,koppu,コップに水を入れる。,Cho nước vào cốc.,https://source.unsplash.com/featured/400x400?glass
+n5_kit_nabe,dodung,鍋,nồi,nabe,鍋料理。,Món lẩu.,https://source.unsplash.com/featured/400x400?pot
+n5_kit_naifu,dodung,ナイフ,dao,naifu,ナイフで切る。,Cắt bằng dao.,https://source.unsplash.com/featured/400x400?knife
+n5_kit_sara,dodung,皿,đĩa,sara,皿を洗う。,Rửa đĩa.,https://source.unsplash.com/featured/400x400?plate
+n5_kit_shoyu,giavi,醤油,nước tương,shouyu,醤油をつける。,Chấm nước tương.,https://source.unsplash.com/featured/400x400?soy+sauce
+n5_food_bi-ru,doan,ビール,bia,bīru,冷たいビール。,Bia lạnh.,https://source.unsplash.com/featured/400x400?beer
+n5_food_butaniku,thit,豚肉,thịt lợn,butaniku,豚肉を買う。,Mua thịt lợn.,https://source.unsplash.com/featured/400x400?pork
+n5_food_gohan,doan,ごはん,cơm,gohan,朝ごはんを食べる。,Ăn sáng.,https://source.unsplash.com/featured/400x400?rice
+n5_food_gyuniku,thit,牛肉,thịt bò,gyuuniku,牛肉が好きだ。,Thích thịt bò.,https://source.unsplash.com/featured/400x400?beef
+n5_food_gyunyu,doan,牛乳,sữa bò,gyunyu,牛乳を買う。,Mua sữa.,https://source.unsplash.com/featured/400x400?milk
+n5_food_ju-su,doan,ジュース,nước trái cây,jūsu,オレンジジュース。,Nước cam.,https://source.unsplash.com/featured/400x400?juice
+n5_food_kocha,doan,紅茶,trà đen,koucha,紅茶に砂糖を入れる。,Cho đường vào trà.,https://source.unsplash.com/featured/400x400?black+tea
+n5_food_ko-hi,doan,コーヒー,cà phê,kōhī,コーヒーを飲む。,Uống cà phê.,https://source.unsplash.com/featured/400x400?coffee
+n5_food_kome,luongthuc,米,gạo,kome,米を洗う。,Vo gạo.,https://source.unsplash.com/featured/400x400?rice+grain
+n5_food_mizu,doan,水,nước,mizu,水をください。,Cho tôi nước.,https://source.unsplash.com/featured/400x400?water
+n5_food_niku,doan,肉,thịt,niku,肉が食べたい。,Muốn ăn thịt.,https://source.unsplash.com/featured/400x400?meat
+n5_food_nomimono,doan,飲み物,đồ uống,nomimono,冷たい飲み物。,Đồ uống lạnh.,https://source.unsplash.com/featured/400x400?drink
+n5_food_osake,doan,お酒,rượu,osake,お酒はあまり飲まない。,Không uống rượu lắm.,https://source.unsplash.com/featured/400x400?alcohol
+n5_food_pan,dovat,パン,bánh mì,pan,パンを焼く。,Nướng bánh mì.,https://source.unsplash.com/featured/400x400?bread
+n5_food_ringo,doan,りんご,táo,ringo,りんごを剥く。,Gọt táo.,https://source.unsplash.com/featured/400x400?apple
+n5_food_sakana,doan,魚,cá,sakana,魚が好きです。,Thích cá.,https://source.unsplash.com/featured/400x400?fish
+n5_food_sarada,doan,サラダ,sa lát,sarada,サラダを作る。,Làm salad.,https://source.unsplash.com/featured/400x400?salad
+n5_food_satou,doan,砂糖,đường,satou,砂糖を入れる。,Cho đường.,https://source.unsplash.com/featured/400x400?sugar
+n5_food_tamago,doan,卵,trứng,tamago,卵を焼く。,Rán trứng.,https://source.unsplash.com/featured/400x400?egg
+n5_food_tomato,rau,トマト,cà chua,tomato,赤いトマト。,Cà chua đỏ.,https://source.unsplash.com/featured/400x400?tomato
+n5_food_toriniku,thit,鶏肉,thịt gà,toriniku,鶏肉を焼く。,Nướng thịt gà.,https://source.unsplash.com/featured/400x400?chicken
+n5_food_yasai,doan,野菜,rau,yasai,野菜をたくさん食べる。,Ăn nhiều rau.,https://source.unsplash.com/featured/400x400?vegetable
+n5_food_okashi,doan,お菓子,bánh kẹo,okashi,お菓子を食べ過ぎた。,Ăn quá nhiều bánh kẹo.,https://source.unsplash.com/featured/400x400?candy
+n5_food_kudamono,doan,果物,trái cây,kudamono,果物が好きです。,Thích trái cây.,https://source.unsplash.com/featured/400x400?fruit
+n5_food_tabemono,doan,食べ物,đồ ăn,tabemono,食べ物を探している。,Đang tìm đồ ăn.,https://source.unsplash.com/featured/400x400?food
+n5_food_banana,doan,バナナ,chuối,banana,バナナを一本食べる。,Ăn một quả chuối.,https://source.unsplash.com/featured/400x400?banana
+n5_food_mikan,doan,みかん,quýt,mikan,みかんを剥く。,Bóc quýt.,https://source.unsplash.com/featured/400x400?mandarin
+n5_food_budou,doan,葡萄,nho,budou,葡萄は甘い。,Nho ngọt.,https://source.unsplash.com/featured/400x400?grape
+n5_food_ichigo,doan,苺,dâu tây,ichigo,苺が大好きだ。,Rất thích dâu.,https://source.unsplash.com/featured/400x400?strawberry
+n5_food_suika,doan,西瓜,dưa hấu,suika,夏は西瓜が美味しい。,Dưa hấu ngon mùa hè.,https://source.unsplash.com/featured/400x400?watermelon
+n5_food_jagaimo,rau,じゃがいも,khoai tây,jagaimo,じゃがいもを茹でる。,Luộc khoai tây.,https://source.unsplash.com/featured/400x400?potato
+n5_food_kyabetsu,rau,キャベツ,bắp cải,kyabetsu,キャベツを切る。,Thái bắp cải.,https://source.unsplash.com/featured/400x400?cabbage
+n5_food_ninjin,rau,人参,cà rốt,ninjin,人参を食べる。,Ăn cà rốt.,https://source.unsplash.com/featured/400x400?carrot
+n5_food_tamaneghi,rau,玉ねぎ,hành tây,tamanegi,玉ねぎは辛い。,Hành tây cay.,https://source.unsplash.com/featured/400x400?onion
+n5_food_ninniku,rau,大蒜,tỏi,ninniku,大蒜をみじん切りにする。,Băm tỏi.,https://source.unsplash.com/featured/400x400?garlic
+n5_food_piman,rau,ピーマン,ớt xanh,piman,ピーマンは嫌いだ。,Ghét ớt xanh.,https://source.unsplash.com/featured/400x400?green+pepper
+n5_food_hourensou,rau,ほうれん草,rau chân vịt,hourensou,ほうれん草は鉄分が多い。,Rau chân vịt nhiều sắt.,https://source.unsplash.com/featured/400x400?spinach
+n5_ani_buta,dongvat,豚,con lợn,buta,豚肉を食べる。,Ăn thịt lợn.,https://source.unsplash.com/featured/400x400?pig
+n5_ani_inu,dongvat,犬,con chó,inu,犬が吠える。,Chó sủa.,https://source.unsplash.com/featured/400x400?dog
+n5_ani_neko,dongvat,猫,con mèo,neko,猫が寝ている。,Mèo ngủ.,https://source.unsplash.com/featured/400x400?cat
+n5_ani_saru,dongvat,猿,con khỉ,saru,猿は山にいる。,Khỉ ở núi.,https://source.unsplash.com/featured/400x400?monkey
+n5_ani_tori,dongvat,鳥,con chim,tori,鳥が飛んでいる。,Chim bay.,https://source.unsplash.com/featured/400x400?bird
+n5_ani_uma,dongvat,馬,con ngựa,uma,馬に乗る。,Cưỡi ngựa.,https://source.unsplash.com/featured/400x400?horse
+n5_ani_ushi,dongvat,牛,con bò,ushi,牛のミルク。,Sữa bò.,https://source.unsplash.com/featured/400x400?cow
+n5_ani_zou,dongvat,象,con voi,zou,象は鼻が長い。,Voi vòi dài.,https://source.unsplash.com/featured/400x400?elephant
+n5_ani_kame,dongvat,亀,con rùa,kame,亀は遅い。,Rùa chậm.,https://source.unsplash.com/featured/400x400?turtle
+n5_ani_kuma,dongvat,熊,con gấu,kuma,熊が怖い。,Gấu đáng sợ.,https://source.unsplash.com/featured/400x400?bear
+n5_ani_kirin,dongvat,麒麟,hươu cao cổ,kirin,キリンは首が長い。,Hươu cao cổ cổ dài.,https://source.unsplash.com/featured/400x400?giraffe
+n5_ani_nezumi,dongvat,鼠,con chuột,nezumi,鼠が怖い。,Sợ chuột.,https://source.unsplash.com/featured/400x400?mouse
+n5_ani_tonbo,dongvat,蜻蛉,chuồn chuồn,tonbo,トンボが飛んでいる。,Chuồn chuồn bay.,https://source.unsplash.com/featured/400x400?dragonfly
+n5_nat_ame,thoitiet,雨,mưa,ame,雨が降っている。,Trời mưa.,https://source.unsplash.com/featured/400x400?rain
+n5_nat_fuyu,mua,冬,mùa đông,fuyu,冬は雪が降る。,Đông có tuyết.,https://source.unsplash.com/featured/400x400?winter
+n5_nat_hana,thiennhien,花,hoa,hana,花が咲く。,Hoa nở.,https://source.unsplash.com/featured/400x400?flower
+n5_nat_hare,thoitiet,晴れ,nắng,hare,明日は晴れだ。,Mai nắng.,https://source.unsplash.com/featured/400x400?sunny
+n5_nat_haru,mua,春,mùa xuân,haru,春は花が咲く。,Xuân hoa nở.,https://source.unsplash.com/featured/400x400?spring
+n5_nat_hoshi,thiennhien,星,ngôi sao,hoshi,星が綺麗だ。,Sao đẹp.,https://source.unsplash.com/featured/400x400?star
+n5_nat_ike,thiennhien,池,cái ao,ike,池に魚がいる。,Ao có cá.,https://source.unsplash.com/featured/400x400?pond
+n5_nat_kawa,thiennhien,川,sông,kawa,川で泳ぐ。,Bơi sông.,https://source.unsplash.com/featured/400x400?river
+n5_nat_kaze,thoitiet,風,gió,kaze,風が強い。,Gió mạnh.,https://source.unsplash.com/featured/400x400?wind
+n5_nat_mori,thiennhien,森,rừng,mori,森を歩く。,Đi bộ trong rừng.,https://source.unsplash.com/featured/400x400?forest
+n5_nat_natsu,mua,夏,mùa hè,natsu,夏はとても暑い。,Hè rất nóng.,https://source.unsplash.com/featured/400x400?summer
+n5_nat_sora,thiennhien,空,bầu trời,sora,空を見上げる。,Nhìn lên trời.,https://source.unsplash.com/featured/400x400?sky
+n5_nat_taiyou,thiennhien,太陽,mặt trời,taiyou,太陽が昇る。,Mặt trời mọc.,https://source.unsplash.com/featured/400x400?sun
+n5_nat_tenki,thoitiet,天気,thời tiết,tenki,いい天気ですね。,Đẹp trời nhỉ.,https://source.unsplash.com/featured/400x400?weather
+n5_nat_tsuki,thiennhien,月,mặt trăng,tsuki,月がきれいだ。,Trăng đẹp.,https://source.unsplash.com/featured/400x400?moon
+n5_nat_umi,thiennhien,海,biển,umi,海で泳ぐ。,Bơi biển.,https://source.unsplash.com/featured/400x400?sea
+n5_nat_yama,thiennhien,山,núi,yama,富士山に登る。,Leo núi Phú Sĩ.,https://source.unsplash.com/featured/400x400?mountain
+n5_nat_yuki,thoitiet,雪,tuyết,yuki,雪が降る。,Tuyết rơi.,https://source.unsplash.com/featured/400x400?snow
+n5_nat_sakura,thiennhien,桜,hoa anh đào,sakura,桜が咲く。,Hoa anh đào nở.,https://source.unsplash.com/featured/400x400?cherry+blossom
+n5_nat_kaminari,thiennhien,雷,sấm sét,kaminari,雷が鳴る。,Sấm sét kêu.,https://source.unsplash.com/featured/400x400?thunder
+n5_nat_hikari,thiennhien,光,ánh sáng,hikari,光が眩しい。,Ánh sáng chói.,https://source.unsplash.com/featured/400x400?light
+n5_time_asa,thoigian,朝,sáng,asa,朝ご飯を食べる。,Ăn sáng.,https://source.unsplash.com/featured/400x400?morning
+n5_time_ashita,thoigian,明日,mai,ashita,明日は休みだ。,Mai nghỉ.,https://source.unsplash.com/featured/400x400?tomorrow
+n5_time_atode,thoigian,後で,sau đó,atode,後で行く。,Lát đi.,https://source.unsplash.com/featured/400x400?later
+n5_time_ban,thoigian,晩,tối,ban,晩ご飯。,Cơm tối.,https://source.unsplash.com/featured/400x400?evening
+n5_time_ima,thoigian,今,bây giờ,ima,今何時ですか。,Mấy giờ?,https://source.unsplash.com/featured/400x400?now
+n5_time_kinou,thoigian,昨日,hôm qua,kinou,昨日は雨だった。,Hôm qua mưa.,https://source.unsplash.com/featured/400x400?yesterday
+n5_time_konshuu,thoigian,今週,tuần này,konshuu,今週は忙しい。,Tuần này bận.,https://source.unsplash.com/featured/400x400?this+week
+n5_time_kotoshi,thoigian,今年,năm nay,kotoshi,今年は頑張る。,Năm nay cố gắng.,https://source.unsplash.com/featured/400x400?this+year
+n5_time_kyonen,thoigian,去年,năm ngoái,kyonen,去年卒業した。,Năm ngoái tốt nghiệp.,https://source.unsplash.com/featured/400x400?last+year
+n5_time_kyou,thoigian,今日,hôm nay,kyou,今日は月曜日だ。,Hôm nay thứ two.,https://source.unsplash.com/featured/400x400?today
+n5_time_maiasa,thoigian,毎朝,mỗi sáng,maiasa,毎朝コーヒーを飲む。,Mỗi sáng uống cafe.,https://source.unsplash.com/featured/400x400?every+morning
+n5_time_maiban,thoigian,毎晩,mỗi tối,maiban,毎晩本を読む。,Mỗi tối đọc sách.,https://source.unsplash.com/featured/400x400?every+night
+n5_time_mainichi,thoigian,毎日,mỗi ngày,mainichi,毎日歩く。,Đi bộ mỗi ngày.,https://source.unsplash.com/featured/400x400?every+day
+n5_time_mukashi,thoigian,昔,ngày xưa,mukashi,昔住んでいた。,Xưa từng sống.,https://source.unsplash.com/featured/400x400?old+days
+n5_time_rainen,thoigian,来年,năm sau,rainen,来年帰る。,Năm sau về.,https://source.unsplash.com/featured/400x400?next+year
+n5_time_raishuu,thoigian,来週,tuần sau,raishuu,来週会いましょう。,Tuần sau gặp.,https://source.unsplash.com/featured/400x400?next+week
+n5_time_saikin,thoigian,最近,gần đây,saikin,最近忙しい。,Dạo này bận.,https://source.unsplash.com/featured/400x400?recently
+n5_time_saki,thoigian,先に,trước,saki,お先に失礼します。,Xin phép về trước.,https://source.unsplash.com/featured/400x400?before
+n5_time_senshuu,thoigian,先週,tuần trước,senshuu,先週日本へ行った。,Tuần trước đi Nhật.,https://source.unsplash.com/featured/400x400?last+week
+n5_time_yoru,thoigian,夜,đêm,yoru,夜は暗い。,Đêm tối.,https://source.unsplash.com/featured/400x400?night
+n5_time_yuugata,thoigian,夕方,chiều tối,yuugata,夕方に帰る。,Về chiều tối.,https://source.unsplash.com/featured/400x400?evening
+n5_time_gozen,thoigian,午前,sáng (trước 12h),gozen,午前中に仕事をする。,Làm việc buổi sáng.,https://source.unsplash.com/featured/400x400?morning
+n5_time_gogo,thoigian,午後,chiều (sau 12h),gogo,午後3時に会いましょう。,Hẹn 3h chiều.,https://source.unsplash.com/featured/400x400?afternoon
+n5_time_kesa,thoigian,今朝,sáng nay,kesa,今朝新聞を読んだ。,Sáng nay đọc báo.,https://source.unsplash.com/featured/400x400?this+morning
+n5_time_konban,thoigian,今晩,tối nay,konban,今晩は何をしますか。,Tối nay làm gì?,https://source.unsplash.com/featured/400x400?tonight
+n5_time_ototoi,thoigian,一昨日,hôm kia,ototoi,一昨日は雨だった。,Hôm kia mưa.,https://source.unsplash.com/featured/400x400?day+before+yesterday
+n5_time_asatte,thoigian,明後日,ngày kia,asatte,明後日は試験だ。,Ngày kia thi.,https://source.unsplash.com/featured/400x400?day+after+tomorrow
+n5_time_maishuu,thoigian,毎週,mỗi tuần,maishuu,毎週映画を見に行く。,Mỗi tuần đi xem phim.,https://source.unsplash.com/featured/400x400?every+week
+n5_time_maitsuki,thoigian,毎月,mỗi tháng,maitsuki,毎月本を買う。,Mỗi tháng mua sách.,https://source.unsplash.com/featured/400x400?every+month
+n5_time_mainen,thoigian,毎年,mỗi năm,mainen,毎年旅行する。,Mỗi năm đi du lịch.,https://source.unsplash.com/featured/400x400?every+year
+n5_time_sengetsu,thoigian,先月,tháng trước,sengetsu,先月引っ越した。,Tháng trước chuyển nhà.,https://source.unsplash.com/featured/400x400?last+month
+n5_time_raigetsu,thoigian,来月,tháng sau,raigetsu,来月から仕事を始める。,Tháng sau bắt đầu việc.,https://source.unsplash.com/featured/400x400?next+month
+n5_time_sarainen,thoigian,再来年,năm sau nữa,sarainen,再来年卒業する。,Năm sau nữa tốt nghiệp.,https://source.unsplash.com/featured/400x400?year+after+next
+n5_time_ototoshi,thoigian,一昨年,năm kia,ototoshi,一昨年日本に行った。,Năm kia đi Nhật.,https://source.unsplash.com/featured/400x400?two+years+ago
+n5_time_kon_ya,thoigian,今夜,tối nay,kon'ya,今夜は星がきれいだ。,Tối nay trời đẹp.,https://source.unsplash.com/featured/400x400?tonight
+n5_time_ichinichi,thoigian,一日,một ngày,ichinichi,一日中家にいた。,Ở nhà cả ngày.,https://source.unsplash.com/featured/400x400?one+day
+n5_time_tsuitachi,thoigian,一日,ngày mồng một,tsuitachi,明日は四月一日です。,Mai là mồng một tháng 4.,https://source.unsplash.com/featured/400x400?first+day
+n5_mon_gogatsu,thoigian,五月,tháng 5,gogatsu,五月は晴れが多い。,Tháng 5 nhiều nắng.,https://source.unsplash.com/featured/400x400?may
+n5_tim_natsuyasumi,thoigian,夏休み,nghỉ hè,natsuyasumi,夏休みは長い。,Nghỉ hè dài.,https://source.unsplash.com/featured/400x400?summer+vacation
+n5_tim_hiruyasumi,thoigian,昼休み,nghỉ trưa,hiruyasumi,昼休みに寝る。,Ngủ trưa.,https://source.unsplash.com/featured/400x400?lunch+break
+n5_pos_aida,vitri,間,giữa,aida,AとBの間。,Giữa A và B.,https://source.unsplash.com/featured/400x400?between
+n5_pos_chikaku,vitri,近く,gần,chikaku,学校の近く。,Gần trường.,https://source.unsplash.com/featured/400x400?near
+n5_pos_hidari,vitri,左,trái,hidari,左を見てください。,Nhìn sang trái.,https://source.unsplash.com/featured/400x400?left
+n5_pos_mae,vitri,前,trước,mae,駅の前で会う。,Gặp trước ga.,https://source.unsplash.com/featured/400x400?front
+n5_pos_migi,vitri,右,phải,migi,右に曲がる。,Rẽ phải.,https://source.unsplash.com/featured/400x400?right
+n5_pos_naka,vitri,中,trong,naka,箱の中。,Trong hộp.,https://source.unsplash.com/featured/400x400?inside
+n5_pos_shita,vitri,下,dưới,shita,椅子の下に猫がいる。,Mèo dưới ghế.,https://source.unsplash.com/featured/400x400?under
+n5_pos_soto,vitri,外,ngoài,soto,外は寒い。,Ngoài lạnh.,https://source.unsplash.com/featured/400x400?outside
+n5_pos_tonari,vitri,隣,bên cạnh,tonari,隣の部屋。,Phòng bên cạnh.,https://source.unsplash.com/featured/400x400?next+to
+n5_pos_ue,vitri,上,trên,ue,机の上に本がある。,Sách trên bàn.,https://source.unsplash.com/featured/400x400?on
+n5_pos_ushiro,vitri,後ろ,sau,ushiro,車の後ろ。,Sau xe.,https://source.unsplash.com/featured/400x400?behind
+n5_dir_higashi,huong,東,phía Đông,higashi,東から昇る。,Mọc từ Đông.,https://source.unsplash.com/featured/400x400?east
+n5_dir_mannaka,huong,真ん中,chính giữa,mannaka,町の真ん中。,Giữa thị trấn.,https://source.unsplash.com/featured/400x400?center
+n5_dir_minami,huong,南,phía Nam,minami,南の島。,Đảo phía Nam.,https://source.unsplash.com/featured/400x400?south
+n5_dir_nishi,huong,西,phía Tây,nishi,西に沈む。,Lặn Tây.,https://source.unsplash.com/featured/400x400?west
+n5_dir_kita,huong,北,phía Bắc,kita,北の風。,Gió Bắc.,https://source.unsplash.com/featured/400x400?north
+n5_plc_byouin,diadiem,病院,bệnh viện,byouin,病院はどこですか。,BV ở đâu?,https://source.unsplash.com/featured/400x400?hospital
+n5_place_depato,diadiem,デパート,TT thương mại,depato,デパートで買い物。,Mua sắm ở mall.,https://source.unsplash.com/featured/400x400?department+store
+n5_plc_eishakan,diadiem,映画館,rạp phim,eigakan,映画館へ行く。,Đi rạp phim.,https://source.unsplash.com/featured/400x400?cinema
+n5_place_gakkou,diadiem,学校,trường học,gakkou,学校へ行く。,Đi học.,https://source.unsplash.com/featured/400x400?school
+n5_place_ginkou,diadiem,銀行,ngân hàng,ginkou,銀行でお金を出す。,Rút tiền ngân hàng.,https://source.unsplash.com/featured/400x400?bank
+n5_place_honya,diadiem,本屋,hiệu sách,honya,本屋で本を買う。,Mua sách ở hiệu sách.,https://source.unsplash.com/featured/400x400?bookstore
+n5_cit_machi,thanhpho,町,thành phố/thị trấn,machi,賑やかな町。,Phố náo nhiệt.,https://source.unsplash.com/featured/400x400?city+town
+n5_cit_mise,thanhpho,店,cửa hàng,mise,店に入る。,Vào cửa hàng.,https://source.unsplash.com/featured/400x400?shop
+n5_cit_mura,thanhpho,村,làng,mura,静かな村。,Làng yên tĩnh.,https://source.unsplash.com/featured/400x400?village
+n5_place_toshokan,diadiem,図書館,thư viện,toshokan,図書館で勉強。,Học ở thư viện.,https://source.unsplash.com/featured/400x400?library
+n5_place_kouen,diadiem,公園,công viên,kouen,公園で遊ぶ。,Chơi công viên.,https://source.unsplash.com/featured/400x400?park
+n5_place_yubinkyoku,diadiem,郵便局,bưu điện,yuubinkyoku,郵便局へ行く。,Đi bưu điện.,https://source.unsplash.com/featured/400x400?post+office
+n5_cit_kouba,thanhpho,工場,nhà máy,kouba,工場で働く。,Làm nhà máy.,https://source.unsplash.com/featured/400x400?factory
+n5_cit_kousaten,thanhpho,交差点,ngã tư,kousaten,交差点を曲がる。,Rẽ ngã tư.,https://source.unsplash.com/featured/400x400?intersection
+n5_cit_michi,thanhpho,道,con đường,michi,道を歩く。,Đi bộ trên đường.,https://source.unsplash.com/featured/400x400?road
+n5_cit_hashi,thanhpho,橋,cầu,hashi,橋を渡る。,Qua cầu.,https://source.unsplash.com/featured/400x400?bridge
+n5_tra_basu,giaothong,バス,xe buýt,basu,バスを待つ。,Đợi xe buýt.,https://source.unsplash.com/featured/400x400?bus
+n5_tra_densha,giaothong,電車,tàu điện,densha,電車で行く。,Đi tàu điện.,https://source.unsplash.com/featured/400x400?train
+n5_tra_eki,giaothong,駅,ga,eki,駅で会いましょう。,Gặp ở ga.,https://source.unsplash.com/featured/400x400?station
+n5_tra_fune,giaothong,船,thuyền,fune,船に乗る。,Lên thuyền.,https://source.unsplash.com/featured/400x400?boat
+n5_tra_jitensha,giaothong,自転車,xe đạp,jitensha,自転車に乗る。,Đi xe đạp.,https://source.unsplash.com/featured/400x400?bicycle
+n5_tra_kuruma,giaothong,車,ô tô,kuruma,車を運転する。,Lái ô tô.,https://source.unsplash.com/featured/400x400?car
+n5_tra_kuukou,giaothong,空港,sân bay,kuukou,空港は遠い。,Sân bay xa.,https://source.unsplash.com/featured/400x400?airport
+n5_tra_takushi,giaothong,タクシー,taxi,takushi,タクシーを呼ぶ。,Gọi taxi.,https://source.unsplash.com/featured/400x400?taxi
+n5_edu_bunbougu,hoc tap,文房具,văn phòng phẩm,bunbougu,文房具屋。,Cửa hàng văn phòng phẩm.,https://source.unsplash.com/featured/400x400?stationery
+n5_edu_enpitsu,hoc tap,鉛筆,bút chì,enpitsu,鉛筆を削る。,Gọt bút chì.,https://source.unsplash.com/featured/400x400?pencil
+n5_edu_fudebako,hoc tap,筆箱,hộp bút,fudebako,筆箱を忘れた。,Quên hộp bút.,https://source.unsplash.com/featured/400x400?pencil+case
+n5_job_gakusei,nghenghiep,学生,sinh viên,gakusei,私は学生です。,Tôi là sinh viên.,https://source.unsplash.com/featured/400x400?student
+n5_edu_kyoushitsu,truonghoc,教室,lớp học,kyoushitsu,教室に入る。,Vào lớp.,https://source.unsplash.com/featured/400x400?classroom
+n5_obj_kyoukasho,dovat,教科書,sách giáo khoa,kyoukasho,教科書を開く。,Mở SGK.,https://source.unsplash.com/featured/400x400?textbook
+n5_edu_monosashi,hoc tap,物差し,thước kẻ,monosashi,物差しで測る。,Đo bằng thước.,https://source.unsplash.com/featured/400x400?ruler
+n5_obj_noto,dovat,ノート,vở,noto,ノートに書く。,Viết vào vở.,https://source.unsplash.com/featured/400x400?notebook
+n5_kat_pe-ji,giaoduc,ページ,trang sách,pēji,ページを開く。,Mở trang.,https://source.unsplash.com/featured/400x400?page
+n5_job_sensei,nghenghiep,先生,giáo viên,sensei,先生に聞く。,Hỏi giáo viên.,https://source.unsplash.com/featured/400x400?teacher
+n5_edu_shiken,truonghoc,試験,kỳ thi,shiken,試験は明日だ。,Thi ngày mai.,https://source.unsplash.com/featured/400x400?exam
+n5_edu_techo,hoc tap,手帳,sổ tay,techou,手帳に書く。,Viết vào sổ tay.,https://source.unsplash.com/featured/400x400?notebook
+n5_mis_test,khac,テスト,bài kiểm tra,tesuto,テストは難しい。,Kiểm tra khó.,https://source.unsplash.com/featured/400x400?test
+n5_edu_enshitsu,truonghoc,演習室,phòng thực hành,enshitsu,演習室で勉強する。,Học trong phòng thực hành.,https://source.unsplash.com/featured/400x400?practice+room
+n5_it_botan,it,ボタン,nút bấm,botan,ボタンを押す。,Ấn nút.,https://source.unsplash.com/featured/400x400?button
+n5_it_deta,it,データ,dữ liệu,dēta,データを保存する。,Lưu dữ liệu.,https://source.unsplash.com/featured/400x400?data
+n5_tech_eakon,dovat,エアコン,máy lạnh,eakon,エアコンをつける。,Bật máy lạnh.,https://source.unsplash.com/featured/400x400?air+conditioner
+n5_kat_erebe-ta-,dovat,エレベーター,thang máy,erebētā,エレベーターに乗る。,Đi thang máy.,https://source.unsplash.com/featured/400x400?elevator
+n5_kat_esu-kare-ta-,dovat,エスカレーター,thang cuốn,esukarētā,エスカレーターを使う。,Dùng thang cuốn.,https://source.unsplash.com/featured/400x400?escalator
+n5_tech_kamera,dovat,カメラ,máy ảnh,kamera,カメラを貸して。,Cho mượn máy ảnh.,https://source.unsplash.com/featured/400x400?camera
+n5_it_ki-bo-do,it,キーボード,bàn phím,kībōdo,キーボードを叩く。,Gõ bàn phím.,https://source.unsplash.com/featured/400x400?keyboard
+n5_it_mausu,it,マウス,chuột máy tính,mausu,マウスを使う。,Dùng chuột.,https://source.unsplash.com/featured/400x400?mouse
+n5_it_me-ru,it,メール,email,mēru,メールを送る。,Gửi email.,https://source.unsplash.com/featured/400x400?email
+n5_it_puroguramu,it,プログラム,chương trình,puroguramu,プログラムを書く。,Viết chương trình.,https://source.unsplash.com/featured/400x400?program
+n5_tech_rajio,dovat,ラジオ,radio,rajio,ラジオを聴く。,Nghe radio.,https://source.unsplash.com/featured/400x400?radio
+n5_it_saite,it,サイト,trang web,saito,ウェブサイトを見る。,Xem web.,https://source.unsplash.com/featured/400x400?website
+n5_it_sofuto,it,ソフト,phần mềm,sofuto,新しいソフト。,Phần mềm mới.,https://source.unsplash.com/featured/400x400?software
+n5_tech_sumaho,dovat,スマホ,smartphone,sumaho,スマホで撮る。,Chụp bằng smartphone.,https://source.unsplash.com/featured/400x400?smartphone
+n5_tech_stobu,dovat,ストーブ,lò sưởi,sutōbu,ストーブを出す。,Lấy lò sưởi.,https://source.unsplash.com/featured/400x400?stove
+n5_cloth_boushi,phukien,帽子,mũ,boushi,帽子をかぶる。,Đội mũ.,https://source.unsplash.com/featured/400x400?hat
+n5_cloth_fuku,quanao,服,quần áo,fuku,服を着る。,Mặc quần áo.,https://source.unsplash.com/featured/400x400?clothes
+n5_obj_ko-to,quanao,コート,áo khoác,kōto,コートを着る。,Mặc áo khoác.,https://source.unsplash.com/featured/400x400?coat
+n5_cloth_kutsushita,quanao,靴下,tất,kutsushita,靴下を履く。,Đi tất.,https://source.unsplash.com/featured/400x400?socks
+n5_obj_nekutai,quanao,ネクタイ,cà vạt,nekutai,ネクタイを締める。,Thắt cà vạt.,https://source.unsplash.com/featured/400x400?tie
+n5_obj_se-ta-,quanao,セーター,áo len,sētā,赤いセーター。,Áo len đỏ.,https://source.unsplash.com/featured/400x400?sweater
+n5_cloth_shatsu,quanao,シャツ,áo sơ mi,shatsu,白いシャツ。,Sơ mi trắng.,https://source.unsplash.com/featured/400x400?shirt
+n5_kat_suka-to,quanao,スカート,váy,sukāto,長いスカート。,Váy dài.,https://source.unsplash.com/featured/400x400?skirt
+n5_cloth_zubon,quanao,ズボン,quần dài,zubon,ズボンをはく。,Mặc quần.,https://source.unsplash.com/featured/400x400?pants
+n5_kat_pajiama,quanao,パジャマ,đồ ngủ,pajiama,パジャマを着る。,Mặc đồ ngủ.,https://source.unsplash.com/featured/400x400?pajamas
+n5_kat_panti,quanao,パンティ,quần lót,panti,新しいパンティ。,Quần lót mới.,https://source.unsplash.com/featured/400x400?underwear
+n5_cloth_uwagi,quanao,上着,áo khoác ngoài,uwagi,上着を脱ぐ。,Cởi áo khoác.,https://source.unsplash.com/featured/400x400?jacket
+n5_cloth_kutsu,quanao,靴,giày,kutsu,靴を履く。,Đi giày.,https://source.unsplash.com/featured/400x400?shoes
+n5_cloth_megane,quanao,眼鏡,kính mắt,megane,眼鏡をかける。,Đeo kính.,https://source.unsplash.com/featured/400x400?glasses
+n5_obj_tebukuro,phukien,手袋,găng tay,tebukuro,手袋をはめる。,Đeo găng tay.,https://source.unsplash.com/featured/400x400?gloves
+n5_obj_tokei,phukien,時計,đồng hồ,tokei,時計を見る。,Xem đồng hồ.,https://source.unsplash.com/featured/400x400?watch
+n5_obj_hankachi,phukien,ハンカチ,khăn tay,hankachi,ハンカチを持つ。,Mang khăn tay.,https://source.unsplash.com/featured/400x400?handkerchief
+n5_body_hana,cothe,鼻,mũi,hana,鼻が高い。,Mũi cao.,https://source.unsplash.com/featured/400x400?nose
+n5_body_kao,cothe,顔,mặt,kao,顔を洗う。,Rửa mặt.,https://source.unsplash.com/featured/400x400?face
+n5_body_karada,cothe,体,thân thể,karada,体にいい。,Tốt cho cơ thể.,https://source.unsplash.com/featured/400x400?body
+n5_body_me,cothe,目,mắt,me,目が大きい。,Mắt to.,https://source.unsplash.com/featured/400x400?eye
+n5_body_te,cothe,手,tay,te,手を洗う。,Rửa tay.,https://source.unsplash.com/featured/400x400?hand
+n5_body_kuchi,cothe,口,miệng,kuchi,口を開けてください。,Mở miệng.,https://source.unsplash.com/featured/400x400?mouth
+n5_body_mimi,cothe,耳,tai,mimi,耳が痛い。,Đau tai.,https://source.unsplash.com/featured/400x400?ear
+n5_body_ha,cothe,歯,răng,ha,歯を磨く。,Đánh răng.,https://source.unsplash.com/featured/400x400?tooth
+n5_body_onaka,cothe,お腹,bụng,onaka,お腹が空いた。,Đói bụng.,https://source.unsplash.com/featured/400x400?stomach
+n5_body_kami,cothe,髪,tóc,kami,髪が長い。,Tóc dài.,https://source.unsplash.com/featured/400x400?hair
+n5_body_se,cothe,背,lưng/cao,se,背が高い。,Cao.,https://source.unsplash.com/featured/400x400?back
+n5_body_mune,cothe,胸,ngực,mune,胸が痛い。,Đau ngực.,https://source.unsplash.com/featured/400x400?chest
+n5_body_hiza,cothe,膝,đầu gối,hiza,膝を曲げる。,Gập gối.,https://source.unsplash.com/featured/400x400?knee
+n5_body_yubi,cothe,指,ngón tay,yubi,指輪をはめる。,Đeo nhẫn.,https://source.unsplash.com/featured/400x400?finger
+n5_body_kubi,cothe,首,cổ,kubi,首が回らない。,Rất bận.,https://source.unsplash.com/featured/400x400?neck
+n5_body_kata,cothe,肩,vai,kata,肩を揉む。,Massage vai.,https://source.unsplash.com/featured/400x400?shoulder
+n5_body_hoho,cothe,頬,má,hoho,頬を赤らめる。,Đỏ mặt.,https://source.unsplash.com/featured/400x400?cheek
+n5_col_aka,mausac,赤,đỏ,aka,赤いリンゴ。,Táo đỏ.,https://source.unsplash.com/featured/400x400?red
+n5_col_ao,mausac,青,xanh dương,ao,青い空。,Trời xanh.,https://source.unsplash.com/featured/400x400?blue
+n5_col_kiiro,mausac,黄色,vàng,kiiro,黄色い花。,Hoa vàng.,https://source.unsplash.com/featured/400x400?yellow
+n5_col_kuro,mausac,黒,đen,kuro,黒い靴。,Giày đen.,https://source.unsplash.com/featured/400x400?black
+n5_col_midori,mausac,緑,xanh lá,midori,緑の野菜。,Rau xanh.,https://source.unsplash.com/featured/400x400?green
+n5_col_shiro,mausac,白,trắng,shiro,白いシャツ。,Sơ mi trắng.,https://source.unsplash.com/featured/400x400?white
+n5_col_iro,mausac,色,màu sắc,iro,何色が好きですか。,Thích màu gì?,https://source.unsplash.com/featured/400x400?color
+n5_ent_dansu,giaitri,ダンス,khiêu vũ,dansu,ダンスを習う。,Học nhảy.,https://source.unsplash.com/featured/400x400?dance
+n5_lei_eiga,sothich,映画,phim,eiga,映画を見る。,Xem phim.,https://source.unsplash.com/featured/400x400?movie
+n5_lei_ongaku,sothich,音楽,âm nhạc,ongaku,音楽を聴く。,Nghe nhạc.,https://source.unsplash.com/featured/400x400?music
+n5_ent_piano,giaitri,ピアノ,piano,piano,ピアノを弾く。,Chơi piano.,https://source.unsplash.com/featured/400x400?piano
+n5_lei_saka,sothich,サッカー,bóng đá,sakkā,サッカーをする。,Đá bóng.,https://source.unsplash.com/featured/400x400?soccer
+n5_lei_shashin,sothich,写真,ảnh,shashin,写真を撮る。,Chụp ảnh.,https://source.unsplash.com/featured/400x400?photo
+n5_lei_shumi,sothich,趣味,sở thích,shumi,趣味は何ですか。,Sở thích?,https://source.unsplash.com/featured/400x400?hobby
+n5_lei_sports,sothich,スポーツ,thể thao,supōtsu,スポーツをする。,Chơi thể thao.,https://source.unsplash.com/featured/400x400?sports
+n5_ent_tenisu,giaitri,テニス,tennis,tenisu,テニスをする。,Chơi tennis.,https://source.unsplash.com/featured/400x400?tennis
+n5_lei_uta,sothich,歌,bài hát,uta,歌を歌う。,Hát.,https://source.unsplash.com/featured/400x400?song
+n5_ent_ryokou,giaitri,旅行,du lịch,ryokou,日本を旅行する。,Du lịch Nhật.,https://source.unsplash.com/featured/400x400?travel
+n5_hea_byouki,suckhoe,病気,bệnh,byouki,病気になった。,Bị bệnh.,https://source.unsplash.com/featured/400x400?sick
+n5_hea_genki,suckhoe,元気,khỏe,genki,元気な子供。,Trẻ khỏe.,https://source.unsplash.com/featured/400x400?healthy
+n5_hea_kaze,suckhoe,風邪,cảm lạnh,kaze,風邪をひいた。,Bị cảm.,https://source.unsplash.com/featured/400x400?cold
+n5_hea_kusuri,suckhoe,薬,thuốc,kusuri,薬を飲む。,Uống thuốc.,https://source.unsplash.com/featured/400x400?medicine
+n5_hea_netsu,suckhoe,熱,sốt,netsu,熱がありますか。,Bạn sốt không?,https://source.unsplash.com/featured/400x400?fever
+n5_hea_seki,suckhoe,咳,ho,seki,咳が出る。,Bị ho.,https://source.unsplash.com/featured/400x400?cough
+n5_sta_daijoubu,trangthai,大丈夫,ổn,daijoubu,大丈夫ですか。,Ổn chứ?,https://source.unsplash.com/featured/400x400?ok
+n5_obj_bentou,dovat,弁当,cơm hộp,bentou,お弁当を食べる。,Ăn cơm hộp.,https://source.unsplash.com/featured/400x400?bento
+n5_obj_fuuto,dovat,封筒,phong bì,fuuto,封筒に入れる。,Cho vào phong bì.,https://source.unsplash.com/featured/400x400?envelope
+n5_obj_hagaki,dovat,葉書,bưu thiếp,hagaki,葉書を送る。,Gửi bưu thiếp.,https://source.unsplash.com/featured/400x400?postcard
+n5_obj_hasami,dovan,はさみ,kéo,hasami,はさみで切る。,Cắt bằng kéo.,https://source.unsplash.com/featured/400x400?scissors
+n5_obj_hikidashi,dovat,引き出し,ngăn kéo,hikidashi,引き出しを開ける。,Mở ngăn kéo.,https://source.unsplash.com/featured/400x400?drawer
+n5_obj_hondana,dovat,本棚,kệ sách,hondana,本棚に並べる。,Xếp lên kệ.,https://source.unsplash.com/featured/400x400?bookshelf
+n5_obj_kaban,dovat,鞄,cặp/túi,kaban,重い鞄。,Cặp nặng.,https://source.unsplash.com/featured/400x400?bag
+n5_obj_kagami,dovat,鏡,gương,kagami,鏡を見る。,Nhìn gương.,https://source.unsplash.com/featured/400x400?mirror
+n5_obj_kagi,dovat,鍵,chìa khóa,kagi,鍵を忘れた。,Quên chìa khóa.,https://source.unsplash.com/featured/400x400?key
+n5_obj_kami,dovan,紙,giấy,kami,紙に書く。,Viết vào giấy.,https://source.unsplash.com/featured/400x400?paper
+n5_obj_kasa,dovat,傘,ô,kasa,傘をさす。,Che ô.,https://source.unsplash.com/featured/400x400?umbrella
+n5_obj_keshigomu,dovat,消しゴム,cục tẩy,keshigomu,消しゴムを貸して。,Cho mượn tẩy.,https://source.unsplash.com/featured/400x400?eraser
+n5_obj_kitte,dovat,切手,tem,kitte,切手を貼る。,Dán tem.,https://source.unsplash.com/featured/400x400?stamp
+n5_obj_saifu,dovat,財布,ví tiền,saifu,財布を失くした。,Mất ví.,https://source.unsplash.com/featured/400x400?wallet
+n5_obj_sekken,vesinh,石鹸,xà phòng,sekken,石鹸で洗う。,Rửa xà phòng.,https://source.unsplash.com/featured/400x400?soap
+n5_obj_taoru,vesinh,タオル,khăn tắm,taoru,タオルで拭く。,Lau khăn.,https://source.unsplash.com/featured/400x400?towel
+n5_obj_te-pu,dovan,テープ,băng dính,tēpu,テープで貼る。,Dán băng dính.,https://source.unsplash.com/featured/400x400?tape
+n5_obj_tsukue,dovat,机,bàn học,tsukue,机の上に本がある。,Sách trên bàn.,https://source.unsplash.com/featured/400x400?desk
+n5_obj_hako,dovat,箱,hộp,hako,箱を開ける。,Mở hộp.,https://source.unsplash.com/featured/400x400?box
+n5_obj_patti,khac,パーティー,tiệc,paatii,パーティーに行く。,Đi dự tiệc.,https://source.unsplash.com/featured/400x400?party
+n5_obj_pen,dovat,ペン,bút,pen,ペンで書く。,Viết bút.,https://source.unsplash.com/featured/400x400?pen
+n5_obj_jisho,dovat,辞書,từ điển,jisho,辞書を引く。,Tra từ điển.,https://source.unsplash.com/featured/400x400?dictionary
+n5_obj_zasshi,dovat,雑誌,tạp chí,zasshi,雑誌を買う。,Mua tạp chí.,https://source.unsplash.com/featured/400x400?magazine
+n5_mis_kippu,khac,切符,vé,kippu,切符を買う。,Mua vé.,https://source.unsplash.com/featured/400x400?ticket
+n5_obj_saizu,khac,サイズ,kích cỡ,saizu,サイズが合う。,Vừa size.,https://source.unsplash.com/featured/400x400?size
+n5_mis_imi,khac,意味,ý nghĩa,imi,意味がわかる。,Hiểu ý nghĩa.,https://source.unsplash.com/featured/400x400?meaning
+n5_mis_jishin,khac,自信,tự tin,jishin,自信がある。,Có tự tin.,https://source.unsplash.com/featured/400x400?confidence
+n5_obj_nyusu,khac,ニュース,tin tức,nyuusu,ニュースを見る。,Xem tin tức.,https://source.unsplash.com/featured/400x400?news
+n5_mis_oane,khac,お金,tiền,okane,お金がない。,Không tiền.,https://source.unsplash.com/featured/400x400?money
+n5_obj_omyo,dovat,お土産,quà lưu niệm,omiyage,お土産を買う。,Mua quà.,https://source.unsplash.com/featured/400x400?souvenir
+n5_pro_anata,daitu,あなた,bạn,anata,あなたは優しいですね。,Bạn tốt.,https://source.unsplash.com/featured/400x400?you
+n5_pro_are,daitu,あれ,cái kia,are,あれは山です。,Kia là núi.,https://source.unsplash.com/featured/400x400?that+over+there
+n5_pro_dochira,nghevan,どちら,cái nào,dochira,どちらがいい？,Cái nào tốt?,https://source.unsplash.com/featured/400x400?which
+n5_q_doko,tunghevan,どこ,ở đâu,doko,トイレはどこですか。,Nhà vệ sinh đâu?,https://source.unsplash.com/featured/400x400?where
+n5_pro_donata,nghevan,どなた,vị nào,donata,あの方はどなた？,Vị kia là ai?,https://source.unsplash.com/featured/400x400?who
+n5_q_dore,tunghevan,どれ,cái nào,dore,あなたの本はどれですか。,Sách của bạn cái nào?,https://source.unsplash.com/featured/400x400?which
+n5_q_doshite,tunghevan,どうして,tại sao,doushite,どうして来なかったの。,Sao không đến?,https://source.unsplash.com/featured/400x400?why
+n5_q_dou,tunghevan,どう,thế nào,dou,調子はどうですか。,Tình hình thế nào?,https://source.unsplash.com/featured/400x400?how
+n5_pro_ikura,nghevan,いくら,bao nhiêu tiền,ikura,これはいくらですか。,Bao nhiêu?,https://source.unsplash.com/featured/400x400?how+much
+n5_pro_ikutsu,nghevan,いくつ,bao nhiêu cái,ikutsu,いくつありますか。,Mấy cái?,https://source.unsplash.com/featured/400x400?how+many
+n5_q_itsu,tunghevan,いつ,khi nào,itsu,誕生日はいつですか。,Sinh nhật khi nào?,https://source.unsplash.com/featured/400x400?when
+n5_pro_kore,daitu,これ,cái này,kore,これをください。,Cho tôi cái này.,https://source.unsplash.com/featured/400x400?this
+n5_q_nani,tunghevan,何,cái gì,nani,これは何ですか。,Đây là cái gì?,https://source.unsplash.com/featured/400x400?what
+n5_pro_sore,daitu,それ,cái đó,sore,それは何ですか。,Đó là cái gì?,https://source.unsplash.com/featured/400x400?that
+n5_pro_watashi,daitu,私,tôi,watashi,私は学生です。,Tôi sinh viên.,https://source.unsplash.com/featured/400x400?I
+n5_q_dare,tunghevan,誰,ai,dare,あの人は誰ですか。,Người kia là ai?,https://source.unsplash.com/featured/400x400?who
+n5_adv_chodo,trangtu,ちょうど,vừa đúng,choudo,ちょうど三時だ。,Vừa đúng 3h.,https://source.unsplash.com/featured/400x400?exactly
+n5_adv_chotto,trangtu,ちょっと,một chút,chotto,ちょっと待って。,Đợi chút.,https://source.unsplash.com/featured/400x400?a+little
+n5_adv_dakara,tu_noi,だから,vì thế,dakara,雨だ。だから行かない。,Mưa, vì thế không đi.,https://source.unsplash.com/featured/400x400?therefore
+n5_adv_dandan,trangtu,だんだん,dần dần,dandan,だんだん暑くなる。,Dần nóng.,https://source.unsplash.com/featured/400x400?gradually
+n5_adv_daitai,trangtu,だいたい,khoảng,daitai,だいたいわかった。,Khoảng hiểu.,https://source.unsplash.com/featured/400x400?approximately
+n5_adv_hakkiri,trangtu,はっきり,rõ ràng,hakkiri,はっきり見える。,Nhìn rõ.,https://source.unsplash.com/featured/400x400?clearly
+n5_adv_hontouni,trangtu,本当に,thật sự,hontouni,本当に美味しい。,Thật ngon.,https://source.unsplash.com/featured/400x400?really
+n5_adv_ikkaini,trangtu,一回に,một lần,ikkaini,一回に行く。,Đi một lần.,https://source.unsplash.com/featured/400x400?once
+n5_adv_itsumo,trangtu,いつも,luôn,itsumo,いつも元気だ。,Luôn khỏe.,https://source.unsplash.com/featured/400x400?always
+n5_adv_kanari,trangtu,かなり,khá,kanari,今日はかなり暑い。,Khá nóng.,https://source.unsplash.com/featured/400x400?quite
+n5_adv_mada,trangtu,まだ,vẫn/chưa,mada,まだ終わっていません。,Vẫn chưa xong.,https://source.unsplash.com/featured/400x400?yet
+n5_adv_moshi,trangtu,もし,nếu,moshi,もし雨なら行かない。,Nếu mưa không đi.,https://source.unsplash.com/featured/400x400?if
+n5_adv_motto,trangtu,もっと,hơn,motto,もっと食べたい。,Muốn ăn hơn.,https://source.unsplash.com/featured/400x400?more
+n5_adv_mou,trangtu,もう,đã rồi,mou,もう食べました。,Đã ăn rồi.,https://source.unsplash.com/featured/400x400?already
+n5_adv_mousugu,trangtu,もうすぐ,sắp,mousugu,もうすぐ春だ。,Sắp xuân.,https://source.unsplash.com/featured/400x400?soon
+n5_adv_nakanaka,trangtu,なかなか,mãi không,nakanaka,なかなか終わらない。,Mãi không xong.,https://source.unsplash.com/featured/400x400?not+easily
+n5_adv_sugu,trangtu,すぐ,ngay,sugu,すぐ行きます。,Đi ngay.,https://source.unsplash.com/featured/400x400?immediately
+n5_adv_sukoshi,trangtu,少し,một chút,sukoshi,少し疲れました。,Hơi mệt.,https://source.unsplash.com/featured/400x400?a+little
+n5_adv_tabun,trangtu,たぶん,có lẽ,tabun,たぶん雨だろう。,Có lẽ mưa.,https://source.unsplash.com/featured/400x400?maybe
+n5_adv_takusan,trangtu,たくさん,nhiều,takusan,たくさん食べてね。,Ăn nhiều nhé.,https://source.unsplash.com/featured/400x400?many
+n5_adv_tokidoki,trangtu,時々,thỉnh thoảng,tokidoki,時々海へ行きます。,Thỉnh thoảng đi biển.,https://source.unsplash.com/featured/400x400?sometimes
+n5_adv_totemo,trangtu,とても,rất,totemo,とても暑いですね。,Rất nóng.,https://source.unsplash.com/featured/400x400?very
+n5_adv_yoku,trangtu,よく,thường/rõ,yoku,よく寝ました。,Ngủ ngon.,https://source.unsplash.com/featured/400x400?well
+n5_adv_yatto,trangtu,やっと,cuối cùng,yatto,やっと終わった。,Cuối cùng xong.,https://source.unsplash.com/featured/400x400?finally
+n5_adv_yukkuri,trangtu,ゆっくり,chậm,yukkuri,ゆっくり話して。,Nói chậm.,https://source.unsplash.com/featured/400x400?slowly
+n5_adv_zenzen,trangtu,全然,hoàn toàn không,zenzen,全然わからない。,Không hiểu gì.,https://source.unsplash.com/featured/400x400?not+at+all
+n5_adv_zutto,trangtu,ずっと,suốt,zutto,ずっと待っていた。,Đợi suốt.,https://source.unsplash.com/featured/400x400?continuously
+n5_adv_amari,trangtu,あまり,...không lắm,amari,あまり食べない。,Không ăn nhiều.,https://source.unsplash.com/featured/400x400?not+much
+n5_adv_taitei,trangtu,大抵,hầu hết,taitei,大抵の人は分かる。,Hầu hết đều hiểu.,https://source.unsplash.com/featured/400x400?usually
+n5_adv_tatoe,trangtu,たとえ,dù cho,tatoe,たとえ雨でも行く。,Dù mưa cũng đi.,https://source.unsplash.com/featured/400x400?even+if
+n5_adv_sorosoro,trangtu,そろそろ,sắp sửa,sorosoro,そろそろ帰ります。,Sắp về.,https://source.unsplash.com/featured/400x400?about+to
+n5_adv_mazu,trangtu,まず,trước tiên,mazu,まず名前を書いてください。,Trước tiên viết tên.,https://source.unsplash.com/featured/400x400?first
+n5_adv_tonikaku,trangtu,とにかく,dù sao,tonikaku,とにかく行ってみよう。,Dù sao thử đi.,https://source.unsplash.com/featured/400x400?anyway
+n5_adv_hajimete,trangtu,初めて,lần đầu,hajimete,初めて日本へ行った。,Lần đầu đi Nhật.,https://source.unsplash.com/featured/400x400?first+time
+n5_adv_hontou,trangtu,本当,thật sự,hontou,本当ですか。,Thật sao?,https://source.unsplash.com/featured/400x400?really
+n5_conj_soshite,tu_noi,そして,và rồi,soshite,掃除した。そして寝た。,Dọn xong rồi ngủ.,https://source.unsplash.com/featured/400x400?and+then
+n5_adv_shikkari,trangtu,しっかり,chắc chắn,shikkari,しっかりしろ！,Tỉnh táo lên!,https://source.unsplash.com/featured/400x400?firmly
+n5_cnt_mai,sodem,枚,tờ/chiếc,mai,紙を二枚。,Hai tờ giấy.,https://source.unsplash.com/featured/400x400?counter+for+flat+objects
+n5_cnt_mittsu,sodem,三つ,3 cái,mittsu,三つあります。,Có 3 cái.,https://source.unsplash.com/featured/400x400?three+things
+n5_mat_kane,vatlieu,金,vàng/kim loại,kane,金色の時計。,Đồng hồ vàng.,https://source.unsplash.com/featured/400x400?gold
+n5_mat_ki,vatlieu,木,gỗ,ki,木で作る。,Làm bằng gỗ.,https://source.unsplash.com/featured/400x400?wood
+n5_kat_garasu,vatlieu,ガラス,thủy tinh,garasu,ガラスの窓。,Cửa sổ thủy tinh.,https://source.unsplash.com/featured/400x400?glass
+n5_sea_aki,mua,秋,thu,aki,秋は涼しい。,Thu mát.,https://source.unsplash.com/featured/400x400?autumn
+n5_sea_natsu,mua,夏,hè,natsu,夏はとても暑い。,Hè nóng.,https://source.unsplash.com/featured/400x400?summer
+n5_sea_haru,mua,春,xuân,haru,春は花が咲く。,Xuân hoa nở.,https://source.unsplash.com/featured/400x400?spring

@@ -1,0 +1,15 @@
+venv
+venv2
+__pycache__
+*.pyc
+*.log
+.env
+.git
+.gitignore
+staticfiles
+media
+mediafiles
+*.md
+Dockerfile
+docker-compose.yml
+.dockerignore

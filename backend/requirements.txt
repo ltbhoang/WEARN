@@ -1,0 +1,22 @@
+# Django core (tương thích Python 3.11)
+Django==5.1.7
+djangorestframework==3.15.2
+djangorestframework_simplejwt==5.3.1
+django-cors-headers==4.4.0
+
+# Database driver
+mysqlclient==2.2.8
+
+# Xử lý ảnh
+Pillow==12.2.0
+numpy==2.4.4
+scikit-image==0.26.0
+
+# Chuyển đổi SVG sang PNG
+cairosvg==2.9.0
+
+# Production server & environment
+gunicorn
+python-dotenv
+
+django-storages[azure]
