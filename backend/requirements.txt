@@ -18,3 +18,5 @@ cairosvg==2.9.0
 # Production server & environment
 gunicorn
 python-dotenv
+
+django-storages[azure]

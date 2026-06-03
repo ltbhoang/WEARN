@@ -23,14 +23,11 @@ RUN mkdir -p /app/staticfiles /app/media
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
-# Set quyền cho entrypoint
-COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh
-
 # Tạo user không root
 RUN useradd -m -u 1000 django && chown -R django:django /app
 USER django
 
 EXPOSE 8000
 
-ENTRYPOINT ["./entrypoint.sh"]
+# Không dùng entrypoint.sh nữa, chạy migrate và runserver trực tiếp
+CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]

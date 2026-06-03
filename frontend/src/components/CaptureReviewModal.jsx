@@ -12,6 +12,7 @@ const CaptureReviewModal = ({ imageUrl, onSave, onCancel }) => {
   const [maskImageUrl, setMaskImageUrl] = useState(null);
 
   const AI_URL = "http://192.168.1.13:8001/predict";
+  //const AI_URL = "http://10.183.94.14:8001/predict";
   const today = new Date().toLocaleDateString("vi-VN", {
     day: "numeric",
     month: "long",

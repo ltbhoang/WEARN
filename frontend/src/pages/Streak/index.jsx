@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
-  Calendar,
   TrendingUp,
   Flame,
   Trophy,
@@ -11,16 +10,37 @@ import {
   Loader2,
   Layers,
   Award,
+  ChevronRight,
+  X,
+  CheckCircle,
 } from "lucide-react";
 import { useDataStore } from "../../store/dataStore";
 import { useFlashcardStore } from "../../store/flashcardStore";
+
+// Danh sách tháng (có icon nhẹ)
+const MONTHS = [
+  { id: 0, name: "Tháng 1", icon: "" },
+  { id: 1, name: "Tháng 2", icon: "" },
+  { id: 2, name: "Tháng 3", icon: "" },
+  { id: 3, name: "Tháng 4", icon: "" },
+  { id: 4, name: "Tháng 5", icon: "" },
+  { id: 5, name: "Tháng 6", icon: "" },
+  { id: 6, name: "Tháng 7", icon: "" },
+  { id: 7, name: "Tháng 8", icon: "" },
+  { id: 8, name: "Tháng 9", icon: "" },
+  { id: 9, name: "Tháng 10", icon: "" },
+  { id: 10, name: "Tháng 11", icon: "" },
+  { id: 11, name: "Tháng 12", icon: "" },
+];
 
 const StreakPage = () => {
   const navigate = useNavigate();
   const { streakData, fetchStreak, loading } = useDataStore();
   const { flashcardSets, fetchFlashcardSets } = useFlashcardStore();
   const [showAllAchievements, setShowAllAchievements] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
+  // eslint-disable-next-line no-unused-vars
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
@@ -120,8 +140,6 @@ const StreakPage = () => {
     return weeks;
   }, [selectedYear, selectedMonth, activity_dates]);
 
-  const months = Array.from({ length: 12 }, (_, i) => `Tháng ${i + 1}`);
-
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFD]">
@@ -191,25 +209,24 @@ const StreakPage = () => {
         </div>
       </div>
 
-      {/* Calendar Section */}
+      {/* Calendar Section - đã bỏ icon lịch, thay select bằng bottom sheet */}
       <div className="px-6 mb-8 mt-6">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-[#E85A4F]" />
-            <h2 className="text-base font-bold">Lịch học</h2>
-          </div>
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="bg-white border border-gray-100 rounded-xl px-3 py-1.5 text-xs font-bold shadow-sm focus:ring-0"
+          <h2 className="text-base font-bold">Lịch học</h2>
+          <button
+            onClick={() => setIsSheetOpen(true)}
+            className="flex items-center justify-between bg-white border border-gray-100 rounded-xl px-4 py-2 shadow-sm active:scale-[0.98] transition-all"
           >
-            {months.map((m, idx) => (
-              <option key={idx} value={idx}>{m}</option>
-            ))}
-          </select>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-[#2D2D2D]">
+                {MONTHS[selectedMonth].name}
+              </span>
+            </div>
+            <ChevronRight size={16} className="text-gray-300 ml-1" />
+          </button>
         </div>
 
-        <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-4xl p-5 shadow-sm border border-gray-100">
           <div className="grid grid-cols-7 gap-1 mb-4">
             {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((d) => (
               <div key={d} className="text-xs font-bold text-[#CCC] text-center">
@@ -298,6 +315,69 @@ const StreakPage = () => {
           Tiếp tục học tập
         </button>
       </div>
+
+      {/* BOTTOM SHEET chọn tháng */}
+      {isSheetOpen && (
+        <div className="fixed inset-0 z-100 flex items-end justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setIsSheetOpen(false)}
+          />
+          <div className="relative w-full max-h-[75vh] bg-white rounded-t-[40px] shadow-2xl flex flex-col animate-slide-up overflow-hidden">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-3 mb-1" />
+            <div className="p-6 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white z-10">
+              <h3 className="text-lg font-black text-[#2D2D2D]">Chọn tháng</h3>
+              <button
+                onClick={() => setIsSheetOpen(false)}
+                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 space-y-2 pb-10">
+              {MONTHS.map((month) => (
+                <button
+                  key={month.id}
+                  onClick={() => {
+                    setSelectedMonth(month.id);
+                    setIsSheetOpen(false);
+                  }}
+                  className={`flex items-center gap-4 w-full p-4 rounded-2xl transition-all ${
+                    selectedMonth === month.id
+                      ? "bg-[#FEE9E7] border border-[#E85A4F]/20 shadow-sm"
+                      : "bg-[#FAFAFA] active:bg-gray-100"
+                  }`}
+                >
+                  <span className="text-2xl">{month.icon}</span>
+                  <span
+                    className={`flex-1 text-left font-bold ${
+                      selectedMonth === month.id ? "text-[#E85A4F]" : "text-[#4A4A4A]"
+                    }`}
+                  >
+                    {month.name}
+                  </span>
+                  {selectedMonth === month.id && (
+                    <CheckCircle size={20} className="text-[#E85A4F]" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CSS animation */}
+      <style>
+        {`
+          @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+          }
+          .animate-slide-up {
+            animation: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+          }
+        `}
+      </style>
     </div>
   );
 };

@@ -17,7 +17,7 @@ class Vocabulary(models.Model):
     example_translation = models.TextField(blank=True, null=True)      # dịch câu ví dụ
     pronunciation = models.CharField(max_length=255, blank=True, null=True)  # romaji (cách đọc Latin)
     class_name = models.CharField(max_length=100, unique=True)         # mã định danh (n5_adj_abunai)
-    topic = models.CharField(max_length=50, blank=True, null=True)      # chủ đề (tinhtu, dongtu...)
+    topic = models.CharField(max_length=50, blank=True, null=True, db_index=True)      # chủ đề (tinhtu, dongtu...)
     reading_hiragana = models.CharField(max_length=255, blank=True, null=True) # cách đọc hiragana
     created_at = models.DateTimeField(auto_now_add=True)
     audio = models.FileField(upload_to='vocab_audio/', blank=True, null=True)

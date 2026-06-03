@@ -256,16 +256,6 @@ const FlashcardPracticePage = () => {
           </div>
 
           <div className="space-y-4">
-            {/* Ôn từ chưa thuộc (theo DB) */}
-            {unmemorizedCount > 0 && (
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleReviewUnmemorized}
-                className="w-full py-5 bg-[#27AE60] text-white rounded-[2rem] font-black text-xl shadow-xl shadow-green-100 flex items-center justify-center gap-3"
-              >
-                <RefreshCw className="w-6 h-6" /> ÔN TỪ CHƯA THUỘC ({unmemorizedCount})
-              </motion.button>
-            )}
 
             {/* Ôn từ đã "Học sau" trong phiên này */}
             {laterOnlyCount > 0 && (
@@ -274,7 +264,7 @@ const FlashcardPracticePage = () => {
                 onClick={handleReviewLaterOnly}
                 className="w-full py-5 bg-[#FF8C42] text-white rounded-[2rem] font-black text-xl shadow-xl flex items-center justify-center gap-3"
               >
-                <RefreshCw className="w-6 h-6" /> ÔN "HỌC SAU" TRONG PHIÊN ({laterOnlyCount})
+                <RefreshCw className="w-6 h-6" /> ÔN TỪ CHƯA THUỘC ({laterOnlyCount})
               </motion.button>
             )}
 

@@ -69,33 +69,26 @@ export const useVocabStore = create((set, get) => ({
   },
 
   // Thêm vào trong create((set, get) => ({ ... }))
+  // store/vocabStore.js (chỉ sửa hàm fetchTopicsWithImages)
   fetchTopicsWithImages: async () => {
     set({ loading: true, error: null });
     try {
-      // 1. Lấy danh sách tên topic trước
-      const resTopics = await axiosPrivate.get("/api/vocabularies/topics/");
-      const topicList = resTopics.data;
-
-      // 2. Với mỗi topic, lấy danh sách từ vựng để lấy ảnh của từ đầu tiên
-      const topicsWithData = await Promise.all(
-        topicList.map(async (topic) => {
-          try {
-            const resVocab = await axiosPrivate.get(
-              `/api/vocabularies/?topic=${topic}`
-            );
-            // Lấy ảnh của từ đầu tiên, nếu không có ảnh thì để null
-            const firstImage =
-              resVocab.data[0]?.image_url || resVocab.data[0]?.image || null;
-            return { id: topic, image: firstImage };
-          } catch {
-            return { id: topic, image: null };
-          }
-        })
+      // Gọi API gộp một lần
+      const response = await axiosPrivate.get(
+        "/api/vocabularies/all-by-topic/"
       );
+      const allData = response.data; // { "congty": [...], "connguoi": [...], ... }
+      const topicList = Object.keys(allData); // lấy danh sách các topic
+
+      const topicsWithData = topicList.map((topic) => {
+        const firstVocab = allData[topic][0];
+        const image = firstVocab?.image_url || firstVocab?.image || null;
+        return { id: topic, image: image };
+      });
 
       set({ topics: topicsWithData, loading: false });
-    // eslint-disable-next-line no-unused-vars
     } catch (err) {
+      console.error("Lỗi fetch topics with images:", err);
       set({ error: "Không thể tải danh sách chủ đề kèm ảnh", loading: false });
     }
   },

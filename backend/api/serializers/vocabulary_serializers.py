@@ -36,6 +36,13 @@ class SavedVocabularySerializer(serializers.ModelSerializer):
             'id', 'collection', 'vocabulary', 'user_image', 'saved_at',
             'word', 'meaning', 'pronunciation', 'example_sentence', 'example_translation', 'audio_url'
         ]
+    def get_audio_url(self, obj):
+        if obj.vocabulary and obj.vocabulary.audio:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.vocabulary.audio.url)
+            return obj.vocabulary.audio.url
+        return None
 
 class LearningProgressSerializer(serializers.ModelSerializer):
     word_name = serializers.ReadOnlyField(source='vocabulary.word')

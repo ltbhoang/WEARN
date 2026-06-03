@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { User, Mail, Lock, Chrome, Apple } from "lucide-react";
+import { User, Mail, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { axiosPublic } from "../../apis/axios"; // điều chỉnh đường dẫn import cho đúng
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -34,24 +35,38 @@ export default function Signup() {
     }
     setLoading(true);
     try {
-      const response = await fetch("http://192.168.1.13:8000/api/register/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-          full_name: formData.fullName, // nếu backend có field này
-        }),
-      });
-      const data = await response.json();
-      if (response.ok) {
+      // Chuẩn bị payload đúng với RegisterSerializer (Django)
+      const payload = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        first_name: formData.fullName || "",
+        last_name: "",
+      };
+      const response = await axiosPublic.post("/api/register/", payload);
+      if (response.status === 201) {
         navigate("/login");
       } else {
-        setError(data.detail || data.message || "Đăng ký thất bại, vui lòng thử lại");
+        setError("Đăng ký thất bại, vui lòng thử lại");
       }
     } catch (err) {
-      setError("Lỗi kết nối đến máy chủ");
+      if (err.response && err.response.data) {
+        const errorData = err.response.data;
+        if (typeof errorData === "object") {
+          // Lấy thông báo lỗi đầu tiên từ backend (VD: {username: ["Tên đăng nhập đã tồn tại"]})
+          const firstKey = Object.keys(errorData)[0];
+          const firstError = errorData[firstKey];
+          if (Array.isArray(firstError)) {
+            setError(firstError[0]);
+          } else {
+            setError(firstError || "Đăng ký thất bại");
+          }
+        } else {
+          setError(errorData.detail || errorData.message || "Đăng ký thất bại");
+        }
+      } else {
+        setError("Lỗi kết nối đến máy chủ");
+      }
     } finally {
       setLoading(false);
     }
@@ -64,8 +79,8 @@ export default function Signup() {
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <div 
-            onClick={() => navigate("/")} 
+          <div
+            onClick={() => navigate("/")}
             className="inline-flex items-center justify-center w-16 h-16 bg-[#E85A4F] rounded-[1.8rem] shadow-lg mb-4 cursor-pointer hover:scale-105 transition-transform"
           >
             <span className="text-white font-black italic text-2xl">W</span>
@@ -95,7 +110,7 @@ export default function Signup() {
               </div>
             </div>
 
-            {/* Họ và tên */}
+            {/* Họ và tên (sẽ được gửi thành first_name) */}
             <div>
               <label className="block text-[10px] font-black text-[#8E8D8A] uppercase tracking-[0.2em] mb-2 ml-1">Họ và tên</label>
               <div className="relative group">
@@ -169,8 +184,8 @@ export default function Signup() {
               </div>
             )}
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="w-full bg-[#474747] text-white py-5 rounded-2xl font-black shadow-xl hover:bg-[#E85A4F] active:scale-[0.98] transition-all flex items-center justify-center gap-3 mt-4 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -182,8 +197,8 @@ export default function Signup() {
 
         <p className="text-center mt-8 text-sm font-medium text-[#8E8D8A]">
           Đã có tài khoản?{" "}
-          <button 
-            onClick={() => navigate("/login")} 
+          <button
+            onClick={() => navigate("/login")}
             className="text-[#E85A4F] font-black hover:underline"
           >
             Đăng nhập ngay

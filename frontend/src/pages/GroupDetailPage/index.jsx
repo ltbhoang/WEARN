@@ -6,7 +6,6 @@ import { useVocabStore } from "../../store/vocabStore";
 import { axiosPrivate } from "../../apis/axios";
 import WordDetailModal from "../../components/WordDetail";
 
-// Đồng bộ GROUP_MAPPING với TopicListPage (12 nhóm)
 const GROUP_MAPPING = {
   "Gia đình & Quan hệ": ["giadinh", "connguoi"],
   "Cuộc sống & Nhà cửa": ["nhacua", "dovan", "dodung", "vesinh"],
@@ -59,7 +58,6 @@ const GroupDetailPage = () => {
   const [selectedWord, setSelectedWord] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Helper: chuyển dữ liệu từ API sang format WordDetailModal
   const formatWordItem = (word) => ({
     id: word.id || word.class_name,
     ja: word.word,
@@ -73,53 +71,43 @@ const GroupDetailPage = () => {
     topicId: word.topic,
   });
 
-  // Hàm fetch trực tiếp từ API cho một topic
-  const fetchWordsForTopic = async (topicId) => {
-    try {
-      const response = await axiosPrivate.get(
-        `/api/vocabularies/?topic=${topicId}`
-      );
-      // Chuyển đổi dữ liệu ngay khi nhận
-      const formattedWords = response.data.map(formatWordItem);
-      return { topicId, words: formattedWords };
-    } catch (err) {
-      console.error(`Lỗi fetch topic ${topicId}:`, err);
-      return { topicId, words: [] };
-    }
-  };
-
   useEffect(() => {
     if (!topicIds.length) {
       setLoading(false);
       return;
     }
 
-    const fetchAllTopics = async () => {
+    const fetchAllData = async () => {
       setLoading(true);
-      const results = await Promise.all(
-        topicIds.map((id) => fetchWordsForTopic(id))
-      );
-      const newWordsByTopic = {};
-      results.forEach(({ topicId, words }) => {
-        if (words && words.length > 0) {
-          newWordsByTopic[topicId] = words;
-        }
-      });
-      setWordsByTopic(newWordsByTopic);
-      setLoading(false);
+      try {
+        const response = await axiosPrivate.get(
+          "/api/vocabularies/all-by-topic/"
+        );
+        const allData = response.data;
+        const newWordsByTopic = {};
+        topicIds.forEach((topicId) => {
+          const words = allData[topicId];
+          if (words && words.length) {
+            newWordsByTopic[topicId] = words.map(formatWordItem);
+          }
+        });
+        setWordsByTopic(newWordsByTopic);
+      } catch (err) {
+        console.error("Lỗi fetch gộp:", err);
+        // Không gọi fallback, để tránh nhiều request
+        setWordsByTopic({});
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchAllTopics();
+    fetchAllData();
   }, [topicIds]);
 
-  // Cập nhật trạng thái memorized cho từ
   const handleToggleMemorized = async (wordId) => {
     setActionLoading(true);
     try {
-      // Gọi API cập nhật memorized
       await axiosPrivate.patch(`/api/vocabularies/${wordId}/memorized/`);
-
-      // Cập nhật local state (optimistic)
       setWordsByTopic((prev) => {
         const newState = { ...prev };
         for (const topicId in newState) {
@@ -137,15 +125,11 @@ const GroupDetailPage = () => {
     }
   };
 
-  // Xóa từ vựng
   const handleDeleteWord = async (wordId) => {
     if (!window.confirm("Bạn có chắc muốn xóa từ này khỏi nhóm?")) return;
-
     setActionLoading(true);
     try {
       await axiosPrivate.delete(`/api/vocabularies/${wordId}/`);
-
-      // Xóa khỏi local state
       setWordsByTopic((prev) => {
         const newState = { ...prev };
         for (const topicId in newState) {
@@ -153,14 +137,11 @@ const GroupDetailPage = () => {
             (word) => word.id !== wordId
           );
         }
-        // Xóa topic nếu không còn từ nào
         Object.keys(newState).forEach((topicId) => {
           if (newState[topicId].length === 0) delete newState[topicId];
         });
         return newState;
       });
-
-      // Đóng modal nếu đang mở
       setSelectedWord(null);
     } catch (err) {
       console.error("Lỗi xóa từ:", err);
@@ -170,13 +151,10 @@ const GroupDetailPage = () => {
     }
   };
 
-  const handleWordClick = (word) => {
-    setSelectedWord(word);
-  };
-
+  const handleWordClick = (word) => setSelectedWord(word);
   const closeModal = () => {
     setSelectedWord(null);
-    resetCurrentVocabulary(); // Giữ lại để clear store nếu cần
+    resetCurrentVocabulary();
   };
 
   if (error && !selectedWord) {
@@ -219,7 +197,6 @@ const GroupDetailPage = () => {
           </h1>
         </div>
       </header>
-
       <main className="max-w-5xl mx-auto px-4 py-6">
         {topicIds.length === 0 ? (
           <div className="text-center text-gray-500 py-10">
@@ -229,7 +206,6 @@ const GroupDetailPage = () => {
           topicIds.map((topicId) => {
             const words = wordsByTopic[topicId] || [];
             if (words.length === 0) return null;
-
             return (
               <section key={topicId} className="mb-8">
                 <h2 className="text-xl font-bold text-[#E85A4F] mb-3 border-l-4 border-[#E85A4F] pl-3">
@@ -242,7 +218,6 @@ const GroupDetailPage = () => {
                       onClick={() => handleWordClick(word)}
                       className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] flex gap-3"
                     >
-                      {/* Ảnh từ vựng */}
                       <div className="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
                         {word.img ? (
                           <img
@@ -283,7 +258,6 @@ const GroupDetailPage = () => {
             );
           })
         )}
-
         {Object.keys(wordsByTopic).length === 0 &&
           !loading &&
           topicIds.length > 0 && (
@@ -292,25 +266,21 @@ const GroupDetailPage = () => {
             </div>
           )}
       </main>
-
       {selectedWord && (
         <WordDetailModal
           item={selectedWord}
           onClose={closeModal}
           onToggleMemorized={handleToggleMemorized}
-          onDelete={handleDeleteWord} // vẫn truyền nhưng modal sẽ không dùng đến
+          onDelete={handleDeleteWord}
           relatedWords={[]}
           hideRelated={true}
           isSystem={true}
           onAddToFlashcard={(word) => {
-            // TODO: Gọi API thêm từ này vào flashcard của user
             console.log("Thêm vào flashcard:", word);
             alert(`Đã thêm "${word.ja}" vào flashcard!`);
           }}
         />
       )}
-
-      {/* Overlay loading khi thao tác xóa/toggle */}
       {actionLoading && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[60]">
           <Loader2 className="w-8 h-8 text-white animate-spin" />

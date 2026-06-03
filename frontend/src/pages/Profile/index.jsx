@@ -9,7 +9,6 @@ import {
   Flame,
   TrendingUp,
   Award,
-  Lock,
   Loader2,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
@@ -44,7 +43,13 @@ const avatarOptions = [
 const Profile = () => {
   const navigate = useNavigate();
   const { user, updateUser, fetchUserProfile, loading: authLoading } = useAuthStore();
-  const { flashcardSets, fetchFlashcardSets } = useFlashcardStore();
+  const { 
+    flashcardSets, 
+    fetchFlashcardSets,
+    savedVocabularies,      // 👈 Lấy savedVocabularies
+    fetchSavedVocabularies, // 👈 Hàm fetch
+    loading: cameraLoading  // 👈 Trạng thái loading của savedVocabularies
+  } = useFlashcardStore();
   const { streakData, fetchStreak } = useDataStore();
 
   const [editMode, setEditMode] = useState(false);
@@ -65,10 +70,12 @@ const Profile = () => {
   });
   const [avatarUrl, setAvatarUrl] = useState(avatar107);
 
-  // Lấy dữ liệu thống kê
+  // Lấy dữ liệu thống kê (bao gồm savedVocabularies)
   useEffect(() => {
     fetchFlashcardSets();
     fetchStreak();
+    fetchSavedVocabularies(); // 👈 Gọi fetch để lấy danh sách scan
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Cập nhật form data khi user thay đổi
@@ -87,10 +94,14 @@ const Profile = () => {
     if (!user) {
       fetchUserProfile().catch(console.error);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const totalFlashcards = flashcardSets.reduce((sum, set) => sum + (set.item_count || 0), 0);
   const streakDays = streakData?.current_streak || 0;
+
+  // Số lần scan = số lượng savedVocabularies (mỗi lần lưu 1 từ)
+  const scanCount = savedVocabularies.length;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -136,39 +147,39 @@ const Profile = () => {
   };
 
   const handleAvatarSelect = async (avatar) => {
-  setLoading(true);
-  try {
-    await axiosPrivate.patch('/api/profile/', { avatar_url: avatar });
-    setAvatarUrl(avatar);
-    updateUser({ avatar: avatar });
-    setShowAvatarModal(false);
-  } catch (err) {
-    console.error(err);
-    alert("Không thể cập nhật ảnh đại diện");
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      await axiosPrivate.patch('/api/profile/', { avatar_url: avatar });
+      setAvatarUrl(avatar);
+      updateUser({ avatar: avatar });
+      setShowAvatarModal(false);
+    } catch (err) {
+      console.error(err);
+      alert("Không thể cập nhật ảnh đại diện");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const handleFileUpload = async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  const formData = new FormData();
-  formData.append('avatar', file);
-  setLoading(true);
-  try {
-    const res = await axiosPrivate.post('/api/upload-avatar/', formData);
-    setAvatarUrl(res.data.avatar_url);
-    updateUser({ avatar: res.data.avatar_url });
-    setShowAvatarModal(false);
-    setShowFileUpload(false);
-  } catch (err) {
-    console.error(err);
-    alert("Upload thất bại");
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('avatar', file);
+    setLoading(true);
+    try {
+      const res = await axiosPrivate.post('/api/upload-avatar/', formData);
+      setAvatarUrl(res.data.avatar_url);
+      updateUser({ avatar: res.data.avatar_url });
+      setShowAvatarModal(false);
+      setShowFileUpload(false);
+    } catch (err) {
+      console.error(err);
+      alert("Upload thất bại");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (authLoading && !user) {
     return (
@@ -223,7 +234,13 @@ const handleFileUpload = async (e) => {
           <div className="text-center">
             <Camera className="w-6 h-6 text-[#E85A4F] mx-auto mb-1" />
             <p className="text-xs text-[#8E8D8A]">Số lần scan</p>
-            <p className="text-xl font-bold text-[#2D2D2D]">0</p>
+            <p className="text-xl font-bold text-[#2D2D2D]">
+              {cameraLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-[#E85A4F] mx-auto" />
+              ) : (
+                scanCount
+              )}
+            </p>
           </div>
           <div className="text-center">
             <Award className="w-6 h-6 text-[#E85A4F] mx-auto mb-1" />
@@ -317,7 +334,7 @@ const handleFileUpload = async (e) => {
       <div className="px-6 mt-6">
         <button
           onClick={() => navigate("/streak")}
-          className="w-full py-4 bg-gradient-to-r from-slate-500 to-[#E85A4F] text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2"
+          className="w-full py-4 bg-linear-to-r from-slate-500 to-[#E85A4F] text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2"
         >
           <TrendingUp className="w-5 h-5" />
           Tiếp tục học để cải thiện thành tích

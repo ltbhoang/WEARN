@@ -81,6 +81,18 @@ class VocabularyViewSet(viewsets.ReadOnlyModelViewSet):
         )
         return Response(list(topics))
 
+    @action(detail=False, methods=['get'], url_path='all-by-topic')
+    def all_by_topic(self, request):
+        queryset = Vocabulary.objects.exclude(topic__isnull=True).exclude(topic='')
+        grouped = {}
+        for vocab in queryset:
+            topic = vocab.topic
+            if topic not in grouped:
+                grouped[topic] = []
+            serializer = self.get_serializer(vocab)  # dùng VocabularySerializer đã có audio_url
+            grouped[topic].append(serializer.data)
+        return Response(grouped)
+
 # 2. Collection: Của ai người đó thấy
 class CollectionViewSet(viewsets.ModelViewSet):
     queryset = Collection.objects.all()
@@ -558,3 +570,4 @@ class DeleteTempImageView(APIView):
             os.remove(file_path)
             return Response({'status': 'deleted', 'path': relative_path})
         return Response({'error': 'File not found or not a temp file'}, status=404)
+    

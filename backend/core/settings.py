@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'api.apps.ApiConfig',
+    'storages',
 ]
 
 REST_FRAMEWORK = {
@@ -96,7 +97,10 @@ DATABASES = {
         'PASSWORD': os.environ.get('DB_PASSWORD', ''),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '3306'),
-        'OPTIONS': {'charset': 'utf8mb4'},
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
+            },
     }
 }
 
@@ -138,5 +142,17 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-MEDIA_URL = '/media/'
+# Media files - dùng Azure Storage
+MEDIA_URL = '/media/'  # prefix dùng để generate URL, nhưng thực tế sẽ được thay bằng URL của Azure
+# Không cần MEDIA_ROOT khi dùng DEFAULT_FILE_STORAGE, nhưng giữ để tránh lỗi không mong muốn
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Cấu hình Azure Storage (dùng cho DEFAULT_FILE_STORAGE)
+DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+
+# Thông tin tài khoản Azure
+AZURE_ACCOUNT_NAME = 'wearnstorage'
+AZURE_ACCOUNT_KEY = os.environ.get('AZURE_ACCOUNT_KEY')   # lấy từ biến môi trường (bắt buộc)
+AZURE_CONTAINER = 'media'          # tên container chứa media
+AZURE_URL_EXPIRATION_SECS = None   # None = URL vĩnh viễn (container đã public)
+AZURE_OVERWRITE_FILES = True       # ghi đè file nếu trùng tên
