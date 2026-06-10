@@ -11,6 +11,9 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
   const [fetchingVocab, setFetchingVocab] = useState(false);
   const [maskImageUrl, setMaskImageUrl] = useState(null);
   const [maskLoadError, setMaskLoadError] = useState(false);
+  
+  // ➕ Thêm state này để lưu ảnh gốc "sạch" khi AI trả về kết quả
+  const [cleanOriginImageUrl, setCleanOriginImageUrl] = useState(null);
 
   const AI_URL = "https://lily-prescribe-avenue.ngrok-free.dev/predict-base64";
   const today = new Date().toLocaleDateString("vi-VN", {
@@ -26,6 +29,7 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
         setLoading(true);
         setMaskImageUrl(null);
         setMaskLoadError(false);
+        setCleanOriginImageUrl(null); // Reset link ảnh sạch
         
         const res = await fetch(AI_URL, {
           method: "POST",
@@ -34,15 +38,21 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
         });
         if (!res.ok) throw new Error(`AI service error: HTTP ${res.status}`);
         const data = await res.json();
+        
         if (data.success && data.predictions.length) {
           setPredictions(data.predictions);
           const first = data.predictions[0];
           setSelectedLabel(first.label);
           setSelectedConfidence(first.confidence);
           
+          // ➕ Cập nhật ảnh gốc sạch (ảnh WaveSpeed) nếu API trả về 
+          // (Bạn kiểm tra xem key trong JSON trả về tên là gì, ví dụ: data.image_url hoặc data.uploaded_url)
+          if (data.image_url) { 
+            setCleanOriginImageUrl(data.image_url);
+          }
+
           if (data.mask_url) {
             console.log("✅ mask_url nhận được:", data.mask_url);
-            // Thử tải ảnh mask để kiểm tra lỗi
             const img = new Image();
             img.onload = () => {
               console.log("✅ Ảnh mask tải thành công");
@@ -64,7 +74,7 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
         console.error("AI error:", err);
         setError(err.message);
       } finally {
-        setLoading(false);
+        loading && setLoading(false);
       }
     };
     detect();
@@ -129,7 +139,14 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
   }
 
   const isConfidenceValid = selectedConfidence >= 60;
-  const displayImageUrl = maskImageUrl && !maskLoadError ? maskImageUrl : imageUrl;
+  
+  // 🔄 CẬP NHẬT LOGIC ĐỊNH NGHĨA ẢNH HIỂN THỊ:
+  // 1. Ưu tiên số 1: maskImageUrl (nếu tải thành công)
+  // 2. Ưu tiên số 2: cleanOriginImageUrl (ảnh WaveSpeed nhận từ API)
+  // 3. Cuối cùng: Mới dùng đến imageUrl truyền từ ngoài vào làm dự phòng
+  const displayImageUrl = maskImageUrl && !maskLoadError 
+    ? maskImageUrl 
+    : (cleanOriginImageUrl || imageUrl);
 
   return (
     <div className="fixed inset-0 bg-[#F9F9F6] z-50 flex flex-col p-6 font-sans select-none overflow-hidden">
@@ -154,7 +171,7 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
             </button>
           )}
 
-          {/* ẢNH: ưu tiên mask nếu có và tải thành công */}
+          {/* ẢNH */}
           <div className="w-44 h-48 flex items-center justify-center drop-shadow-xl">
             <img 
               src={displayImageUrl} 
