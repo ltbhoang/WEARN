@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { axiosPrivate } from "../apis/axios";
 
-const CaptureReviewModal = ({ imageUrl, onSave, onCancel }) => {
+const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => {
   const [predictions, setPredictions] = useState([]);
   const [vocabulary, setVocabulary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,7 @@ const CaptureReviewModal = ({ imageUrl, onSave, onCancel }) => {
 
   //const AI_URL = "http://192.168.1.13:8001/predict";
   //const AI_URL = "http://10.183.94.14:8001/predict";
-  const AI_URL = "https://lily-prescribe-avenue.ngrok-free.dev/predict";
+  const AI_URL = "https://lily-prescribe-avenue.ngrok-free.dev/predict-base64";
   const today = new Date().toLocaleDateString("vi-VN", {
     day: "numeric",
     month: "long",
@@ -21,13 +21,14 @@ const CaptureReviewModal = ({ imageUrl, onSave, onCancel }) => {
 
   useEffect(() => {
     const detect = async () => {
+      if (!rawImageDataUrl) return;
       try {
         setError(null);
         setLoading(true);
         const res = await fetch(AI_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image_url: imageUrl }),
+          body: JSON.stringify({ image_base64: rawImageDataUrl }),
         });
         if (!res.ok) throw new Error(`AI service error: HTTP ${res.status}`);
         const data = await res.json();
@@ -39,8 +40,6 @@ const CaptureReviewModal = ({ imageUrl, onSave, onCancel }) => {
           if (data.mask_url) {
             setMaskImageUrl(data.mask_url);
             console.log("✅ mask_url nhận được:", data.mask_url);
-          } else {
-            console.warn("⚠️ Không có mask_url trong response");
           }
         } else {
           throw new Error(data.error || "No predictions");
@@ -53,7 +52,7 @@ const CaptureReviewModal = ({ imageUrl, onSave, onCancel }) => {
       }
     };
     detect();
-  }, [imageUrl]);
+  }, [rawImageDataUrl]);
 
   useEffect(() => {
     if (!selectedLabel) return;

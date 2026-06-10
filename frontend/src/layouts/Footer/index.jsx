@@ -19,6 +19,7 @@ const Footer = () => {
   const location = useLocation();
   const [showCamera, setShowCamera] = useState(false);
   const [capturedImageUrl, setCapturedImageUrl] = useState(null);
+  const [rawImageDataUrl, setRawImageDataUrl] = useState(null); // Thêm state lưu base64 gốc
   const [maskImageUrl, setMaskImageUrl] = useState(null);
   const [showReview, setShowReview] = useState(false);
   const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
@@ -36,6 +37,10 @@ const Footer = () => {
 
   const handleCapture = async (imageDataUrl) => {
     try {
+      // Lưu base64 gốc để gửi thẳng AI
+      setRawImageDataUrl(imageDataUrl);
+      
+      // Vẫn upload lên Django để lấy URL lưu vào collection
       const uploadRes = await axiosPrivate.post("/api/upload-temp-image/", {
         image_base64: imageDataUrl,
       });
@@ -67,6 +72,7 @@ const Footer = () => {
         showToast("Đã cập nhật ảnh thành công!", "success");
         setShowReview(false);
         setCapturedImageUrl(null);
+        setRawImageDataUrl(null);
         setMaskImageUrl(null);
       } else {
         showToast("Không tìm thấy bản ghi cũ để cập nhật.", "error");
@@ -127,6 +133,7 @@ const Footer = () => {
       showToast("Đã lưu vào bộ sưu tập của bạn!", "success");
       setShowReview(false);
       setCapturedImageUrl(null);
+      setRawImageDataUrl(null);
       setMaskImageUrl(null);
     } catch (err) {
       console.error("Save error:", err);
@@ -160,6 +167,7 @@ const Footer = () => {
     }
     setShowReview(false);
     setCapturedImageUrl(null);
+    setRawImageDataUrl(null);
     setMaskImageUrl(null);
   };
 
@@ -198,9 +206,10 @@ const Footer = () => {
       </footer>
 
       {showCamera && <CameraWeb onCapture={handleCapture} onClose={handleCloseCamera} />}
-      {showReview && capturedImageUrl && (
+      {showReview && capturedImageUrl && rawImageDataUrl && (
         <CaptureReviewModal
           imageUrl={capturedImageUrl}
+          rawImageDataUrl={rawImageDataUrl}
           onSave={(vocabularyId, maskUrl) => {
             if (maskUrl) setMaskImageUrl(maskUrl);
             handleSave(vocabularyId, maskUrl || capturedImageUrl);
@@ -220,7 +229,7 @@ const Footer = () => {
               Bạn đã lưu từ vựng này trong hôm nay rồi. Bạn có muốn <span className="font-semibold text-gray-700">thay thế hình ảnh cũ</span> bằng ảnh mới này không?
             </p>
             <div className="flex gap-3">
-              <button onClick={() => { setShowReplaceConfirm(false); setPendingPayload(null); setShowReview(false); setCapturedImageUrl(null); setMaskImageUrl(null); }} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 active:scale-95 transition-all text-sm">
+              <button onClick={() => { setShowReplaceConfirm(false); setPendingPayload(null); setShowReview(false); setCapturedImageUrl(null); setRawImageDataUrl(null); setMaskImageUrl(null); }} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 active:scale-95 transition-all text-sm">
                 Hủy bỏ
               </button>
               <button onClick={() => handleReplaceImage(pendingPayload.collectionId, pendingPayload.vocabularyId, pendingPayload.newImageUrl)} className="flex-1 py-3 bg-gradient-to-r from-[#E85A4F] to-[#E98074] text-white rounded-2xl font-bold shadow-lg shadow-[#E85A4F]/30 hover:opacity-95 active:scale-95 transition-all text-sm">
