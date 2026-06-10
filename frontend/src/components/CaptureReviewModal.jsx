@@ -12,14 +12,21 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
   const [maskImageUrl, setMaskImageUrl] = useState(null);
   const [maskLoadError, setMaskLoadError] = useState(false);
   
-  // ➕ Thêm state này để lưu ảnh gốc "sạch" khi AI trả về kết quả
-  const [cleanOriginImageUrl, setCleanOriginImageUrl] = useState(null);
+  // Ảnh gốc tạm thời từ base64 (hiển thị ngay, không lỗi 404)
+  const [localPreviewUrl, setLocalPreviewUrl] = useState(null);
 
   const AI_URL = "https://lily-prescribe-avenue.ngrok-free.dev/predict-base64";
   const today = new Date().toLocaleDateString("vi-VN", {
     day: "numeric",
     month: "long",
   });
+
+  // Tạo local preview từ base64 khi component mount
+  useEffect(() => {
+    if (rawImageDataUrl) {
+      setLocalPreviewUrl(rawImageDataUrl);
+    }
+  }, [rawImageDataUrl]);
 
   useEffect(() => {
     const detect = async () => {
@@ -29,8 +36,7 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
         setLoading(true);
         setMaskImageUrl(null);
         setMaskLoadError(false);
-        setCleanOriginImageUrl(null); // Reset link ảnh sạch
-        
+
         const res = await fetch(AI_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -38,18 +44,12 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
         });
         if (!res.ok) throw new Error(`AI service error: HTTP ${res.status}`);
         const data = await res.json();
-        
+
         if (data.success && data.predictions.length) {
           setPredictions(data.predictions);
           const first = data.predictions[0];
           setSelectedLabel(first.label);
           setSelectedConfidence(first.confidence);
-          
-          // ➕ Cập nhật ảnh gốc sạch (ảnh WaveSpeed) nếu API trả về 
-          // (Bạn kiểm tra xem key trong JSON trả về tên là gì, ví dụ: data.image_url hoặc data.uploaded_url)
-          if (data.image_url) { 
-            setCleanOriginImageUrl(data.image_url);
-          }
 
           if (data.mask_url) {
             console.log("✅ mask_url nhận được:", data.mask_url);
@@ -74,7 +74,7 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
         console.error("AI error:", err);
         setError(err.message);
       } finally {
-        loading && setLoading(false);
+        setLoading(false);
       }
     };
     detect();
@@ -140,13 +140,8 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
 
   const isConfidenceValid = selectedConfidence >= 60;
   
-  // 🔄 CẬP NHẬT LOGIC ĐỊNH NGHĨA ẢNH HIỂN THỊ:
-  // 1. Ưu tiên số 1: maskImageUrl (nếu tải thành công)
-  // 2. Ưu tiên số 2: cleanOriginImageUrl (ảnh WaveSpeed nhận từ API)
-  // 3. Cuối cùng: Mới dùng đến imageUrl truyền từ ngoài vào làm dự phòng
-  const displayImageUrl = maskImageUrl && !maskLoadError 
-    ? maskImageUrl 
-    : (cleanOriginImageUrl || imageUrl);
+  // 🔄 Ưu tiên mask nếu có, nếu không thì dùng ảnh gốc base64
+  const displayImageUrl = (maskImageUrl && !maskLoadError) ? maskImageUrl : localPreviewUrl;
 
   return (
     <div className="fixed inset-0 bg-[#F9F9F6] z-50 flex flex-col p-6 font-sans select-none overflow-hidden">
@@ -171,20 +166,25 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
             </button>
           )}
 
-          {/* ẢNH */}
+          {/* ẢNH: dùng local preview base64 thay vì URL của Django */}
           <div className="w-44 h-48 flex items-center justify-center drop-shadow-xl">
-            <img 
-              src={displayImageUrl} 
-              alt="Object" 
-              className="max-w-full max-h-full object-contain rounded-[2rem] border-4 border-white bg-white/10 shadow-inner"
-              onError={(e) => {
-                console.error("Lỗi hiển thị ảnh:", e.target.src);
-                if (e.target.src === maskImageUrl) setMaskLoadError(true);
-              }}
-            />
+            {displayImageUrl ? (
+              <img 
+                src={displayImageUrl} 
+                alt="Object" 
+                className="max-w-full max-h-full object-contain rounded-[2rem] border-4 border-white bg-white/10 shadow-inner"
+                onError={(e) => {
+                  console.error("Lỗi hiển thị ảnh:", e.target.src);
+                  if (maskImageUrl && e.target.src === maskImageUrl) setMaskLoadError(true);
+                }}
+              />
+            ) : (
+              <div className="w-full h-full bg-white/20 rounded-2xl flex items-center justify-center text-white">
+                Đang tải ảnh...
+              </div>
+            )}
           </div>
 
-          {/* Badge thông báo nếu mask thất bại */}
           {!loading && maskLoadError && (
             <div className="absolute top-6 left-6 bg-amber-500/80 text-white text-xs font-bold px-3 py-1 rounded-full">
               ⚠️ Hiển thị ảnh gốc (mask lỗi)
