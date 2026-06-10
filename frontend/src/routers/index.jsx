@@ -16,6 +16,7 @@ import KanaLessonDetailPage from "../pages/KanaLessonDetailPage";
 import KanaTestPage from "../pages/KanaTestPage";
 import TopicListPage from "../pages/TopicListPage"; 
 import GroupDetailPage from "../pages/GroupDetailPage";
+import SmartReviewPage from "../pages/SmartReviewPage";
 const AppRoutes = () => {
   return (
     <Routes>
@@ -27,6 +28,7 @@ const AppRoutes = () => {
       <Route path="/streak" element={<StreakPage />} />
       <Route path="/flashcard" element={<FlashcardSetsPage />} />
       <Route path="/flashcard/create" element={<CreateFlashcardSetPage />} />
+      <Route path="/flashcard/smart-review" element={<SmartReviewPage />} />
       <Route path="/flashcard/:id" element={<FlashcardPracticePage />} />
       <Route path="/kana-lessons" element={<KanaLessonsPage />} />
       <Route path="/kana-lesson/:lessonId" element={<KanaLessonDetailPage />} />

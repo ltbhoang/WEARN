@@ -9,6 +9,7 @@ import {
   Layers,
   Clock,
   Search,
+  Sparkles,
 } from "lucide-react";
 
 import { useFlashcardStore } from "../../store/flashcardStore";
@@ -54,6 +55,7 @@ const FlashcardSetsPage = () => {
       {/* Header */}
       <div className="bg-[#FEE9E7] px-6 pt-10 pb-6">
         <div className="flex items-center justify-between mb-4">
+          {/* Bên trái: nút back + tiêu đề */}
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(-1)}
@@ -66,12 +68,24 @@ const FlashcardSetsPage = () => {
             </h1>
           </div>
 
-          <button
-            onClick={() => navigate("/flashcard/create")}
-            className="w-12 h-12 rounded-full bg-[#E85A4F] flex items-center justify-center text-white shadow-lg hover:bg-[#d14b41] transition-colors"
-          >
-            <Plus className="w-6 h-6" />
-          </button>
+          {/* Bên phải: nút ôn tập thông minh + nút tạo mới */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("/flashcard/smart-review")}
+              className="relative w-12 h-12 rounded-full bg-[#4A4A4A] flex items-center justify-center text-white shadow-lg hover:bg-[#3a3a3a] transition-colors"
+              title="Ôn tập thông minh"
+            >
+              <Sparkles className="w-6 h-6" />
+              {/* Có thể thêm badge hiển thị số lượng từ chưa thuộc nếu muốn */}
+            </button>
+
+            <button
+              onClick={() => navigate("/flashcard/create")}
+              className="w-12 h-12 rounded-full bg-[#E85A4F] flex items-center justify-center text-white shadow-lg hover:bg-[#d14b41] transition-colors"
+            >
+              <Plus className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Thanh tìm kiếm */}

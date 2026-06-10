@@ -16,6 +16,8 @@ from .views import (
     UserProfileDetailView,
     UploadTempImageView,
     DeleteTempImageView,
+    due_vocabularies,
+    submit_review,
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -57,6 +59,9 @@ urlpatterns = [
     
     path('upload-temp-image/', UploadTempImageView.as_view(), name='upload-temp-image'),
     path('delete-temp-image/', DeleteTempImageView.as_view(), name='delete-temp-image'),
+    
+    path('due-vocabularies/', due_vocabularies, name='due-vocabularies'),
+    path('submit-review/', submit_review, name='submit-review'),
 
 ]
 

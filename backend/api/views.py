@@ -10,15 +10,17 @@ from io import BytesIO
 from skimage.metrics import structural_similarity as ssim
 
 from rest_framework import generics, permissions, viewsets, status
-from rest_framework.decorators import api_view, action
+from rest_framework.decorators import api_view, action, permission_classes
 from rest_framework.response import Response
 from rest_framework import filters
 from rest_framework.exceptions import PermissionDenied
-
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from django.contrib.auth.hashers import check_password
 from django.core.files.storage import default_storage
 
+from datetime import timedelta
+from django.utils import timezone
 
 import os
 import uuid
@@ -160,7 +162,22 @@ class FlashcardSetViewSet(viewsets.ModelViewSet):
         return FlashcardSetSerializer
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        flashcard_set = serializer.save(user=self.request.user)
+        print(f"[DEBUG] Created flashcard set {flashcard_set.id} with {flashcard_set.items.count()} items")
+        for item in flashcard_set.items.all():
+            vocab = None
+            if item.saved_vocab:
+                vocab = item.saved_vocab.vocabulary
+            elif item.vocabulary:
+                vocab = item.vocabulary
+            if vocab:
+                try:
+                    init_learning_progress(self.request.user, vocab)
+                    print(f"[DEBUG] OK - init_learning_progress called for {vocab.word}")
+                except Exception as e:
+                    print(f"[ERROR] init_learning_progress failed for {vocab.word}: {e}")
+            else:
+                print(f"[WARN] No vocabulary found for item {item.id}")
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -176,8 +193,17 @@ class FlashcardSetViewSet(viewsets.ModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         item = serializer.save()
-        # Cập nhật streak
         update_user_activity(request.user)
+
+        # Xác định vocabulary từ item
+        vocab = None
+        if item.saved_vocab:
+            vocab = item.saved_vocab.vocabulary
+        elif item.vocabulary:
+            vocab = item.vocabulary
+        if vocab:
+            init_learning_progress(request.user, vocab)
+
         item_serializer = FlashcardSetItemSerializer(item)
         return Response(item_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -294,7 +320,9 @@ class SavedVocabularyViewSet(viewsets.ModelViewSet):
             raise drf_serializers.ValidationError({"collection": "This field is required."})
         if collection.user != self.request.user:
             raise PermissionDenied("You don't own this collection")
-        serializer.save()
+        saved_vocab = serializer.save()
+        # Tự động tạo learning progress cho từ vựng vừa lưu
+        init_learning_progress(self.request.user, saved_vocab.vocabulary)
 
 # 6. Lesson ViewSet (chỉ đọc + action hoàn thành bài học)
 class LessonViewSet(viewsets.ReadOnlyModelViewSet):
@@ -570,4 +598,135 @@ class DeleteTempImageView(APIView):
             os.remove(file_path)
             return Response({'status': 'deleted', 'path': relative_path})
         return Response({'error': 'File not found or not a temp file'}, status=404)
+    
+def update_learning_progress(user, vocabulary, grade, review_date=None):
+    """
+    Cập nhật LearningProgress theo thuật toán SM-2.
+    grade: 0 (quên hoàn toàn) -> 5 (nhớ hoàn hảo)
+    """
+    if review_date is None:
+        review_date = timezone.now().date()
+
+    progress, created = LearningProgress.objects.get_or_create(
+        user=user,
+        vocabulary=vocabulary,
+        defaults={
+            'ease_factor': 2.5,
+            'interval': 1,
+            'next_review_date': review_date,
+            'status': 'learning'
+        }
+    )
+
+    # 1. Cập nhật Ease Factor
+    if grade >= 3:
+        progress.ease_factor += (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02))
+        progress.ease_factor = max(1.3, progress.ease_factor)
+    else:
+        progress.ease_factor = max(1.3, progress.ease_factor - 0.2)
+
+    # 2. Cập nhật Interval
+    if grade < 3:
+        progress.interval = 1
+    else:
+        if progress.interval == 1:
+            progress.interval = 1
+        elif progress.interval == 1 and progress.review_count == 1:
+            progress.interval = 6
+        else:
+            progress.interval = int(round(progress.interval * progress.ease_factor))
+        progress.interval = min(365, progress.interval)
+
+    # 3. Ngày ôn tiếp theo
+    progress.next_review_date = review_date + timedelta(days=progress.interval)
+
+    progress.review_count += 1
+    progress.last_reviewed = timezone.now()
+    progress.status = 'mastered' if progress.interval >= 30 else 'review'
+    progress.save()
+
+    update_user_activity(user)
+    return progress
+
+def init_learning_progress(user, vocabulary):
+    """Khởi tạo LearningProgress cho từ mới, ngày ôn là hôm nay."""
+    today = timezone.now().date()
+    progress, created = LearningProgress.objects.get_or_create(
+        user=user,
+        vocabulary=vocabulary,
+        defaults={
+            'ease_factor': 2.5,
+            'interval': 1,
+            'next_review_date': today,
+            'review_count': 0,
+            'status': 'learning'
+        }
+    )
+    return progress
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def due_vocabularies(request):
+    """Lấy danh sách từ vựng cần ôn hôm nay (tối đa 20)"""
+    today = timezone.now().date()
+    due_progress = LearningProgress.objects.filter(
+        user=request.user,
+        next_review_date__lte=today
+    ).select_related('vocabulary').order_by('next_review_date')[:20]
+
+    data = []
+    for prog in due_progress:
+        data.append({
+            'progress_id': prog.id,
+            'vocabulary_id': prog.vocabulary.id,
+            'word': prog.vocabulary.word,
+            'meaning': prog.vocabulary.meaning,
+            'reading_hiragana': prog.vocabulary.reading_hiragana,
+            'pronunciation': prog.vocabulary.pronunciation,
+            'next_review_date': prog.next_review_date,
+            'interval': prog.interval,
+            'ease_factor': prog.ease_factor,
+        })
+    return Response(data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def submit_review(request):
+    """Gửi kết quả ôn tập (grade) cho một từ vựng"""
+    vocabulary_id = request.data.get('vocabulary_id')
+    grade = request.data.get('grade')
+
+    if not vocabulary_id or grade is None:
+        return Response(
+            {'error': 'Missing vocabulary_id or grade'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        grade = int(grade)
+        if grade < 0 or grade > 5:
+            raise ValueError
+    except (TypeError, ValueError):
+        return Response(
+            {'error': 'Grade must be integer between 0 and 5'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        vocab = Vocabulary.objects.get(id=vocabulary_id)
+    except Vocabulary.DoesNotExist:
+        return Response(
+            {'error': 'Vocabulary not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    progress = update_learning_progress(request.user, vocab, grade)
+
+    return Response({
+        'success': True,
+        'next_review_date': progress.next_review_date,
+        'interval': progress.interval,
+        'ease_factor': progress.ease_factor,
+    }, status=status.HTTP_200_OK)
     

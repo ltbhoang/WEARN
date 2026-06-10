@@ -7,6 +7,8 @@ export const useFlashcardStore = create((set, get) => ({
   currentSet: null,
   reviewItems: [],
   savedVocabularies: [], // Danh sách SavedVocabulary của user
+  dueVocabularies: [], // Danh sách từ vựng cần ôn theo SM-2
+  reviewResult: null, // Kết quả trả về sau khi submit
   loading: false,
   error: null,
 
@@ -258,6 +260,47 @@ export const useFlashcardStore = create((set, get) => ({
     }
   },
 
+  // Lấy danh sách từ vựng cần ôn hôm nay (theo SM-2)
+  fetchDueVocabularies: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosPrivate.get("/api/due-vocabularies/");
+      set({ dueVocabularies: response.data, loading: false });
+      return response.data;
+    } catch (err) {
+      set({
+        error:
+          err.response?.data?.message || "Không thể lấy danh sách từ cần ôn",
+        loading: false,
+      });
+    }
+  },
+
+  // Gửi kết quả ôn tập (grade) cho một từ vựng
+  submitReview: async (vocabularyId, grade) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosPrivate.post("/api/submit-review/", {
+        vocabulary_id: vocabularyId,
+        grade: grade,
+      });
+      set({ reviewResult: response.data, loading: false });
+      // Sau khi submit thành công, loại bỏ từ vừa ôn khỏi danh sách dueVocabularies
+      set((state) => ({
+        dueVocabularies: state.dueVocabularies.filter(
+          (item) => item.vocabulary_id !== vocabularyId
+        ),
+      }));
+      return response.data;
+    } catch (err) {
+      set({
+        error: err.response?.data?.message || "Không thể gửi kết quả ôn tập",
+        loading: false,
+      });
+      throw err;
+    }
+  },
+
   bulkUpdateMemorized: async (items) => {
     try {
       const response = await axiosPrivate.post(
@@ -299,6 +342,63 @@ export const useFlashcardStore = create((set, get) => ({
       console.error("Lỗi sắp xếp lại thứ tự:", err);
       throw err;
     }
+  },
+
+  getUnmemorizedVocabularies: () => {
+    const { flashcardSets } = get();
+    const unmemorizedItems = [];
+    // Sắp xếp bộ theo thời gian tạo cũ nhất lên trước
+    const sortedSets = [...flashcardSets].sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at)
+    );
+    for (const set of sortedSets) {
+      for (const item of set.items) {
+        if (!item.memorized && item.vocabulary_detail) {
+          unmemorizedItems.push({
+            itemId: item.id,
+            flashcardSetId: set.id,
+            flashcardSetName: set.name,
+            vocabularyId: item.vocabulary,
+            word: item.vocabulary_detail.word,
+            meaning: item.vocabulary_detail.meaning,
+            readingHiragana: item.vocabulary_detail.reading_hiragana,
+            pronunciation: item.vocabulary_detail.pronunciation,
+            exampleSentence: item.vocabulary_detail.example_sentence,
+            exampleTranslation: item.vocabulary_detail.example_translation,
+            audioUrl: item.vocabulary_detail.audio_url,
+            userImage: item.user_image,
+          });
+        }
+      }
+    }
+    return unmemorizedItems;
+  },
+
+  // Lấy danh sách từ chưa thuộc theo một bộ flashcard cụ thể
+  getUnmemorizedVocabulariesBySetId: (setId) => {
+    const { flashcardSets } = get();
+    const targetSet = flashcardSets.find((set) => set.id === setId);
+    if (!targetSet) return [];
+    const unmemorizedItems = [];
+    for (const item of targetSet.items) {
+      if (!item.memorized && item.vocabulary_detail) {
+        unmemorizedItems.push({
+          itemId: item.id,
+          flashcardSetId: targetSet.id,
+          flashcardSetName: targetSet.name,
+          vocabularyId: item.vocabulary,
+          word: item.vocabulary_detail.word,
+          meaning: item.vocabulary_detail.meaning,
+          readingHiragana: item.vocabulary_detail.reading_hiragana,
+          pronunciation: item.vocabulary_detail.pronunciation,
+          exampleSentence: item.vocabulary_detail.example_sentence,
+          exampleTranslation: item.vocabulary_detail.example_translation,
+          audioUrl: item.vocabulary_detail.audio_url,
+          userImage: item.user_image,
+        });
+      }
+    }
+    return unmemorizedItems;
   },
 
   // --- HELPER FUNCTIONS ---
