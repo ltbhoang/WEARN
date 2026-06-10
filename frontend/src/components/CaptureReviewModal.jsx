@@ -13,7 +13,7 @@ const CaptureReviewModal = ({ imageUrl, onSave, onCancel }) => {
 
   //const AI_URL = "http://192.168.1.13:8001/predict";
   //const AI_URL = "http://10.183.94.14:8001/predict";
-  const AI_URL = "https://white-smoke-0437ab100.7.azurestaticapps.net/predict";
+  const AI_URL = "https://lily-prescribe-avenue.ngrok-free.dev/predict";
   const today = new Date().toLocaleDateString("vi-VN", {
     day: "numeric",
     month: "long",
