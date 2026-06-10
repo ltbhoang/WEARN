@@ -10,9 +10,8 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
   const [error, setError] = useState(null);
   const [fetchingVocab, setFetchingVocab] = useState(false);
   const [maskImageUrl, setMaskImageUrl] = useState(null);
+  const [maskLoadError, setMaskLoadError] = useState(false);
 
-  //const AI_URL = "http://192.168.1.13:8001/predict";
-  //const AI_URL = "http://10.183.94.14:8001/predict";
   const AI_URL = "https://lily-prescribe-avenue.ngrok-free.dev/predict-base64";
   const today = new Date().toLocaleDateString("vi-VN", {
     day: "numeric",
@@ -25,6 +24,9 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
       try {
         setError(null);
         setLoading(true);
+        setMaskImageUrl(null);
+        setMaskLoadError(false);
+        
         const res = await fetch(AI_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -37,9 +39,23 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
           const first = data.predictions[0];
           setSelectedLabel(first.label);
           setSelectedConfidence(first.confidence);
+          
           if (data.mask_url) {
-            setMaskImageUrl(data.mask_url);
             console.log("✅ mask_url nhận được:", data.mask_url);
+            // Thử tải ảnh mask để kiểm tra lỗi
+            const img = new Image();
+            img.onload = () => {
+              console.log("✅ Ảnh mask tải thành công");
+              setMaskImageUrl(data.mask_url);
+            };
+            img.onerror = (err) => {
+              console.error("❌ Ảnh mask tải thất bại:", err);
+              setMaskLoadError(true);
+            };
+            img.src = data.mask_url;
+          } else {
+            console.warn("⚠️ Không có mask_url trong response");
+            setMaskLoadError(true);
           }
         } else {
           throw new Error(data.error || "No predictions");
@@ -113,6 +129,7 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
   }
 
   const isConfidenceValid = selectedConfidence >= 60;
+  const displayImageUrl = maskImageUrl && !maskLoadError ? maskImageUrl : imageUrl;
 
   return (
     <div className="fixed inset-0 bg-[#F9F9F6] z-50 flex flex-col p-6 font-sans select-none overflow-hidden">
@@ -137,10 +154,25 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
             </button>
           )}
 
-          {/* ẢNH: ưu tiên ảnh mask nếu có */}
+          {/* ẢNH: ưu tiên mask nếu có và tải thành công */}
           <div className="w-44 h-48 flex items-center justify-center drop-shadow-xl">
-            <img src={maskImageUrl || imageUrl} alt="Object" className="max-w-full max-h-full object-contain rounded-[2rem] border-4 border-white bg-white/10 shadow-inner" />
+            <img 
+              src={displayImageUrl} 
+              alt="Object" 
+              className="max-w-full max-h-full object-contain rounded-[2rem] border-4 border-white bg-white/10 shadow-inner"
+              onError={(e) => {
+                console.error("Lỗi hiển thị ảnh:", e.target.src);
+                if (e.target.src === maskImageUrl) setMaskLoadError(true);
+              }}
+            />
           </div>
+
+          {/* Badge thông báo nếu mask thất bại */}
+          {!loading && maskLoadError && (
+            <div className="absolute top-6 left-6 bg-amber-500/80 text-white text-xs font-bold px-3 py-1 rounded-full">
+              ⚠️ Hiển thị ảnh gốc (mask lỗi)
+            </div>
+          )}
 
           {/* Nội dung */}
           <div className="w-full text-center flex flex-col items-center justify-center mt-4">
