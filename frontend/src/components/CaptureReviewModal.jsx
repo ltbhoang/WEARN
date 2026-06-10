@@ -12,6 +12,9 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
   const [maskImageUrl, setMaskImageUrl] = useState(null);
   const [maskLoadError, setMaskLoadError] = useState(false);
   
+  // Trạng thái xác nhận ảnh mask thực sự đã render sẵn sàng lên DOM
+  const [maskRendered, setMaskRendered] = useState(false);
+
   // Ảnh gốc tạm thời từ base64 (hiển thị ngay, không lỗi 404)
   const [localPreviewUrl, setLocalPreviewUrl] = useState(null);
 
@@ -36,6 +39,7 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
         setLoading(true);
         setMaskImageUrl(null);
         setMaskLoadError(false);
+        setMaskRendered(false);
 
         const res = await fetch(AI_URL, {
           method: "POST",
@@ -139,12 +143,22 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
   }
 
   const isConfidenceValid = selectedConfidence >= 60;
-  
-  // 🔄 Ưu tiên mask nếu có, nếu không thì dùng ảnh gốc base64
-  const displayImageUrl = (maskImageUrl && !maskLoadError) ? maskImageUrl : localPreviewUrl;
+  const isMaskValid = maskImageUrl && !maskLoadError;
 
   return (
     <div className="fixed inset-0 bg-[#F9F9F6] z-50 flex flex-col p-6 font-sans select-none overflow-hidden">
+      {/* Nhúng CSS Animation Quét Laser chuyên nghiệp trực tiếp vào component */}
+      <style>{`
+        @keyframes laserScan {
+          0% { top: 0%; opacity: 0.3; }
+          50% { top: 100%; opacity: 1; }
+          100% { top: 0%; opacity: 0.3; }
+        }
+        .laser-line {
+          animation: laserScan 2s infinite ease-in-out;
+        }
+      `}</style>
+
       <div className="max-w-md w-full mx-auto flex flex-col h-full">
         {/* TOP BAR */}
         <div className="flex items-center gap-4 mb-4 mt-2">
@@ -166,21 +180,44 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
             </button>
           )}
 
-          {/* ẢNH: dùng local preview base64 thay vì URL của Django */}
-          <div className="w-44 h-48 flex items-center justify-center drop-shadow-xl">
-            {displayImageUrl ? (
-              <img 
-                src={displayImageUrl} 
-                alt="Object" 
-                className="max-w-full max-h-full object-contain rounded-[2rem] border-4 border-white bg-white/10 shadow-inner"
-                onError={(e) => {
-                  console.error("Lỗi hiển thị ảnh:", e.target.src);
-                  if (maskImageUrl && e.target.src === maskImageUrl) setMaskLoadError(true);
-                }}
-              />
+          {/* KHU VỰC CHỨA ẢNH ANIMATION */}
+          <div className="w-44 h-48 flex items-center justify-center drop-shadow-xl relative rounded-[2rem] border-4 border-white bg-white/10 shadow-inner overflow-hidden">
+            {localPreviewUrl ? (
+              <>
+                {/* LỚP 1: Ảnh gốc Base64 hiển thị ngay tức thì khi mở modal */}
+                <img 
+                  src={localPreviewUrl} 
+                  alt="Original" 
+                  className={`max-w-full max-h-full object-contain absolute transition-all duration-700 ease-in-out ${
+                    maskRendered ? "opacity-40 blur-[2px] scale-95" : "opacity-100 scale-100"
+                  }`}
+                />
+
+                {/* LỚP 2: Ảnh Mask segment xếp đè lên trên, fade-in mượt khi load xong */}
+                {isMaskValid && (
+                  <img 
+                    src={maskImageUrl} 
+                    alt="Segmented Object" 
+                    onLoad={() => setMaskRendered(true)}
+                    className={`max-w-full max-h-full object-contain absolute z-10 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) ${
+                      maskRendered ? "opacity-100 scale-105 drop-shadow-[0_0_12px_rgba(255,255,255,0.6)]" : "opacity-0 scale-90"
+                    }`}
+                    onError={(e) => {
+                      console.error("Lỗi hiển thị ảnh mask:", e.target.src);
+                      setMaskLoadError(true);
+                      setMaskRendered(false);
+                    }}
+                  />
+                )}
+
+                {/* LỚP 3: Thanh ánh sáng Laser quét qua ảnh trong lúc AI đang tính toán */}
+                {loading && (
+                  <div className="absolute inset-x-0 h-[3px] bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_8px_#fff,0_0_15px_#FF6550] z-20 laser-line" />
+                )}
+              </>
             ) : (
-              <div className="w-full h-full bg-white/20 rounded-2xl flex items-center justify-center text-white">
-                Đang tải ảnh...
+              <div className="w-full h-full flex items-center justify-center text-white/60 text-sm font-medium animate-pulse">
+                Đang chuẩn bị...
               </div>
             )}
           </div>
