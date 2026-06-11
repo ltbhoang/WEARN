@@ -224,32 +224,6 @@ const Profile = () => {
         </div>
       </div>
 
-      <div className="px-6 -mt-4">
-        <div className="bg-white rounded-2xl p-5 grid grid-cols-3 gap-4 shadow-md">
-          <div className="text-center">
-            <Flame className="w-6 h-6 text-[#E85A4F] mx-auto mb-1" />
-            <p className="text-xs text-[#8E8D8A]">Streak</p>
-            <p className="text-xl font-bold text-[#2D2D2D]">{streakDays} ngày</p>
-          </div>
-          <div className="text-center">
-            <Camera className="w-6 h-6 text-[#E85A4F] mx-auto mb-1" />
-            <p className="text-xs text-[#8E8D8A]">Số lần scan</p>
-            <p className="text-xl font-bold text-[#2D2D2D]">
-              {cameraLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-[#E85A4F] mx-auto" />
-              ) : (
-                scanCount
-              )}
-            </p>
-          </div>
-          <div className="text-center">
-            <Award className="w-6 h-6 text-[#E85A4F] mx-auto mb-1" />
-            <p className="text-xs text-[#8E8D8A]">Flashcard</p>
-            <p className="text-xl font-bold text-[#2D2D2D]">{totalFlashcards}</p>
-          </div>
-        </div>
-      </div>
-
       <div className="px-6 mt-6">
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">

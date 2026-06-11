@@ -196,7 +196,7 @@ const Footer = () => {
           </button>
           <button onClick={() => handleNavClick("/streak")} className={`flex flex-col items-center gap-0.5 transition-colors ${isActive("/streak") ? "text-[#E85A4F]" : "text-[#8E8D8A]"} hover:text-[#E85A4F]`}>
             <GraduationCap className="w-6 h-6 stroke-[1.5]" />
-            <span className="text-[11px] font-black uppercase tracking-wider">Luyện tập</span>
+            <span className="text-[11px] font-black uppercase tracking-wider">Thành tựu</span>
           </button>
           <button onClick={() => handleNavClick("/profile")} className={`flex flex-col items-center gap-0.5 transition-colors ${isActive("/profile") ? "text-[#E85A4F]" : "text-[#8E8D8A]"} hover:text-[#E85A4F]`}>
             <User className="w-6 h-6 stroke-[1.5]" />
