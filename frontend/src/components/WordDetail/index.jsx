@@ -152,45 +152,6 @@ const WordDetailModal = ({
             )}
           </div>
 
-          {!hideRelated && (
-            <>
-              <div className="mt-4">
-                <button
-                  onClick={() => setShowRelatedSection(!showRelatedSection)}
-                  className="w-full py-3 border border-gray-200 text-[#4A4A4A] rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
-                >
-                  <span>📚</span>
-                  {showRelatedSection ? "Ẩn từ liên quan" : "Xem từ liên quan"}
-                </button>
-              </div>
-
-              {showRelatedSection && (
-                <div className="mt-4">
-                  <h3 className="text-lg font-bold text-[#2D2D2D] mb-3">
-                    Từ vựng liên quan
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {wordsToShow.map((word) => (
-                      <div
-                        key={word.id}
-                        className="bg-[#FAF9F8] p-3 rounded-xl border border-gray-100"
-                      >
-                        <div className="text-2xl mb-1">{word.emoji}</div>
-                        <div className="font-bold text-[#333]">{word.kanji}</div>
-                        <div className="text-xs text-[#E85A4F] font-medium">
-                          {word.furigana}
-                        </div>
-                        <div className="text-xs text-[#8E8D8A] mt-1 line-clamp-1">
-                          {word.meaning}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
           <div className="mt-6">
             {isSystem ? (
               <button
