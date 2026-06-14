@@ -38,7 +38,15 @@ const SmartReviewPage = () => {
   const [localSm2Map, setLocalSm2Map] = useState({});
   const [questionCount, setQuestionCount] = useState(10);
   const [allDueWordIds, setAllDueWordIds] = useState([]);
-  const [mode, setMode] = useState("smart"); // "smart" hoặc "weak"
+  
+  // Lưu chế độ vào localStorage để nhớ lần sau
+  const [mode, setMode] = useState(() => {
+    return localStorage.getItem("review_mode") || "smart";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("review_mode", mode);
+  }, [mode]);
 
   const slideTransition = {
     type: "tween",
@@ -84,8 +92,8 @@ const SmartReviewPage = () => {
             // Chế độ thông minh: chỉ lấy từ đến hạn
             shouldInclude = sm2Info.nextReviewDate <= now;
           } else {
-            // Chế độ luyện từ yếu: lấy những từ chưa thuộc (repetitions === 0 hoặc ef dưới ngưỡng)
-            const isWeak = sm2Info.repetitions === 0 || sm2Info.ef < 1.8;
+            // Chế độ luyện từ yếu: repetitions === 0 HOẶC ef < 2.0
+            const isWeak = sm2Info.repetitions === 0 || sm2Info.ef < 2.0;
             shouldInclude = isWeak;
           }
 
@@ -109,10 +117,11 @@ const SmartReviewPage = () => {
     const dueWordIds = allWords.map(w => w.id);
     if (allWords.length === 0) return { questions: [], dueWordIds: [] };
 
-    // Sắp xếp: với chế độ smart ưu tiên nextReviewDate cũ, với weak ưu tiên ef thấp + repetitions
+    // Sắp xếp
     if (reviewMode === "smart") {
       allWords.sort((a, b) => a.nextReviewDate - b.nextReviewDate);
     } else {
+      // Weak: ưu tiên repetitions thấp (0) trước, sau đó ef thấp
       allWords.sort((a, b) => {
         if (a.repetitions !== b.repetitions) return a.repetitions - b.repetitions;
         return a.ef - b.ef;
@@ -172,7 +181,7 @@ const SmartReviewPage = () => {
     return { questions: questionList.sort(() => 0.5 - Math.random()), dueWordIds };
   };
 
-  // Tạo câu hỏi khi flashcardSets hoặc mode thay đổi
+  // Tạo câu hỏi khi flashcardSets, mode, questionCount thay đổi (và chưa bắt đầu, chưa kết thúc)
   useEffect(() => {
     if (flashcardSets.length > 0 && !started && !isFinished) {
       const { questions: qs, dueWordIds } = generateQuestionsWithDueList(flashcardSets, questionCount, mode);
@@ -184,7 +193,7 @@ const SmartReviewPage = () => {
       setQuestions([]);
     }
     setLoading(false);
-  }, [flashcardSets, localSm2Map, questionCount, started, isFinished, mode]);
+  }, [flashcardSets, localSm2Map, questionCount, mode, started, isFinished]);
 
   // Countdown logic
   useEffect(() => {
@@ -512,7 +521,7 @@ const SmartReviewPage = () => {
     );
   }
 
-  // ---------- Đang làm bài (giữ nguyên) ----------
+  // ---------- Đang làm bài ----------
   const currentQ = questions[currentIndex];
   if (!currentQ) return null;
   const progress = ((currentIndex + 1) / questions.length) * 100;
