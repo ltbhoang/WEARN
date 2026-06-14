@@ -23,7 +23,6 @@ const SmartReviewPage = () => {
   const audioInstanceRef = useRef(new Audio());
   const { updateWord } = useSM2();
 
-  // ---------- State ----------
   const [started, setStarted] = useState(false);
   const [countdown, setCountdown] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -36,7 +35,7 @@ const SmartReviewPage = () => {
   const [showFeedback, setShowFeedback] = useState(null);
   const [localSm2Map, setLocalSm2Map] = useState({});
   const [questionCount, setQuestionCount] = useState(10);
-  const [allDueWordIds, setAllDueWordIds] = useState([]); // Lưu toàn bộ từ đến hạn trong ngày
+  const [allDueWordIds, setAllDueWordIds] = useState([]);
 
   const slideTransition = {
     type: "tween",
@@ -64,7 +63,6 @@ const SmartReviewPage = () => {
     }
   };
 
-  // Tạo câu hỏi, đồng thời trả về danh sách đầy đủ các từ đến hạn
   const generateQuestionsWithDueList = (sets, limit = 10) => {
     if (!sets || sets.length === 0) return { questions: [], dueWordIds: [] };
 
@@ -94,7 +92,6 @@ const SmartReviewPage = () => {
     const dueWordIds = allWords.map(w => w.id);
     if (allWords.length === 0) return { questions: [], dueWordIds: [] };
 
-    // Sắp xếp và chọn giới hạn
     allWords.sort((a, b) => a.nextReviewDate - b.nextReviewDate);
     const selectedWords = allWords.slice(0, limit);
     const indices = Array.from({ length: selectedWords.length }, (_, i) => i);
@@ -149,18 +146,19 @@ const SmartReviewPage = () => {
     return { questions: questionList.sort(() => 0.5 - Math.random()), dueWordIds };
   };
 
-  // Tạo câu hỏi khi flashcardSets thay đổi
   useEffect(() => {
     if (flashcardSets.length > 0 && !started && !isFinished) {
       const { questions: qs, dueWordIds } = generateQuestionsWithDueList(flashcardSets, questionCount);
       setQuestions(qs);
       setUserAnswers(new Array(qs.length).fill(null));
       setAllDueWordIds(dueWordIds);
+    } else if (flashcardSets.length === 0) {
+      setAllDueWordIds([]);
+      setQuestions([]);
     }
     setLoading(false);
   }, [flashcardSets, localSm2Map, questionCount, started, isFinished]);
 
-  // Countdown logic
   useEffect(() => {
     if (countdown === null) return;
     if (countdown > 0) {
@@ -235,13 +233,11 @@ const SmartReviewPage = () => {
     moveToNextQuestion();
   };
 
-  // Hàm tạo phiên ôn tiếp các từ còn lại (chưa được hỏi)
   const continueWithRemaining = () => {
     const askedIds = questions.map(q => q.id);
     const remainingIds = allDueWordIds.filter(id => !askedIds.includes(id));
     if (remainingIds.length === 0) return;
 
-    // Lọc lại flashcardSets để lấy các từ có id nằm trong remainingIds
     const remainingWords = [];
     for (const set of flashcardSets) {
       for (const item of set.items) {
@@ -260,9 +256,7 @@ const SmartReviewPage = () => {
         }
       }
     }
-    // Tạo câu hỏi từ remainingWords (không cần lọc lại nextReviewDate vì đã đảm bảo)
     if (remainingWords.length === 0) return;
-    // Xáo trộn và tạo câu hỏi tương tự generateQuestions
     const shuffled = [...remainingWords].sort(() => 0.5 - Math.random());
     const essayCount = Math.min(3, shuffled.length);
     const newQuestions = [];
@@ -303,19 +297,14 @@ const SmartReviewPage = () => {
     setCurrentIndex(0);
     setIsFinished(false);
     setStarted(false);
-    setCountdown(3); // bắt đầu đếm ngược lại
+    setCountdown(3);
   };
 
-  // Chuyển sang chế độ học từ chưa thuộc (dựa trên memorized=false hoặc SM-2)
   const goToWeakWords = () => {
-    // Tạo một mảng các từ có memorized === false (hoặc repetitions === 0)
-    // Có thể chuyển hướng đến một trang mới hoặc gọi một hàm lọc tương tự.
-    // Ở đây, tạm thời alert để bạn tự triển khai theo ý muốn.
     alert("Tính năng 'Học từ chưa thuộc' sẽ được phát triển. Bạn có thể lọc các từ có memorized=false trong flashcardSets.");
-    // Gợi ý: navigate("/weak-words") hoặc mở modal.
   };
 
-  // ---------- Màn hình kết thúc (đã sửa) ----------
+  // ---------- Màn hình kết thúc ----------
   if (isFinished) {
     const total = userAnswers.length;
     const correctCount = userAnswers.filter((a) => a && a.isCorrect).length;
@@ -382,7 +371,7 @@ const SmartReviewPage = () => {
     );
   }
 
-  // ---------- Màn hình chưa bắt đầu (thêm xử lý khi không có từ) ----------
+  // ---------- Màn hình chưa bắt đầu ----------
   if (!started) {
     if (loading) {
       return (
@@ -391,7 +380,8 @@ const SmartReviewPage = () => {
         </div>
       );
     }
-    if (questions.length === 0) {
+    // Kiểm tra nếu không có từ cần ôn
+    if (allDueWordIds.length === 0) {
       return (
         <div className="min-h-screen bg-[#FAF9F8] flex flex-col items-center justify-center p-6 text-center">
           <div className="text-6xl mb-4">🎉</div>
@@ -411,7 +401,6 @@ const SmartReviewPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center max-w-sm w-full"
         >
-          {/* Vòng tròn countdown / nút play */}
           <div className="w-32 h-32 rounded-full bg-red-50 flex items-center justify-center mb-6 border border-red-100 relative">
             <AnimatePresence mode="wait">
               {countdown === null ? (
@@ -472,7 +461,7 @@ const SmartReviewPage = () => {
     );
   }
 
-  // ---------- Đang làm bài (giữ nguyên) ----------
+  // ---------- Đang làm bài ----------
   const currentQ = questions[currentIndex];
   if (!currentQ) return null;
   const progress = ((currentIndex + 1) / questions.length) * 100;
