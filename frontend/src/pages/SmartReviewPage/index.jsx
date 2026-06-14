@@ -39,7 +39,7 @@ const SmartReviewPage = () => {
   const [questionCount, setQuestionCount] = useState(10);
   const [allDueWordIds, setAllDueWordIds] = useState([]);
   
-  // Lưu chế độ vào localStorage để nhớ lần sau
+  // Lưu chế độ vào localStorage
   const [mode, setMode] = useState(() => {
     return localStorage.getItem("review_mode") || "smart";
   });
@@ -54,16 +54,35 @@ const SmartReviewPage = () => {
     duration: 0.3,
   };
 
-  // Load dữ liệu SM-2 từ localStorage (key cũ)
+  // Load dữ liệu SM-2 từ cả key cũ và các key sm2_*
   useEffect(() => {
-    const stored = localStorage.getItem("smart_review_sm2_data");
-    if (stored) {
+    const allSm2Data = {};
+
+    // 1. Đọc key cũ (từ phiên bản trước)
+    const oldData = localStorage.getItem("smart_review_sm2_data");
+    if (oldData) {
       try {
-        setLocalSm2Map(JSON.parse(stored));
+        Object.assign(allSm2Data, JSON.parse(oldData));
       } catch (e) {
-        console.error("Lỗi parse dữ liệu SM-2", e);
+        console.error("Lỗi parse dữ liệu SM-2 cũ", e);
       }
     }
+
+    // 2. Đọc tất cả key sm2_* (từ hook useSM2)
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("sm2_")) {
+        const wordId = key.slice(4); // bỏ "sm2_"
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          allSm2Data[wordId] = data;
+        } catch (e) {
+          console.error(`Lỗi parse key ${key}`, e);
+        }
+      }
+    }
+
+    setLocalSm2Map(allSm2Data);
   }, []);
 
   // Hàm cập nhật SM-2 (chỉ dùng cho chế độ smart)
@@ -75,7 +94,7 @@ const SmartReviewPage = () => {
     }
   };
 
-  // Tạo câu hỏi (hỗ trợ cả 2 chế độ)
+  // Tạo câu hỏi (hỗ trợ cả 2 chế độ) - giữ nguyên
   const generateQuestionsWithDueList = (sets, limit = 10, reviewMode = "smart") => {
     if (!sets || sets.length === 0) return { questions: [], dueWordIds: [] };
 
@@ -89,10 +108,8 @@ const SmartReviewPage = () => {
 
           let shouldInclude = false;
           if (reviewMode === "smart") {
-            // Chế độ thông minh: chỉ lấy từ đến hạn
             shouldInclude = sm2Info.nextReviewDate <= now;
           } else {
-            // Chế độ luyện từ yếu: repetitions === 0 HOẶC ef < 2.0
             const isWeak = sm2Info.repetitions === 0 || sm2Info.ef < 2.0;
             shouldInclude = isWeak;
           }
@@ -117,11 +134,9 @@ const SmartReviewPage = () => {
     const dueWordIds = allWords.map(w => w.id);
     if (allWords.length === 0) return { questions: [], dueWordIds: [] };
 
-    // Sắp xếp
     if (reviewMode === "smart") {
       allWords.sort((a, b) => a.nextReviewDate - b.nextReviewDate);
     } else {
-      // Weak: ưu tiên repetitions thấp (0) trước, sau đó ef thấp
       allWords.sort((a, b) => {
         if (a.repetitions !== b.repetitions) return a.repetitions - b.repetitions;
         return a.ef - b.ef;
@@ -181,7 +196,7 @@ const SmartReviewPage = () => {
     return { questions: questionList.sort(() => 0.5 - Math.random()), dueWordIds };
   };
 
-  // Tạo câu hỏi khi flashcardSets, mode, questionCount thay đổi (và chưa bắt đầu, chưa kết thúc)
+  // Tạo câu hỏi khi flashcardSets, mode, questionCount thay đổi
   useEffect(() => {
     if (flashcardSets.length > 0 && !started && !isFinished) {
       const { questions: qs, dueWordIds } = generateQuestionsWithDueList(flashcardSets, questionCount, mode);
@@ -252,7 +267,6 @@ const SmartReviewPage = () => {
       setShowFeedback({ ok: false, msg: `Sai rồi! Đáp án đúng: ${currentQ.correctMeaning}` });
     }
 
-    // Chỉ cập nhật SM-2 nếu đang ở chế độ smart
     if (mode === "smart") {
       updateLocalSM2(currentQ.id, qualityScore);
     }
@@ -342,7 +356,7 @@ const SmartReviewPage = () => {
     setCountdown(3);
   };
 
-  // ---------- Màn hình kết thúc ----------
+  // ---------- Màn hình kết thúc (giữ nguyên) ----------
   if (isFinished) {
     const total = userAnswers.length;
     const correctCount = userAnswers.filter((a) => a && a.isCorrect).length;
@@ -412,7 +426,6 @@ const SmartReviewPage = () => {
         </div>
       );
     }
-    // Trường hợp không có từ để ôn theo chế độ hiện tại
     if (allDueWordIds.length === 0) {
       const message = mode === "smart" 
         ? "Hôm nay bạn đã ôn hết từ vựng cần nhắc lại. Hãy quay lại ngày mai."
@@ -521,7 +534,7 @@ const SmartReviewPage = () => {
     );
   }
 
-  // ---------- Đang làm bài ----------
+  // ---------- Đang làm bài (giữ nguyên) ----------
   const currentQ = questions[currentIndex];
   if (!currentQ) return null;
   const progress = ((currentIndex + 1) / questions.length) * 100;
