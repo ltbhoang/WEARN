@@ -10,19 +10,68 @@ import {
   Clock,
   Search,
   Sparkles,
+  X,
 } from "lucide-react";
-
 import { useFlashcardStore } from "../../store/flashcardStore";
 
 const FlashcardSetsPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [showNoDueModal, setShowNoDueModal] = useState(false);
 
   const { flashcardSets, fetchFlashcardSets, loading } = useFlashcardStore();
 
   useEffect(() => {
     fetchFlashcardSets();
   }, [fetchFlashcardSets]);
+
+  // Hàm kiểm tra có ít nhất một từ cần ôn hôm nay không
+  const hasDueWords = () => {
+    if (!flashcardSets.length) return false;
+
+    const now = Date.now();
+
+    for (const set of flashcardSets) {
+      for (const item of set.items) {
+        if (!item.vocabulary_detail) continue;
+
+        let nextReviewDate = 0;
+
+        // 1. Kiểm tra key mới `sm2_${item.id}`
+        const sm2New = localStorage.getItem(`sm2_${item.id}`);
+        if (sm2New) {
+          try {
+            const data = JSON.parse(sm2New);
+            nextReviewDate = data.nextReviewDate ?? 0;
+          } catch (e) {}
+        } 
+        // 2. Nếu chưa có, kiểm tra key cũ `smart_review_sm2_data`
+        else {
+          const oldData = localStorage.getItem("smart_review_sm2_data");
+          if (oldData) {
+            try {
+              const oldMap = JSON.parse(oldData);
+              if (oldMap[item.id]) {
+                nextReviewDate = oldMap[item.id].nextReviewDate ?? 0;
+              }
+            } catch (e) {}
+          }
+        }
+
+        // Nếu chưa có dữ liệu SM‑2 (nextReviewDate = 0) → coi như cần ôn
+        if (nextReviewDate <= now) return true;
+      }
+    }
+    return false;
+  };
+
+  const handleSmartReview = () => {
+    if (hasDueWords()) {
+      navigate("/flashcard/smart-review");
+    } else {
+      setShowNoDueModal(true);
+    }
+  };
 
   const filteredSets = flashcardSets.filter(
     (set) =>
@@ -55,7 +104,6 @@ const FlashcardSetsPage = () => {
       {/* Header */}
       <div className="bg-[#FEE9E7] px-6 pt-10 pb-6">
         <div className="flex items-center justify-between mb-4">
-          {/* Bên trái: nút back + tiêu đề */}
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(-1)}
@@ -68,15 +116,13 @@ const FlashcardSetsPage = () => {
             </h1>
           </div>
 
-          {/* Bên phải: nút ôn tập thông minh + nút tạo mới */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate("/flashcard/smart-review")}
+              onClick={handleSmartReview}
               className="relative w-12 h-12 rounded-full bg-[#4A4A4A] flex items-center justify-center text-white shadow-lg hover:bg-[#3a3a3a] transition-colors"
               title="Ôn tập thông minh"
             >
               <Sparkles className="w-6 h-6" />
-              {/* Có thể thêm badge hiển thị số lượng từ chưa thuộc nếu muốn */}
             </button>
 
             <button
@@ -128,7 +174,6 @@ const FlashcardSetsPage = () => {
             <div
               key={set.id}
               onClick={() => {
-                // Debug: xem cấu trúc items
                 console.log("Bộ flashcard:", set);
                 navigate(`/flashcard/${set.id}`);
               }}
@@ -226,6 +271,33 @@ const FlashcardSetsPage = () => {
         >
           <Plus className="w-6 h-6" />
         </button>
+      )}
+
+      {/* Modal thông báo khi không có từ cần ôn */}
+      {showNoDueModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 text-center relative">
+            <button
+              onClick={() => setShowNoDueModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="text-6xl mb-4">🎉</div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">
+              Không có từ cần ôn
+            </h3>
+            <p className="text-gray-500 text-sm mb-6">
+              Hôm nay bạn đã ôn hết từ vựng cần nhắc lại. Hãy quay lại ngày mai để tiếp tục!
+            </p>
+            <button
+              onClick={() => setShowNoDueModal(false)}
+              className="w-full py-3 bg-[#E85A4F] text-white rounded-xl font-semibold"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

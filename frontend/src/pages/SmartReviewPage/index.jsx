@@ -11,7 +11,6 @@ import {
   Send,
   FastForward,
   RotateCcw,
-  BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFlashcardStore } from "../../store/flashcardStore";
@@ -300,11 +299,7 @@ const SmartReviewPage = () => {
     setCountdown(3);
   };
 
-  const goToWeakWords = () => {
-    alert("Tính năng 'Học từ chưa thuộc' sẽ được phát triển. Bạn có thể lọc các từ có memorized=false trong flashcardSets.");
-  };
-
-  // ---------- Màn hình kết thúc ----------
+  // ---------- Màn hình kết thúc (đã sửa, bỏ nút học từ chưa thuộc) ----------
   if (isFinished) {
     const total = userAnswers.length;
     const correctCount = userAnswers.filter((a) => a && a.isCorrect).length;
@@ -345,14 +340,6 @@ const SmartReviewPage = () => {
                 Ôn tiếp {remainingCount} từ còn lại trong hôm nay
               </button>
             )}
-            {remainingCount === 0 && (
-              <button
-                onClick={goToWeakWords}
-                className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3.5 rounded-xl text-base transition-all flex items-center justify-center gap-2"
-              >
-                <BookOpen className="w-4 h-4" /> Học từ chưa thuộc
-              </button>
-            )}
             <button
               onClick={() => window.location.reload()}
               className="w-full bg-[#E85A4F] hover:bg-[#d94a3f] text-white font-bold py-3.5 rounded-xl text-base transition-all"
@@ -371,7 +358,7 @@ const SmartReviewPage = () => {
     );
   }
 
-  // ---------- Màn hình chưa bắt đầu ----------
+  // ---------- Màn hình chưa bắt đầu (giữ nguyên, đã xử lý khi không có từ) ----------
   if (!started) {
     if (loading) {
       return (
@@ -380,7 +367,6 @@ const SmartReviewPage = () => {
         </div>
       );
     }
-    // Kiểm tra nếu không có từ cần ôn
     if (allDueWordIds.length === 0) {
       return (
         <div className="min-h-screen bg-[#FAF9F8] flex flex-col items-center justify-center p-6 text-center">
@@ -461,7 +447,7 @@ const SmartReviewPage = () => {
     );
   }
 
-  // ---------- Đang làm bài ----------
+  // ---------- Đang làm bài (không thay đổi) ----------
   const currentQ = questions[currentIndex];
   if (!currentQ) return null;
   const progress = ((currentIndex + 1) / questions.length) * 100;
