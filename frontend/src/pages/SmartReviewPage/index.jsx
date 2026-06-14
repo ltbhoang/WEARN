@@ -72,7 +72,7 @@ const SmartReviewPage = () => {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && key.startsWith("sm2_")) {
-        const wordId = key.slice(4); // bỏ "sm2_"
+        const wordId = key.slice(4);
         try {
           const data = JSON.parse(localStorage.getItem(key));
           allSm2Data[wordId] = data;
@@ -94,8 +94,8 @@ const SmartReviewPage = () => {
     }
   };
 
-  // Tạo câu hỏi (hỗ trợ cả 2 chế độ) - giữ nguyên
-  const generateQuestionsWithDueList = (sets, limit = 10, reviewMode = "smart") => {
+  // Tạo câu hỏi (hỗ trợ cả 2 chế độ và hỗ trợ danh sách từ bắt buộc)
+  const generateQuestionsWithDueList = (sets, limit = 10, reviewMode = "smart", forcedWordIds = null) => {
     if (!sets || sets.length === 0) return { questions: [], dueWordIds: [] };
 
     const now = Date.now();
@@ -107,7 +107,9 @@ const SmartReviewPage = () => {
           const sm2Info = localSm2Map[item.id] || { nextReviewDate: 0, ef: 2.5, repetitions: 0 };
 
           let shouldInclude = false;
-          if (reviewMode === "smart") {
+          if (forcedWordIds) {
+            shouldInclude = forcedWordIds.includes(item.id);
+          } else if (reviewMode === "smart") {
             shouldInclude = sm2Info.nextReviewDate <= now;
           } else {
             const isWeak = sm2Info.repetitions === 0 || sm2Info.ef < 2.0;
@@ -294,75 +296,41 @@ const SmartReviewPage = () => {
     const remainingIds = allDueWordIds.filter(id => !askedIds.includes(id));
     if (remainingIds.length === 0) return;
 
-    const remainingWords = [];
-    for (const set of flashcardSets) {
-      for (const item of set.items) {
-        if (remainingIds.includes(item.id) && item.vocabulary_detail) {
-          const sm2Info = localSm2Map[item.id] || { nextReviewDate: 0, ef: 2.5 };
-          remainingWords.push({
-            id: item.id,
-            word: item.vocabulary_detail.word,
-            meaning: item.vocabulary_detail.meaning,
-            reading: item.vocabulary_detail.reading_hiragana || item.vocabulary_detail.pronunciation,
-            audioUrl: item.vocabulary_detail.audio_url,
-            image: item.user_image || item.vocabulary_detail.image_url,
-            nextReviewDate: sm2Info.nextReviewDate,
-            ef: sm2Info.ef,
-          });
-        }
-      }
-    }
-    if (remainingWords.length === 0) return;
-    const shuffled = [...remainingWords].sort(() => 0.5 - Math.random());
-    const essayCount = Math.min(3, shuffled.length);
-    const newQuestions = [];
-    const allMeanings = remainingWords.map(w => w.meaning).filter(m => m);
-    for (let i = 0; i < shuffled.length; i++) {
-      const w = shuffled[i];
-      if (i < essayCount) {
-        newQuestions.push({
-          id: w.id,
-          type: "essay",
-          word: w.word,
-          reading: w.reading,
-          correctMeaning: w.meaning,
-          audioUrl: w.audioUrl,
-          image: w.image,
-        });
-      } else {
-        let wrongOptions = [];
-        const otherMeanings = allMeanings.filter(m => m !== w.meaning);
-        const shuffledOthers = [...otherMeanings].sort(() => 0.5 - Math.random());
-        wrongOptions = shuffledOthers.slice(0, 3);
-        while (wrongOptions.length < 3) wrongOptions.push(w.meaning + " (lặp)");
-        const options = [w.meaning, ...wrongOptions].sort(() => 0.5 - Math.random());
-        newQuestions.push({
-          id: w.id,
-          type: "mcq",
-          word: w.word,
-          reading: w.reading,
-          correctMeaning: w.meaning,
-          options: options,
-          audioUrl: w.audioUrl,
-          image: w.image,
-        });
-      }
-    }
-    setQuestions(newQuestions);
-    setUserAnswers(new Array(newQuestions.length).fill(null));
+    const { questions: qs } = generateQuestionsWithDueList(flashcardSets, 100, mode, remainingIds);
+    if (qs.length === 0) return;
+    setQuestions(qs);
+    setUserAnswers(new Array(qs.length).fill(null));
     setCurrentIndex(0);
     setIsFinished(false);
     setStarted(false);
     setCountdown(3);
   };
 
-  // ---------- Màn hình kết thúc (giữ nguyên) ----------
+  // Hàm chuyển sang luyện từ yếu dựa trên danh sách từ đã trả lời sai
+  const switchToWeakReview = () => {
+    const wrongIds = userAnswers
+      .map((ans, idx) => (ans && !ans.isCorrect ? questions[idx]?.id : null))
+      .filter(id => id);
+    if (wrongIds.length === 0) return;
+    const { questions: qs } = generateQuestionsWithDueList(flashcardSets, 100, "weak", wrongIds);
+    if (qs.length === 0) return;
+    setMode("weak");
+    setQuestions(qs);
+    setUserAnswers(new Array(qs.length).fill(null));
+    setCurrentIndex(0);
+    setIsFinished(false);
+    setStarted(false);
+    setCountdown(3);
+  };
+
+  // ---------- Màn hình kết thúc ----------
   if (isFinished) {
     const total = userAnswers.length;
     const correctCount = userAnswers.filter((a) => a && a.isCorrect).length;
     const accuracy = total ? Math.round((correctCount / total) * 100) : 0;
     const askedIds = questions.map(q => q.id);
     const remainingCount = allDueWordIds.filter(id => !askedIds.includes(id)).length;
+    const wrongCount = total - correctCount;
 
     return (
       <div className="min-h-screen bg-[#FAF9F8] flex items-center justify-center p-6">
@@ -381,7 +349,7 @@ const SmartReviewPage = () => {
               <div className="text-xs text-gray-500 mt-1">Đúng</div>
             </div>
             <div>
-              <div className="text-xl font-bold text-red-500">{total - correctCount}</div>
+              <div className="text-xl font-bold text-red-500">{wrongCount}</div>
               <div className="text-xs text-gray-500 mt-1">Sai / Bỏ qua</div>
             </div>
             <div>
@@ -397,6 +365,14 @@ const SmartReviewPage = () => {
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3.5 rounded-xl text-base transition-all"
               >
                 Ôn tiếp {remainingCount} từ còn lại trong hôm nay
+              </button>
+            )}
+            {mode === "smart" && wrongCount > 0 && (
+              <button
+                onClick={switchToWeakReview}
+                className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3.5 rounded-xl text-base transition-all"
+              >
+                🔁 Luyện lại {wrongCount} từ chưa thuộc
               </button>
             )}
             <button
@@ -435,7 +411,18 @@ const SmartReviewPage = () => {
           <div className="text-6xl mb-4">🎉</div>
           <h2 className="text-xl font-bold text-gray-800">Chúc mừng!</h2>
           <p className="text-gray-500 mt-2">{message}</p>
-          <button onClick={() => navigate("/flashcard")} className="mt-6 px-6 py-2 bg-[#E85A4F] text-white rounded-xl">
+          {mode === "smart" && (
+            <button
+              onClick={() => {
+                setMode("weak");
+                window.location.reload();
+              }}
+              className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-xl"
+            >
+              Chuyển sang luyện từ yếu
+            </button>
+          )}
+          <button onClick={() => navigate("/flashcard")} className="mt-4 px-6 py-2 bg-[#E85A4F] text-white rounded-xl">
             Về trang chính
           </button>
         </div>
