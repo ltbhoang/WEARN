@@ -414,8 +414,21 @@ const SmartReviewPage = () => {
           {mode === "smart" && (
             <button
               onClick={() => {
-                setMode("weak");
-                window.location.reload();
+                // Chuyển sang weak và sinh câu hỏi ngay lập tức, không reload
+                const { questions: newQs, dueWordIds: newDue } = generateQuestionsWithDueList(flashcardSets, questionCount, "weak");
+                if (newQs.length > 0) {
+                  setMode("weak");
+                  setQuestions(newQs);
+                  setAllDueWordIds(newDue);
+                  setUserAnswers(new Array(newQs.length).fill(null));
+                  setCurrentIndex(0);
+                  setIsFinished(false);
+                  setStarted(false);
+                  setCountdown(null);
+                } else {
+                  // Nếu vẫn không có từ yếu, reload để hiển thị thông báo weak
+                  window.location.reload();
+                }
               }}
               className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-xl"
             >
