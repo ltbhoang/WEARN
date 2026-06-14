@@ -11,6 +11,7 @@ import {
   Send,
   FastForward,
   RotateCcw,
+  BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFlashcardStore } from "../../store/flashcardStore";
@@ -35,6 +36,7 @@ const SmartReviewPage = () => {
   const [showFeedback, setShowFeedback] = useState(null);
   const [localSm2Map, setLocalSm2Map] = useState({});
   const [questionCount, setQuestionCount] = useState(10);
+  const [allDueWordIds, setAllDueWordIds] = useState([]); // Lưu toàn bộ từ đến hạn trong ngày
 
   const slideTransition = {
     type: "tween",
@@ -42,7 +44,7 @@ const SmartReviewPage = () => {
     duration: 0.3,
   };
 
-  // Load dữ liệu SM-2 từ localStorage
+  // Load dữ liệu SM-2 từ localStorage (key cũ)
   useEffect(() => {
     const stored = localStorage.getItem("smart_review_sm2_data");
     if (stored) {
@@ -62,9 +64,9 @@ const SmartReviewPage = () => {
     }
   };
 
-  // Tạo câu hỏi dựa trên tất cả các bộ flashcard, chỉ lấy từ đến hạn ôn
-  const generateQuestions = (sets, limit = 10) => {
-    if (!sets || sets.length === 0) return [];
+  // Tạo câu hỏi, đồng thời trả về danh sách đầy đủ các từ đến hạn
+  const generateQuestionsWithDueList = (sets, limit = 10) => {
+    if (!sets || sets.length === 0) return { questions: [], dueWordIds: [] };
 
     const now = Date.now();
     const allWords = [];
@@ -72,18 +74,13 @@ const SmartReviewPage = () => {
     for (const set of sets) {
       for (const item of set.items) {
         if (item.vocabulary_detail) {
-          const sm2Info = localSm2Map[item.id] || {
-            nextReviewDate: 0,
-            ef: 2.5,
-          };
+          const sm2Info = localSm2Map[item.id] || { nextReviewDate: 0, ef: 2.5 };
           if (sm2Info.nextReviewDate <= now) {
             allWords.push({
               id: item.id,
               word: item.vocabulary_detail.word,
               meaning: item.vocabulary_detail.meaning,
-              reading:
-                item.vocabulary_detail.reading_hiragana ||
-                item.vocabulary_detail.pronunciation,
+              reading: item.vocabulary_detail.reading_hiragana || item.vocabulary_detail.pronunciation,
               audioUrl: item.vocabulary_detail.audio_url,
               image: item.user_image || item.vocabulary_detail.image_url,
               nextReviewDate: sm2Info.nextReviewDate,
@@ -94,8 +91,10 @@ const SmartReviewPage = () => {
       }
     }
 
-    if (allWords.length === 0) return [];
+    const dueWordIds = allWords.map(w => w.id);
+    if (allWords.length === 0) return { questions: [], dueWordIds: [] };
 
+    // Sắp xếp và chọn giới hạn
     allWords.sort((a, b) => a.nextReviewDate - b.nextReviewDate);
     const selectedWords = allWords.slice(0, limit);
     const indices = Array.from({ length: selectedWords.length }, (_, i) => i);
@@ -130,15 +129,10 @@ const SmartReviewPage = () => {
       if (w) {
         let wrongOptions = [];
         const otherMeanings = allMeanings.filter((m) => m !== w.meaning);
-        const shuffledOthers = [...otherMeanings].sort(
-          () => 0.5 - Math.random()
-        );
+        const shuffledOthers = [...otherMeanings].sort(() => 0.5 - Math.random());
         wrongOptions = shuffledOthers.slice(0, 3);
-        while (wrongOptions.length < 3)
-          wrongOptions.push(w.meaning + " (lặp)");
-        const options = [w.meaning, ...wrongOptions].sort(
-          () => 0.5 - Math.random()
-        );
+        while (wrongOptions.length < 3) wrongOptions.push(w.meaning + " (lặp)");
+        const options = [w.meaning, ...wrongOptions].sort(() => 0.5 - Math.random());
         questionList.push({
           id: w.id,
           type: "mcq",
@@ -152,14 +146,16 @@ const SmartReviewPage = () => {
       }
     });
 
-    return questionList.sort(() => 0.5 - Math.random());
+    return { questions: questionList.sort(() => 0.5 - Math.random()), dueWordIds };
   };
 
+  // Tạo câu hỏi khi flashcardSets thay đổi
   useEffect(() => {
     if (flashcardSets.length > 0 && !started && !isFinished) {
-      const qs = generateQuestions(flashcardSets, questionCount);
+      const { questions: qs, dueWordIds } = generateQuestionsWithDueList(flashcardSets, questionCount);
       setQuestions(qs);
       setUserAnswers(new Array(qs.length).fill(null));
+      setAllDueWordIds(dueWordIds);
     }
     setLoading(false);
   }, [flashcardSets, localSm2Map, questionCount, started, isFinished]);
@@ -218,10 +214,7 @@ const SmartReviewPage = () => {
       setShowFeedback({ ok: true, msg: "Chính xác!" });
     } else {
       qualityScore = 0;
-      setShowFeedback({
-        ok: false,
-        msg: `Sai rồi! Đáp án đúng: ${currentQ.correctMeaning}`,
-      });
+      setShowFeedback({ ok: false, msg: `Sai rồi! Đáp án đúng: ${currentQ.correctMeaning}` });
     }
 
     updateLocalSM2(currentQ.id, qualityScore);
@@ -242,11 +235,93 @@ const SmartReviewPage = () => {
     moveToNextQuestion();
   };
 
-  // ---------- Màn hình kết thúc (style giống KanaTestPage) ----------
+  // Hàm tạo phiên ôn tiếp các từ còn lại (chưa được hỏi)
+  const continueWithRemaining = () => {
+    const askedIds = questions.map(q => q.id);
+    const remainingIds = allDueWordIds.filter(id => !askedIds.includes(id));
+    if (remainingIds.length === 0) return;
+
+    // Lọc lại flashcardSets để lấy các từ có id nằm trong remainingIds
+    const remainingWords = [];
+    for (const set of flashcardSets) {
+      for (const item of set.items) {
+        if (remainingIds.includes(item.id) && item.vocabulary_detail) {
+          const sm2Info = localSm2Map[item.id] || { nextReviewDate: 0, ef: 2.5 };
+          remainingWords.push({
+            id: item.id,
+            word: item.vocabulary_detail.word,
+            meaning: item.vocabulary_detail.meaning,
+            reading: item.vocabulary_detail.reading_hiragana || item.vocabulary_detail.pronunciation,
+            audioUrl: item.vocabulary_detail.audio_url,
+            image: item.user_image || item.vocabulary_detail.image_url,
+            nextReviewDate: sm2Info.nextReviewDate,
+            ef: sm2Info.ef,
+          });
+        }
+      }
+    }
+    // Tạo câu hỏi từ remainingWords (không cần lọc lại nextReviewDate vì đã đảm bảo)
+    if (remainingWords.length === 0) return;
+    // Xáo trộn và tạo câu hỏi tương tự generateQuestions
+    const shuffled = [...remainingWords].sort(() => 0.5 - Math.random());
+    const essayCount = Math.min(3, shuffled.length);
+    const newQuestions = [];
+    const allMeanings = remainingWords.map(w => w.meaning).filter(m => m);
+    for (let i = 0; i < shuffled.length; i++) {
+      const w = shuffled[i];
+      if (i < essayCount) {
+        newQuestions.push({
+          id: w.id,
+          type: "essay",
+          word: w.word,
+          reading: w.reading,
+          correctMeaning: w.meaning,
+          audioUrl: w.audioUrl,
+          image: w.image,
+        });
+      } else {
+        let wrongOptions = [];
+        const otherMeanings = allMeanings.filter(m => m !== w.meaning);
+        const shuffledOthers = [...otherMeanings].sort(() => 0.5 - Math.random());
+        wrongOptions = shuffledOthers.slice(0, 3);
+        while (wrongOptions.length < 3) wrongOptions.push(w.meaning + " (lặp)");
+        const options = [w.meaning, ...wrongOptions].sort(() => 0.5 - Math.random());
+        newQuestions.push({
+          id: w.id,
+          type: "mcq",
+          word: w.word,
+          reading: w.reading,
+          correctMeaning: w.meaning,
+          options: options,
+          audioUrl: w.audioUrl,
+          image: w.image,
+        });
+      }
+    }
+    setQuestions(newQuestions);
+    setUserAnswers(new Array(newQuestions.length).fill(null));
+    setCurrentIndex(0);
+    setIsFinished(false);
+    setStarted(false);
+    setCountdown(3); // bắt đầu đếm ngược lại
+  };
+
+  // Chuyển sang chế độ học từ chưa thuộc (dựa trên memorized=false hoặc SM-2)
+  const goToWeakWords = () => {
+    // Tạo một mảng các từ có memorized === false (hoặc repetitions === 0)
+    // Có thể chuyển hướng đến một trang mới hoặc gọi một hàm lọc tương tự.
+    // Ở đây, tạm thời alert để bạn tự triển khai theo ý muốn.
+    alert("Tính năng 'Học từ chưa thuộc' sẽ được phát triển. Bạn có thể lọc các từ có memorized=false trong flashcardSets.");
+    // Gợi ý: navigate("/weak-words") hoặc mở modal.
+  };
+
+  // ---------- Màn hình kết thúc (đã sửa) ----------
   if (isFinished) {
     const total = userAnswers.length;
     const correctCount = userAnswers.filter((a) => a && a.isCorrect).length;
     const accuracy = total ? Math.round((correctCount / total) * 100) : 0;
+    const askedIds = questions.map(q => q.id);
+    const remainingCount = allDueWordIds.filter(id => !askedIds.includes(id)).length;
 
     return (
       <div className="min-h-screen bg-[#FAF9F8] flex items-center justify-center p-6">
@@ -254,40 +329,46 @@ const SmartReviewPage = () => {
           <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-5">
             <CheckCircle2 className="w-10 h-10 text-green-600" />
           </div>
-          <h2 className="text-2xl font-black text-[#474747] mb-2">
-            Kết thúc ôn tập
-          </h2>
-          <p className="text-[#8E8D8A] text-sm mb-6">
-            Bạn đã hoàn thành phiên học thông minh
-          </p>
+          <h2 className="text-2xl font-black text-[#474747] mb-2">Kết thúc ôn tập</h2>
+          <p className="text-[#8E8D8A] text-sm mb-6">Bạn đã hoàn thành phiên học thông minh</p>
 
           <div className="bg-gray-50 rounded-xl p-4 mb-6 grid grid-cols-3 gap-2">
             <div>
-              <div className="text-xl font-bold text-green-600">
-                {correctCount}
-              </div>
+              <div className="text-xl font-bold text-green-600">{correctCount}</div>
               <div className="text-xs text-gray-500 mt-1">Đúng</div>
             </div>
             <div>
-              <div className="text-xl font-bold text-red-500">
-                {total - correctCount}
-              </div>
+              <div className="text-xl font-bold text-red-500">{total - correctCount}</div>
               <div className="text-xs text-gray-500 mt-1">Sai / Bỏ qua</div>
             </div>
             <div>
-              <div className="text-xl font-bold text-[#E85A4F]">
-                {accuracy}%
-              </div>
+              <div className="text-xl font-bold text-[#E85A4F]">{accuracy}%</div>
               <div className="text-xs text-gray-500 mt-1">Chính xác</div>
             </div>
           </div>
 
           <div className="space-y-3">
+            {remainingCount > 0 && (
+              <button
+                onClick={continueWithRemaining}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3.5 rounded-xl text-base transition-all"
+              >
+                Ôn tiếp {remainingCount} từ còn lại trong hôm nay
+              </button>
+            )}
+            {remainingCount === 0 && (
+              <button
+                onClick={goToWeakWords}
+                className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3.5 rounded-xl text-base transition-all flex items-center justify-center gap-2"
+              >
+                <BookOpen className="w-4 h-4" /> Học từ chưa thuộc
+              </button>
+            )}
             <button
               onClick={() => window.location.reload()}
               className="w-full bg-[#E85A4F] hover:bg-[#d94a3f] text-white font-bold py-3.5 rounded-xl text-base transition-all"
             >
-              <RotateCcw className="w-4 h-4 inline mr-2" /> Ôn tập lại
+              <RotateCcw className="w-4 h-4 inline mr-2" /> Ôn tập lại (theo lịch SM‑2)
             </button>
             <button
               onClick={() => navigate("/flashcard")}
@@ -301,12 +382,25 @@ const SmartReviewPage = () => {
     );
   }
 
-  // ---------- Màn hình chưa bắt đầu (chọn số câu + countdown) ----------
+  // ---------- Màn hình chưa bắt đầu (thêm xử lý khi không có từ) ----------
   if (!started) {
-    if (loading || questions.length === 0) {
+    if (loading) {
       return (
         <div className="min-h-screen bg-[#FAF9F8] flex items-center justify-center">
           <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-[#E85A4F]" />
+        </div>
+      );
+    }
+    if (questions.length === 0) {
+      return (
+        <div className="min-h-screen bg-[#FAF9F8] flex flex-col items-center justify-center p-6 text-center">
+          <div className="text-6xl mb-4">🎉</div>
+          <h2 className="text-xl font-bold text-gray-800">Chúc mừng!</h2>
+          <p className="text-gray-500 mt-2">Hôm nay bạn đã ôn hết từ vựng cần nhắc lại.</p>
+          <p className="text-gray-400 text-sm mt-1">Hãy quay lại ngày mai để tiếp tục.</p>
+          <button onClick={() => navigate("/flashcard")} className="mt-6 px-6 py-2 bg-[#E85A4F] text-white rounded-xl">
+            Về trang chính
+          </button>
         </div>
       );
     }
@@ -346,9 +440,7 @@ const SmartReviewPage = () => {
 
           {countdown === null && (
             <>
-              <h1 className="text-2xl font-black text-[#474747] mb-2">
-                Ôn tập thông minh
-              </h1>
+              <h1 className="text-2xl font-black text-[#474747] mb-2">Ôn tập thông minh</h1>
               <div className="flex gap-2 mb-5">
                 {[10, 15, 20].map((num) => (
                   <button
@@ -365,7 +457,7 @@ const SmartReviewPage = () => {
                 ))}
               </div>
               <p className="text-gray-400 text-xs mb-6">
-                Có {questions.length} từ vựng đã đến lịch cần ôn tập
+                Có {allDueWordIds.length} từ vựng đã đến lịch cần ôn tập
               </p>
               <button
                 onClick={handleStart}
@@ -380,20 +472,16 @@ const SmartReviewPage = () => {
     );
   }
 
-  // ---------- Đang làm bài (style giống KanaTestPage) ----------
+  // ---------- Đang làm bài (giữ nguyên) ----------
   const currentQ = questions[currentIndex];
   if (!currentQ) return null;
   const progress = ((currentIndex + 1) / questions.length) * 100;
 
   return (
     <div className="min-h-screen bg-[#FAF9F8] font-sans pb-20">
-      {/* Header giống KanaTestPage */}
       <header className="bg-white shadow-sm sticky top-0 z-10 border-b border-gray-100">
         <div className="px-6 py-4 flex items-center gap-4 max-w-2xl mx-auto">
-          <button
-            onClick={() => navigate("/flashcard")}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-          >
+          <button onClick={() => navigate("/flashcard")} className="p-2 rounded-full hover:bg-gray-100">
             <ChevronLeft className="w-5 h-5 text-[#474747]" />
           </button>
           <h1 className="text-xl font-black text-[#474747]">Ôn tập thông minh</h1>
@@ -409,42 +497,27 @@ const SmartReviewPage = () => {
       </header>
 
       <main className="px-6 max-w-2xl mx-auto py-6">
-        {/* Progress bar */}
         <div className="mb-6">
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#E85A4F] transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
+            <div className="h-full bg-[#E85A4F] transition-all duration-300" style={{ width: `${progress}%` }} />
           </div>
           <div className="flex justify-between text-sm text-gray-500 mt-1">
-            <span>
-              Câu {currentIndex + 1}/{questions.length}
-            </span>
+            <span>Câu {currentIndex + 1}/{questions.length}</span>
             <span>Đã trả lời: {userAnswers.filter((a) => a).length}</span>
           </div>
         </div>
 
-        {/* Card câu hỏi */}
         <div className="bg-white rounded-2xl shadow-md border border-[#E0E0E0] p-6">
           <h2 className="text-xl font-bold text-[#474747] mb-6 text-center">
-            {currentQ.type === "mcq"
-              ? "Chọn đáp án đúng"
-              : "Nhập nghĩa của từ"}
+            {currentQ.type === "mcq" ? "Chọn đáp án đúng" : "Nhập nghĩa của từ"}
           </h2>
 
           <div className="text-center mb-8">
-            <div className="text-7xl font-black text-[#E85A4F] mb-2">
-              {currentQ.word}
-            </div>
-            {currentQ.reading && (
-              <div className="text-base text-gray-400 font-medium">
-                〔 {currentQ.reading} 〕
-              </div>
-            )}
+            <div className="text-7xl font-black text-[#E85A4F] mb-2">{currentQ.word}</div>
+            {currentQ.reading && <div className="text-base text-gray-400 font-medium">〔 {currentQ.reading} 〕</div>}
             <button
               onClick={() => playAudio(currentQ.audioUrl)}
-              className="mt-3 p-2 rounded-full bg-white shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors inline-flex items-center gap-1 text-sm text-gray-600"
+              className="mt-3 p-2 rounded-full bg-white shadow-sm border border-gray-200 hover:bg-gray-50 inline-flex items-center gap-1 text-sm text-gray-600"
             >
               <Volume2 className="w-4 h-4" /> Nghe
             </button>
@@ -452,11 +525,7 @@ const SmartReviewPage = () => {
 
           {currentQ.image && (
             <div className="mb-6 flex justify-center">
-              <img
-                src={currentQ.image}
-                alt="Hint"
-                className="h-28 object-contain rounded-xl border border-gray-100 shadow-sm"
-              />
+              <img src={currentQ.image} alt="Hint" className="h-28 object-contain rounded-xl border border-gray-100 shadow-sm" />
             </div>
           )}
 
@@ -494,8 +563,7 @@ const SmartReviewPage = () => {
                     e.key === "Enter" &&
                     !showFeedback &&
                     handleAnswer(
-                      typedAnswer.trim().toLowerCase() ===
-                        currentQ.correctMeaning.toLowerCase(),
+                      typedAnswer.trim().toLowerCase() === currentQ.correctMeaning.toLowerCase(),
                       typedAnswer
                     )
                   }
@@ -508,8 +576,7 @@ const SmartReviewPage = () => {
                   onClick={() =>
                     !showFeedback &&
                     handleAnswer(
-                      typedAnswer.trim().toLowerCase() ===
-                        currentQ.correctMeaning.toLowerCase(),
+                      typedAnswer.trim().toLowerCase() === currentQ.correctMeaning.toLowerCase(),
                       typedAnswer
                     )
                   }
@@ -529,11 +596,7 @@ const SmartReviewPage = () => {
                   : "bg-red-50 text-red-700 border border-red-200"
               }`}
             >
-              {showFeedback.ok ? (
-                <CheckCircle2 className="w-4 h-4" />
-              ) : (
-                <XCircle className="w-4 h-4" />
-              )}
+              {showFeedback.ok ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
               <span>{showFeedback.msg}</span>
             </div>
           )}
