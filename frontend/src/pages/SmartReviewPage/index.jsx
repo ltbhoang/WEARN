@@ -16,13 +16,11 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFlashcardStore } from "../../store/flashcardStore";
-import { useSM2 } from "../../hooks/useSM2";
 
 const SmartReviewPage = () => {
   const navigate = useNavigate();
-  const { flashcardSets, updateFlashcardItemStatus } = useFlashcardStore();
+  const { flashcardSets } = useFlashcardStore();
   const audioInstanceRef = useRef(new Audio());
-  const { updateWord } = useSM2();
 
   // ---------- State ----------
   const [started, setStarted] = useState(false);
@@ -35,11 +33,10 @@ const SmartReviewPage = () => {
   const [typedAnswer, setTypedAnswer] = useState("");
   const [selectedOption, setSelectedOption] = useState(null);
   const [showFeedback, setShowFeedback] = useState(null);
-  const [localSm2Map, setLocalSm2Map] = useState({});
   const [questionCount, setQuestionCount] = useState(10);
-  const [allDueWordIds, setAllDueWordIds] = useState([]);
-  
-  // Lưu chế độ vào localStorage
+  const [dueWords, setDueWords] = useState([]);
+
+  // Chế độ: 'smart' hoặc 'weak'
   const [mode, setMode] = useState(() => {
     return localStorage.getItem("review_mode") || "smart";
   });
@@ -48,133 +45,40 @@ const SmartReviewPage = () => {
     localStorage.setItem("review_mode", mode);
   }, [mode]);
 
-  const slideTransition = {
-    type: "tween",
-    ease: "easeInOut",
-    duration: 0.3,
-  };
-
-  // Load dữ liệu SM-2 từ cả key cũ và các key sm2_*
-  useEffect(() => {
-    const allSm2Data = {};
-
-    // 1. Đọc key cũ (từ phiên bản trước)
-    const oldData = localStorage.getItem("smart_review_sm2_data");
-    if (oldData) {
-      try {
-        Object.assign(allSm2Data, JSON.parse(oldData));
-      } catch (e) {
-        console.error("Lỗi parse dữ liệu SM-2 cũ", e);
-      }
-    }
-
-    // 2. Đọc tất cả key sm2_* (từ hook useSM2)
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith("sm2_")) {
-        const wordId = key.slice(4);
-        try {
-          const data = JSON.parse(localStorage.getItem(key));
-          allSm2Data[wordId] = data;
-        } catch (e) {
-          console.error(`Lỗi parse key ${key}`, e);
-        }
-      }
-    }
-
-    setLocalSm2Map(allSm2Data);
-  }, []);
-
-  // Hàm cập nhật SM-2 (chỉ dùng cho chế độ smart)
-  const updateLocalSM2 = async (wordId, quality) => {
-    const updated = await updateWord(wordId, quality);
-    setLocalSm2Map((prev) => ({ ...prev, [wordId]: updated }));
-    if (quality >= 4 && updateFlashcardItemStatus) {
-      updateFlashcardItemStatus(wordId, true);
-    }
-  };
-
-  // Tạo câu hỏi (hỗ trợ cả 2 chế độ và hỗ trợ danh sách từ bắt buộc)
-  const generateQuestionsWithDueList = (sets, limit = 10, reviewMode = "smart", forcedWordIds = null) => {
-    if (!sets || sets.length === 0) return { questions: [], dueWordIds: [] };
-
-    const now = Date.now();
-    const allWords = [];
-
-    for (const set of sets) {
-      for (const item of set.items) {
-        if (item.vocabulary_detail) {
-          const sm2Info = localSm2Map[item.id] || { nextReviewDate: 0, ef: 2.5, repetitions: 0 };
-
-          let shouldInclude = false;
-          if (forcedWordIds) {
-            shouldInclude = forcedWordIds.includes(item.id);
-          } else if (reviewMode === "smart") {
-            shouldInclude = sm2Info.nextReviewDate <= now;
-          } else {
-            const isWeak = sm2Info.repetitions === 0 || sm2Info.ef < 2.0;
-            shouldInclude = isWeak;
-          }
-
-          if (shouldInclude) {
-            allWords.push({
-              id: item.id,
-              word: item.vocabulary_detail.word,
-              meaning: item.vocabulary_detail.meaning,
-              reading: item.vocabulary_detail.reading_hiragana || item.vocabulary_detail.pronunciation,
-              audioUrl: item.vocabulary_detail.audio_url,
-              image: item.user_image || item.vocabulary_detail.image_url,
-              nextReviewDate: sm2Info.nextReviewDate,
-              ef: sm2Info.ef,
-              repetitions: sm2Info.repetitions,
-            });
-          }
-        }
-      }
-    }
-
-    const dueWordIds = allWords.map(w => w.id);
-    if (allWords.length === 0) return { questions: [], dueWordIds: [] };
-
-    if (reviewMode === "smart") {
-      allWords.sort((a, b) => a.nextReviewDate - b.nextReviewDate);
-    } else {
-      allWords.sort((a, b) => {
-        if (a.repetitions !== b.repetitions) return a.repetitions - b.repetitions;
-        return a.ef - b.ef;
-      });
-    }
-
-    const selectedWords = allWords.slice(0, limit);
-    const indices = Array.from({ length: selectedWords.length }, (_, i) => i);
+  // Hàm tạo câu hỏi từ danh sách từ (không còn local SM2)
+  const generateQuestions = (words, limit = 10) => {
+    if (!words || words.length === 0) return [];
+    const selected = words.slice(0, limit);
+    const indices = selected.map((_, i) => i);
+    // Shuffle
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-    const essayCount = Math.min(3, selectedWords.length);
+    const essayCount = Math.min(3, selected.length);
     const essayIndices = new Set(indices.slice(0, essayCount));
     const mcqIndices = indices.slice(essayCount);
 
     const questionList = [];
-    const allMeanings = allWords.map((w) => w.meaning).filter((m) => m);
+    const allMeanings = selected.map((w) => w.meaning).filter((m) => m);
 
     essayIndices.forEach((idx) => {
-      const w = selectedWords[idx];
+      const w = selected[idx];
       if (w) {
         questionList.push({
           id: w.id,
           type: "essay",
           word: w.word,
-          reading: w.reading,
+          reading: w.reading_hiragana || w.pronunciation,
           correctMeaning: w.meaning,
-          audioUrl: w.audioUrl,
-          image: w.image,
+          audioUrl: w.audio_url,
+          image: w.image_url,
         });
       }
     });
 
     mcqIndices.forEach((idx) => {
-      const w = selectedWords[idx];
+      const w = selected[idx];
       if (w) {
         let wrongOptions = [];
         const otherMeanings = allMeanings.filter((m) => m !== w.meaning);
@@ -186,31 +90,56 @@ const SmartReviewPage = () => {
           id: w.id,
           type: "mcq",
           word: w.word,
-          reading: w.reading,
+          reading: w.reading_hiragana || w.pronunciation,
           correctMeaning: w.meaning,
           options: options,
-          audioUrl: w.audioUrl,
-          image: w.image,
+          audioUrl: w.audio_url,
+          image: w.image_url,
         });
       }
     });
-
-    return { questions: questionList.sort(() => 0.5 - Math.random()), dueWordIds };
+    return questionList.sort(() => 0.5 - Math.random());
   };
 
-  // Tạo câu hỏi khi flashcardSets, mode, questionCount thay đổi
-  useEffect(() => {
-    if (flashcardSets.length > 0 && !started && !isFinished) {
-      const { questions: qs, dueWordIds } = generateQuestionsWithDueList(flashcardSets, questionCount, mode);
+  // Gọi API lấy danh sách từ cần ôn (từ flashcard sets)
+  const fetchDueVocabularies = async () => {
+    if (!flashcardSets || flashcardSets.length === 0) {
+      setDueWords([]);
+      setQuestions([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch("/api/flashcard-sets/due_vocabularies/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch due vocabularies");
+      const data = await response.json();
+      setDueWords(data);
+      // Tạo câu hỏi từ danh sách, giới hạn số lượng questionCount
+      const qs = generateQuestions(data, questionCount);
       setQuestions(qs);
       setUserAnswers(new Array(qs.length).fill(null));
-      setAllDueWordIds(dueWordIds);
-    } else if (flashcardSets.length === 0) {
-      setAllDueWordIds([]);
+    } catch (error) {
+      console.error("Error fetching due vocabularies:", error);
+      setDueWords([]);
       setQuestions([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [flashcardSets, localSm2Map, questionCount, mode, started, isFinished]);
+  };
+
+  // Tạo câu hỏi khi flashcardSets, mode, questionCount thay đổi (chỉ khi chưa bắt đầu)
+  useEffect(() => {
+    if (!started && !isFinished) {
+      fetchDueVocabularies();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flashcardSets, questionCount, mode, started, isFinished]);
 
   // Countdown logic
   useEffect(() => {
@@ -253,6 +182,23 @@ const SmartReviewPage = () => {
     }
   };
 
+  // Gửi kết quả lên backend
+  const submitReview = async (vocabularyId, grade) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      await fetch("/api/submit-review/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ vocabulary_id: vocabularyId, grade }),
+      });
+    } catch (error) {
+      console.error("Error submitting review:", error);
+    }
+  };
+
   const handleAnswer = (isCorrect, answerValue) => {
     if (showFeedback) return;
     const currentQ = questions[currentIndex];
@@ -260,18 +206,16 @@ const SmartReviewPage = () => {
     newAnswers[currentIndex] = { isCorrect, answer: answerValue };
     setUserAnswers(newAnswers);
 
-    let qualityScore = 0;
+    let grade = 0;
     if (isCorrect) {
-      qualityScore = currentQ.type === "mcq" ? 5 : 4;
+      grade = currentQ.type === "mcq" ? 5 : 4;
       setShowFeedback({ ok: true, msg: "Chính xác!" });
     } else {
-      qualityScore = 0;
+      grade = 0;
       setShowFeedback({ ok: false, msg: `Sai rồi! Đáp án đúng: ${currentQ.correctMeaning}` });
     }
 
-    if (mode === "smart") {
-      updateLocalSM2(currentQ.id, qualityScore);
-    }
+    submitReview(currentQ.id, grade);
 
     setTimeout(() => {
       setShowFeedback(null);
@@ -285,18 +229,16 @@ const SmartReviewPage = () => {
     const newAnswers = [...userAnswers];
     newAnswers[currentIndex] = { isCorrect: false, answer: "Bỏ qua" };
     setUserAnswers(newAnswers);
-    if (mode === "smart") {
-      updateLocalSM2(currentQ.id, 1);
-    }
+    submitReview(currentQ.id, 1);
     moveToNextQuestion();
   };
 
+  // Ôn tiếp những từ chưa hỏi trong danh sách dueWords
   const continueWithRemaining = () => {
-    const askedIds = questions.map(q => q.id);
-    const remainingIds = allDueWordIds.filter(id => !askedIds.includes(id));
-    if (remainingIds.length === 0) return;
-
-    const { questions: qs } = generateQuestionsWithDueList(flashcardSets, 100, mode, remainingIds);
+    const askedIds = questions.map((q) => q.id);
+    const remainingWords = dueWords.filter((w) => !askedIds.includes(w.id));
+    if (remainingWords.length === 0) return;
+    const qs = generateQuestions(remainingWords, 100);
     if (qs.length === 0) return;
     setQuestions(qs);
     setUserAnswers(new Array(qs.length).fill(null));
@@ -306,13 +248,15 @@ const SmartReviewPage = () => {
     setCountdown(3);
   };
 
-  // Hàm chuyển sang luyện từ yếu dựa trên danh sách từ đã trả lời sai
+  // Luyện lại từ sai trong phiên hiện tại
   const switchToWeakReview = () => {
     const wrongIds = userAnswers
       .map((ans, idx) => (ans && !ans.isCorrect ? questions[idx]?.id : null))
-      .filter(id => id);
+      .filter((id) => id);
     if (wrongIds.length === 0) return;
-    const { questions: qs } = generateQuestionsWithDueList(flashcardSets, 100, "weak", wrongIds);
+    const wrongWords = dueWords.filter((w) => wrongIds.includes(w.id));
+    if (wrongWords.length === 0) return;
+    const qs = generateQuestions(wrongWords, 100);
     if (qs.length === 0) return;
     setMode("weak");
     setQuestions(qs);
@@ -328,8 +272,8 @@ const SmartReviewPage = () => {
     const total = userAnswers.length;
     const correctCount = userAnswers.filter((a) => a && a.isCorrect).length;
     const accuracy = total ? Math.round((correctCount / total) * 100) : 0;
-    const askedIds = questions.map(q => q.id);
-    const remainingCount = allDueWordIds.filter(id => !askedIds.includes(id)).length;
+    const askedIds = questions.map((q) => q.id);
+    const remainingCount = dueWords.filter((w) => !askedIds.includes(w.id)).length;
     const wrongCount = total - correctCount;
 
     return (
@@ -402,10 +346,11 @@ const SmartReviewPage = () => {
         </div>
       );
     }
-    if (allDueWordIds.length === 0) {
-      const message = mode === "smart" 
-        ? "Hôm nay bạn đã ôn hết từ vựng cần nhắc lại. Hãy quay lại ngày mai."
-        : "Chúc mừng! Bạn không còn từ yếu nào để luyện tập.";
+    if (dueWords.length === 0) {
+      const message =
+        mode === "smart"
+          ? "Hôm nay bạn đã ôn hết từ vựng cần nhắc lại. Hãy quay lại ngày mai."
+          : "Chúc mừng! Bạn không còn từ yếu nào để luyện tập.";
       return (
         <div className="min-h-screen bg-[#FAF9F8] flex flex-col items-center justify-center p-6 text-center">
           <h2 className="text-xl font-bold text-gray-800">Chúc mừng!</h2>
@@ -413,21 +358,8 @@ const SmartReviewPage = () => {
           {mode === "smart" && (
             <button
               onClick={() => {
-                // Chuyển sang weak và sinh câu hỏi ngay lập tức, không reload
-                const { questions: newQs, dueWordIds: newDue } = generateQuestionsWithDueList(flashcardSets, questionCount, "weak");
-                if (newQs.length > 0) {
-                  setMode("weak");
-                  setQuestions(newQs);
-                  setAllDueWordIds(newDue);
-                  setUserAnswers(new Array(newQs.length).fill(null));
-                  setCurrentIndex(0);
-                  setIsFinished(false);
-                  setStarted(false);
-                  setCountdown(null);
-                } else {
-                  // Nếu vẫn không có từ yếu, reload để hiển thị thông báo weak
-                  window.location.reload();
-                }
+                setMode("weak");
+                window.location.reload();
               }}
               className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-xl"
             >
@@ -517,8 +449,8 @@ const SmartReviewPage = () => {
               </div>
               <p className="text-gray-400 text-xs mb-6">
                 {mode === "smart"
-                  ? `Có ${allDueWordIds.length} từ vựng đã đến lịch cần ôn tập`
-                  : `Có ${allDueWordIds.length} từ yếu cần luyện tập`}
+                  ? `Có ${dueWords.length} từ vựng đã đến lịch cần ôn tập`
+                  : `Có ${dueWords.length} từ yếu cần luyện tập`}
               </p>
               <button
                 onClick={handleStart}
@@ -533,7 +465,7 @@ const SmartReviewPage = () => {
     );
   }
 
-  // ---------- Đang làm bài (giữ nguyên) ----------
+  // ---------- Đang làm bài ----------
   const currentQ = questions[currentIndex];
   if (!currentQ) return null;
   const progress = ((currentIndex + 1) / questions.length) * 100;

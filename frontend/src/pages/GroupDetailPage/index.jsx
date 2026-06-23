@@ -63,7 +63,7 @@ const GroupDetailPage = () => {
     id: word.id || word.class_name,
     class_name: word.class_name, // 👈 giữ class_name để gọi chi tiết
     ja: word.word,
-    reading: word.romaji || word.pronunciation,
+    reading: word.reading_hiragana,
     vi: word.meaning,
     example: word.example_sentence || "",
     exampleTranslation: word.example_translation || "",
