@@ -19,7 +19,13 @@ import { useFlashcardStore } from "../../store/flashcardStore";
 
 const SmartReviewPage = () => {
   const navigate = useNavigate();
-  const { flashcardSets } = useFlashcardStore();
+  const {
+    flashcardSets,
+    dueVocabularies,
+    fetchDueVocabularies,
+    loading: storeLoading,
+    submitReview: submitReviewStore,
+  } = useFlashcardStore();
   const audioInstanceRef = useRef(new Audio());
 
   // ---------- State ----------
@@ -45,7 +51,7 @@ const SmartReviewPage = () => {
     localStorage.setItem("review_mode", mode);
   }, [mode]);
 
-  // Hàm tạo câu hỏi từ danh sách từ (không còn local SM2)
+  // Hàm tạo câu hỏi từ danh sách từ
   const generateQuestions = (words, limit = 10) => {
     if (!words || words.length === 0) return [];
     const selected = words.slice(0, limit);
@@ -101,27 +107,16 @@ const SmartReviewPage = () => {
     return questionList.sort(() => 0.5 - Math.random());
   };
 
-  // Gọi API lấy danh sách từ cần ôn (từ flashcard sets)
-  const fetchDueVocabularies = async () => {
-    if (!flashcardSets || flashcardSets.length === 0) {
-      setDueWords([]);
-      setQuestions([]);
-      setLoading(false);
-      return;
-    }
+  // Lấy dữ liệu từ store
+  const loadDueWords = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("access_token");
-      const response = await fetch("/api/flashcard-sets/due_vocabularies/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch due vocabularies");
-      const data = await response.json();
-      setDueWords(data);
-      // Tạo câu hỏi từ danh sách, giới hạn số lượng questionCount
-      const qs = generateQuestions(data, questionCount);
+      // Fetch dữ liệu từ store
+      await fetchDueVocabularies();
+      // Lấy dữ liệu từ store sau khi fetch
+      const words = dueVocabularies;
+      setDueWords(words);
+      const qs = generateQuestions(words, questionCount);
       setQuestions(qs);
       setUserAnswers(new Array(qs.length).fill(null));
     } catch (error) {
@@ -136,7 +131,7 @@ const SmartReviewPage = () => {
   // Tạo câu hỏi khi flashcardSets, mode, questionCount thay đổi (chỉ khi chưa bắt đầu)
   useEffect(() => {
     if (!started && !isFinished) {
-      fetchDueVocabularies();
+      loadDueWords();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flashcardSets, questionCount, mode, started, isFinished]);
@@ -182,18 +177,10 @@ const SmartReviewPage = () => {
     }
   };
 
-  // Gửi kết quả lên backend
+  // Gửi kết quả lên backend (dùng store)
   const submitReview = async (vocabularyId, grade) => {
     try {
-      const token = localStorage.getItem("access_token");
-      await fetch("/api/submit-review/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ vocabulary_id: vocabularyId, grade }),
-      });
+      await submitReviewStore(vocabularyId, grade);
     } catch (error) {
       console.error("Error submitting review:", error);
     }
@@ -339,7 +326,7 @@ const SmartReviewPage = () => {
 
   // ---------- Màn hình chưa bắt đầu ----------
   if (!started) {
-    if (loading) {
+    if (loading || storeLoading) {
       return (
         <div className="min-h-screen bg-[#FAF9F8] flex items-center justify-center">
           <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-[#E85A4F]" />
