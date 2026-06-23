@@ -278,7 +278,7 @@ export const useFlashcardStore = create((set, get) => ({
   fetchDueVocabularies: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosPrivate.get("/api/due-vocabularies/");
+      const response = await axiosPrivate.get("/api/flashcard-sets/due_vocabularies/");
       set({ dueVocabularies: response.data, loading: false });
       return response.data;
     } catch (err) {
