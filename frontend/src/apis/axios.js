@@ -3,9 +3,9 @@ import Cookies from "js-cookie";
 
 //const BASE_URL = "http://192.168.1.12:8000";
 //const BASE_URL = "http://10.183.94.14:8000";
-const BASE_URL = "http://localhost:8000";
+//const BASE_URL = "http://localhost:8000";
 //const BASE_URL = "http://welearn-backend.southeastasia.azurecontainer.io:8000";
-//const BASE_URL = "https://welearn-backend-https.azurewebsites.net";
+const BASE_URL = "https://welearn-backend-https.azurewebsites.net";
 export const axiosPublic = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
