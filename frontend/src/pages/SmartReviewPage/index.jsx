@@ -72,7 +72,7 @@ const SmartReviewPage = () => {
       const w = selected[idx];
       if (w) {
         questionList.push({
-          id: w.id,
+          id: w.vocabulary_id,
           type: "essay",
           word: w.word,
           reading: w.reading_hiragana || w.pronunciation,
@@ -93,7 +93,7 @@ const SmartReviewPage = () => {
         while (wrongOptions.length < 3) wrongOptions.push(w.meaning + " (lặp)");
         const options = [w.meaning, ...wrongOptions].sort(() => 0.5 - Math.random());
         questionList.push({
-          id: w.id,
+          id: w.vocabulary_id,
           type: "mcq",
           word: w.word,
           reading: w.reading_hiragana || w.pronunciation,
