@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from 'react';
 const CameraWeb = ({ onCapture, onClose }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [stream, setStream] = useState(null);
   const [error, setError] = useState('');
   const [facingMode, setFacingMode] = useState('environment');
@@ -27,12 +28,10 @@ const CameraWeb = ({ onCapture, onClose }) => {
         stream.getTracks().forEach(track => track.stop());
       }
 
-      // Kiểm tra trình duyệt có hỗ trợ getUserMedia không
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Trình duyệt không hỗ trợ camera.');
       }
 
-      // Ưu tiên dùng exact, nếu lỗi thì thử dùng facingMode không exact
       let constraints = { video: { facingMode: { exact: facingMode } } };
       let mediaStream;
       try {
@@ -46,7 +45,6 @@ const CameraWeb = ({ onCapture, onClose }) => {
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        // Đảm bảo video tự động phát (Android cần thêm .play())
         videoRef.current.play().catch(e => console.warn('play error', e));
       }
     } catch (err) {
@@ -65,10 +63,6 @@ const CameraWeb = ({ onCapture, onClose }) => {
     }
   };
 
-  const switchCamera = () => {
-    setFacingMode(prev => (prev === 'environment' ? 'user' : 'environment'));
-  };
-
   const capture = () => {
     if (videoRef.current && canvasRef.current && stream) {
       const video = videoRef.current;
@@ -84,6 +78,23 @@ const CameraWeb = ({ onCapture, onClose }) => {
     } else {
       setError('Chưa sẵn sàng chụp ảnh, vui lòng thử lại.');
     }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        onCapture(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset input để có thể chọn cùng file lại
+    e.target.value = null;
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -111,17 +122,19 @@ const CameraWeb = ({ onCapture, onClose }) => {
 
       <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-4 z-20">
         <button
-          onClick={switchCamera}
-          className="px-5 py-3 bg-gray-700 text-white rounded-full font-bold text-base shadow-lg active:scale-95 transition-transform"
-        >
-          🔄 Đổi cam
-        </button>
-        <button
           onClick={capture}
           className="px-8 py-3 bg-[#FF6B6B] text-white rounded-full font-bold text-base shadow-lg active:scale-95 transition-transform"
         >
           📸 Chụp
         </button>
+        
+        <button
+          onClick={triggerFileInput}
+          className="px-5 py-3 bg-blue-600 text-white rounded-full font-bold text-base shadow-lg active:scale-95 transition-transform"
+        >
+          📁 Chọn ảnh
+        </button>
+        
         <button
           onClick={onClose}
           className="px-5 py-3 bg-gray-500 text-white rounded-full font-bold text-base shadow-lg active:scale-95 transition-transform"
@@ -129,6 +142,15 @@ const CameraWeb = ({ onCapture, onClose }) => {
           ✖ Đóng
         </button>
       </div>
+
+      {/* Input file ẩn để chọn ảnh từ thư viện */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
     </div>
   );
 };

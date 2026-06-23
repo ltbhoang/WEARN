@@ -6,9 +6,9 @@ export const useFlashcardStore = create((set, get) => ({
   flashcardSets: [],
   currentSet: null,
   reviewItems: [],
-  savedVocabularies: [], // Danh sách SavedVocabulary của user
-  dueVocabularies: [], // Danh sách từ vựng cần ôn theo SM-2
-  reviewResult: null, // Kết quả trả về sau khi submit
+  savedVocabularies: [],
+  dueVocabularies: [],
+  reviewResult: null,
   loading: false,
   error: null,
 
@@ -18,12 +18,26 @@ export const useFlashcardStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await axiosPrivate.get("/api/flashcard-sets/");
-      set({ flashcardSets: response.data, loading: false });
+      const data = response.data;
+      let sets = [];
+      if (Array.isArray(data)) {
+        sets = data;
+      } else if (data && data.results && Array.isArray(data.results)) {
+        sets = data.results;
+      } else {
+        // Fallback an toàn: thử lấy từ Object.values nếu có thể
+        const values = Object.values(data || {});
+        if (values.length > 0 && Array.isArray(values[0])) {
+          sets = values[0];
+        }
+      }
+      set({ flashcardSets: sets, loading: false });
     } catch (err) {
       set({
         error:
           err.response?.data?.message || "Không thể lấy danh sách bộ flashcard",
         loading: false,
+        flashcardSets: [], // Reset về mảng rỗng
       });
     }
   },
@@ -44,7 +58,6 @@ export const useFlashcardStore = create((set, get) => ({
   },
 
   createFlashcardSet: async (setData) => {
-    // setData = { name, description, items: [{ type: 'camera', id }, { type: 'system', id }] }
     set({ loading: true, error: null });
     try {
       const response = await axiosPrivate.post("/api/flashcard-sets/", setData);
@@ -107,15 +120,26 @@ export const useFlashcardStore = create((set, get) => ({
   fetchSavedVocabularies: async () => {
     set({ loading: true, error: null });
     try {
-      // Endpoint này cần được tạo trong Django: trả về danh sách SavedVocabulary của user
       const response = await axiosPrivate.get("/api/saved-vocabularies/");
-      console.log("API /saved-vocabularies trả về:", response.data);
-      set({ savedVocabularies: response.data, loading: false });
+      const data = response.data;
+      let saved = [];
+      if (Array.isArray(data)) {
+        saved = data;
+      } else if (data && data.results && Array.isArray(data.results)) {
+        saved = data.results;
+      } else {
+        const values = Object.values(data || {});
+        if (values.length > 0 && Array.isArray(values[0])) {
+          saved = values[0];
+        }
+      }
+      set({ savedVocabularies: saved, loading: false });
     } catch (err) {
       set({
         error:
           err.response?.data?.message || "Không thể lấy danh sách từ đã lưu",
         loading: false,
+        savedVocabularies: [], // quan trọng
       });
     }
   },
@@ -139,13 +163,11 @@ export const useFlashcardStore = create((set, get) => ({
   },
 
   addVocabularyToSet: async (setId, item) => {
-    // item = { type: 'camera', id: savedVocabId } hoặc { type: 'system', id: vocabularyId }
     try {
       const response = await axiosPrivate.post(
         `/api/flashcard-sets/${setId}/add_vocab/`,
         item
       );
-      // Cập nhật currentSet tương tự như cũ
       set((state) => {
         if (state.currentSet?.id === setId) {
           const newItems = [...(state.currentSet.items || []), response.data];
@@ -173,7 +195,6 @@ export const useFlashcardStore = create((set, get) => ({
       });
 
       set((state) => {
-        // Cập nhật currentSet
         if (state.currentSet?.id === setId) {
           const itemToRemove = state.currentSet.items?.find(
             (item) => item.id === itemId
@@ -196,7 +217,6 @@ export const useFlashcardStore = create((set, get) => ({
         return state;
       });
 
-      // Xóa khỏi reviewItems nếu có
       set((state) => ({
         reviewItems: state.reviewItems.filter((item) => item.id !== itemId),
       }));
@@ -210,13 +230,10 @@ export const useFlashcardStore = create((set, get) => ({
     try {
       const response = await axiosPrivate.patch(
         `/api/flashcard-items/${itemId}/`,
-        {
-          memorized,
-        }
+        { memorized }
       );
 
       set((state) => {
-        // Cập nhật currentSet
         let newCurrentSet = state.currentSet;
         if (state.currentSet) {
           const items = state.currentSet.items || [];
@@ -226,7 +243,6 @@ export const useFlashcardStore = create((set, get) => ({
             const newItems = [...items];
             newItems[itemIndex] = { ...newItems[itemIndex], memorized };
 
-            // Tính lại memorized_count
             let delta = 0;
             if (memorized && !oldMemorized) delta = 1;
             else if (!memorized && oldMemorized) delta = -1;
@@ -239,7 +255,6 @@ export const useFlashcardStore = create((set, get) => ({
           }
         }
 
-        // Cập nhật reviewItems: nếu memorized = true thì xóa khỏi danh sách ôn tập
         let newReviewItems = state.reviewItems;
         if (memorized) {
           newReviewItems = state.reviewItems.filter(
@@ -260,7 +275,6 @@ export const useFlashcardStore = create((set, get) => ({
     }
   },
 
-  // Lấy danh sách từ vựng cần ôn hôm nay (theo SM-2)
   fetchDueVocabularies: async () => {
     set({ loading: true, error: null });
     try {
@@ -276,7 +290,6 @@ export const useFlashcardStore = create((set, get) => ({
     }
   },
 
-  // Gửi kết quả ôn tập (grade) cho một từ vựng
   submitReview: async (vocabularyId, grade) => {
     set({ loading: true, error: null });
     try {
@@ -285,7 +298,6 @@ export const useFlashcardStore = create((set, get) => ({
         grade: grade,
       });
       set({ reviewResult: response.data, loading: false });
-      // Sau khi submit thành công, loại bỏ từ vừa ôn khỏi danh sách dueVocabularies
       set((state) => ({
         dueVocabularies: state.dueVocabularies.filter(
           (item) => item.vocabulary_id !== vocabularyId
@@ -305,12 +317,9 @@ export const useFlashcardStore = create((set, get) => ({
     try {
       const response = await axiosPrivate.post(
         "/api/flashcard-items/bulk_update_memorized/",
-        {
-          items,
-        }
+        { items }
       );
 
-      // Sau khi cập nhật hàng loạt, làm mới dữ liệu từ API để đảm bảo đồng bộ
       if (get().reviewItems.length > 0) {
         const setId = get().currentSet?.id;
         if (setId) {
@@ -334,7 +343,6 @@ export const useFlashcardStore = create((set, get) => ({
         order: orderData,
       });
 
-      // Refresh lại currentSet để lấy thứ tự mới
       if (get().currentSet?.id === setId) {
         await get().fetchFlashcardSetDetail(setId);
       }
@@ -344,10 +352,13 @@ export const useFlashcardStore = create((set, get) => ({
     }
   },
 
+  // --- HELPER FUNCTIONS (đã sửa) ---
+
   getUnmemorizedVocabularies: () => {
     const { flashcardSets } = get();
+    if (!Array.isArray(flashcardSets)) return [];
+
     const unmemorizedItems = [];
-    // Sắp xếp bộ theo thời gian tạo cũ nhất lên trước
     const sortedSets = [...flashcardSets].sort(
       (a, b) => new Date(a.created_at) - new Date(b.created_at)
     );
@@ -374,11 +385,13 @@ export const useFlashcardStore = create((set, get) => ({
     return unmemorizedItems;
   },
 
-  // Lấy danh sách từ chưa thuộc theo một bộ flashcard cụ thể
   getUnmemorizedVocabulariesBySetId: (setId) => {
     const { flashcardSets } = get();
+    if (!Array.isArray(flashcardSets)) return [];
+
     const targetSet = flashcardSets.find((set) => set.id === setId);
     if (!targetSet) return [];
+
     const unmemorizedItems = [];
     for (const item of targetSet.items) {
       if (!item.memorized && item.vocabulary_detail) {
@@ -401,7 +414,7 @@ export const useFlashcardStore = create((set, get) => ({
     return unmemorizedItems;
   },
 
-  // --- HELPER FUNCTIONS ---
+  // --- RESET & CLEAR ---
 
   resetCurrentSet: () => {
     set({ currentSet: null, reviewItems: [] });

@@ -23,15 +23,16 @@ export const useAuthStore = create((set, get) => ({
     loading: false,
 
     fetchUserProfile: async () => {
+        set({ loading: true });
         try {
             const response = await axiosPrivate.get('/api/user-profile/');
             const userData = response.data;
-            set({ user: userData });
+            set({ user: userData, loading: false });
             syncCookies(get());
             return userData;
         } catch (error) {
             console.error('Failed to fetch user profile', error);
-            // Nếu lỗi 401, có thể token hết hạn, logout
+            set({ loading: false });
             if (error.response?.status === 401) {
                 get().logout();
             }
@@ -47,7 +48,6 @@ export const useAuthStore = create((set, get) => ({
             set({ accessToken: access, refreshToken: refresh });
             syncCookies(get());
 
-            // Gọi lấy profile user sau khi có token
             const userProfile = await get().fetchUserProfile();
             return { success: true, user: userProfile };
         } catch (error) {
@@ -69,6 +69,7 @@ export const useAuthStore = create((set, get) => ({
             set({ accessToken: access });
             syncCookies(get());
             return access;
+        // eslint-disable-next-line no-unused-vars
         } catch (error) {
             get().logout();
             return null;

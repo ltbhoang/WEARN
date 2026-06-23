@@ -4,13 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 
 export default function Login() {
-  const [username, setUsername] = useState(""); 
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   
   const navigate = useNavigate();
-  
-  const { login, loading } = useAuthStore();
+  const { login, loading, user } = useAuthStore(); // Lấy user từ store
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +18,12 @@ export default function Login() {
     const result = await login(username, password);
 
     if (result.success) {
-      navigate("/dashboard");
+      // Kiểm tra role sau khi login thành công
+      if (user?.is_staff) {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     } else {
       setErrorMessage("Tên đăng nhập hoặc mật khẩu không đúng!");
     }

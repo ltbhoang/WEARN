@@ -1,3 +1,4 @@
+// src/pages/Collection/index.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDataStore } from "../../store/dataStore";
@@ -23,6 +24,9 @@ const CollectionPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { collections, fetchCollections, loading } = useDataStore();
 
+  // 👇 Bảo vệ: luôn đảm bảo collections là mảng
+  const safeCollections = Array.isArray(collections) ? collections : [];
+
   useEffect(() => {
     fetchCollections();
   }, [fetchCollections]);
@@ -33,12 +37,11 @@ const CollectionPage = () => {
     return WEEKLY_PALETTE[dayIndex];
   };
 
-  const filteredCollections = collections.filter((col) =>
-    col.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCollections = safeCollections.filter((col) =>
+    col.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    // Thêm pb-40 để cách footer app chính một khoảng xa
     <div className="min-h-screen bg-[#FAF9F8] pb-40 font-sans text-[#2D2D2D]">
       <header className="px-6 pt-10 pb-4">
         <div className="flex items-center gap-4 max-w-2xl mx-auto">
@@ -47,7 +50,7 @@ const CollectionPage = () => {
               Bộ sưu tập
             </h1>
             <p className="text-base text-[#8E8D8A] font-medium mt-1">
-              Bạn đã học được {collections.length} bộ từ rồi!
+              Bạn đã học được {safeCollections.length} bộ từ rồi!
             </p>
           </div>
           
@@ -79,56 +82,64 @@ const CollectionPage = () => {
             <Loader2 className="w-10 h-10 animate-spin mb-2" />
             <p>Đang lấy dữ liệu...</p>
           </div>
-        ) : filteredCollections.map((col) => {
-          const folderTheme = getThemeByDate(col.date_key || col.created_at);
-          
-          return (
-            <section key={col.id} className="space-y-4">
-              <h2 className="text-xl font-bold text-[#474747] ml-2">
-                {col.title}
-              </h2>
+        ) : filteredCollections.length === 0 ? (
+          <div className="text-center py-20 text-[#8E8D8A]">
+            <p className="text-6xl mb-4">📭</p>
+            <p className="text-lg font-medium">Chưa có bộ sưu tập nào</p>
+            <p className="text-sm">Hãy tạo bộ sưu tập đầu tiên của bạn!</p>
+          </div>
+        ) : (
+          filteredCollections.map((col) => {
+            const folderTheme = getThemeByDate(col.date_key || col.created_at);
+            
+            return (
+              <section key={col.id} className="space-y-4">
+                <h2 className="text-xl font-bold text-[#474747] ml-2">
+                  {col.title}
+                </h2>
 
-              <div
-                onClick={() => navigate(`/collection/${col.id}`)}
-                style={{ backgroundColor: folderTheme.bg }}
-                className="relative rounded-[40px] p-8 shadow-sm transition-all active:scale-[0.98] cursor-pointer hover:shadow-md"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2 bg-white/80 px-3 py-1.5 rounded-xl">
-                    <Copy
-                      className="w-4 h-4"
-                      style={{ color: folderTheme.main }}
-                    />
-                    <span className="text-lg font-bold text-[#555]">
-                       {col.vocab_count || 0} từ vựng
-                    </span>
+                <div
+                  onClick={() => navigate(`/collection/${col.id}`)}
+                  style={{ backgroundColor: folderTheme.bg }}
+                  className="relative rounded-[40px] p-8 shadow-sm transition-all active:scale-[0.98] cursor-pointer hover:shadow-md"
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2 bg-white/80 px-3 py-1.5 rounded-xl">
+                      <Copy
+                        className="w-4 h-4"
+                        style={{ color: folderTheme.main }}
+                      />
+                      <span className="text-lg font-bold text-[#555]">
+                         {col.vocab_count || 0} từ vựng
+                      </span>
+                    </div>
+                    <ChevronRight className="w-6 h-6 text-[#C7C7C7]" />
                   </div>
-                  <ChevronRight className="w-6 h-6 text-[#C7C7C7]" />
-                </div>
 
-                {/* HIỂN THỊ TỐI ĐA 4 ẢNH */}
-                <div className="flex gap-3 overflow-hidden mb-4">
-                  {col.images && col.images.slice(0, 3).map((img, idx) => (
-                    <div key={idx} className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-sm shrink-0">
-                      <img src={img} alt="vocab" className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                  {col.vocab_count > 4 && (
-                    <div className="w-16 h-16 rounded-2xl bg-white/50 backdrop-blur flex items-center justify-center text-xs font-bold text-[#8E8D8A]">
-                      +{col.vocab_count - 4}
-                    </div>
-                  )}
-                </div>
+                  {/* Hiển thị tối đa 4 ảnh */}
+                  <div className="flex gap-3 overflow-hidden mb-4">
+                    {col.images && col.images.slice(0, 3).map((img, idx) => (
+                      <div key={idx} className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-sm shrink-0">
+                        <img src={img} alt="vocab" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                    {col.vocab_count > 4 && (
+                      <div className="w-16 h-16 rounded-2xl bg-white/50 backdrop-blur flex items-center justify-center text-xs font-bold text-[#8E8D8A]">
+                        +{col.vocab_count - 4}
+                      </div>
+                    )}
+                  </div>
 
-                <div className="flex gap-4">
-                   <div className="text-xs text-[#8E8D8A] font-medium">
-                     Ngày tạo: {new Date(col.date_key || col.created_at).toLocaleDateString('vi-VN')}
-                   </div>
+                  <div className="flex gap-4">
+                     <div className="text-xs text-[#8E8D8A] font-medium">
+                       Ngày tạo: {new Date(col.date_key || col.created_at).toLocaleDateString('vi-VN')}
+                     </div>
+                  </div>
                 </div>
-              </div>
-            </section>
-          );
-        })}
+              </section>
+            );
+          })
+        )}
       </main>
     </div>
   );

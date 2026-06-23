@@ -14,44 +14,20 @@ import {
 import { useFlashcardStore } from "../../store/flashcardStore";
 import { axiosPrivate } from "../../apis/axios";
 
+// --- Định nghĩa nhóm với icon ---
 const GROUP_MAPPING = {
-  "Gia đình & Quan hệ": ["giadinh", "connguoi"],
-  "Cuộc sống & Nhà cửa": ["nhacua", "dovan", "dodung", "vesinh"],
-  "Ăn uống & Thực phẩm": ["doan", "thit", "rau", "luongthuc", "giavi"],
-  "Động vật & Thiên nhiên": ["dongvat", "thiennhien", "mua", "thoitiet"],
-  "Thời gian": ["thoigian"],
-  "Địa điểm & Phương hướng": [
-    "diadiem",
-    "thanhpho",
-    "vitri",
-    "huong",
-    "kientruc",
-  ],
-  "Giao thông & Du lịch": ["giaothong"],
-  "Hành động (Động từ)": ["dongtu"],
-  "Tính chất (Tính từ)": ["tinhtu", "tinhtu_i", "tinhtu_na", "trangthai"],
-  "Trường học & Công việc": [
-    "hoc_tap",
-    "truonghoc",
-    "giaoduc",
-    "nghenghiep",
-    "congty",
-    "it",
-  ],
-  "Đại từ & Từ để hỏi": ["daitu", "nghevan", "tunghevan", "tu_noi"],
-  "Màu sắc & Đồ vật & Khác": [
-    "mausac",
-    "quanao",
-    "phukien",
-    "dovat",
-    "vatlieu",
-    "khac",
-    "sodem",
-    "trangtu",
-    "sothich",
-    "giaitri",
-    "extra",
-  ],
+  "Gia đình & Quan hệ": { icon: "👨‍👩‍👧‍👦", topics: ["giadinh", "connguoi"] },
+  "Cuộc sống & Nhà cửa": { icon: "🏠", topics: ["nhacua", "dovan", "dodung", "vesinh"] },
+  "Ăn uống & Thực phẩm": { icon: "🍜", topics: ["doan", "thit", "rau", "luongthuc", "giavi"] },
+  "Động vật & Thiên nhiên": { icon: "🐾", topics: ["dongvat", "thiennhien", "mua", "thoitiet"] },
+  "Thời gian": { icon: "⏰", topics: ["thoigian"] },
+  "Địa điểm & Phương hướng": { icon: "📍", topics: ["diadiem", "thanhpho", "vitri", "huong", "kientruc"] },
+  "Giao thông & Du lịch": { icon: "🚗", topics: ["giaothong"] },
+  "Hành động (Động từ)": { icon: "🏃", topics: ["dongtu"] },
+  "Tính chất (Tính từ)": { icon: "🎨", topics: ["tinhtu", "tinhtu_i", "tinhtu_na", "trangthai"] },
+  "Trường học & Công việc": { icon: "📚", topics: ["hoc_tap", "truonghoc", "giaoduc", "nghenghiep", "congty", "it"] },
+  "Đại từ & Từ để hỏi": { icon: "❓", topics: ["daitu", "nghevan", "tunghevan", "tu_noi"] },
+  "Màu sắc & Đồ vật & Khác": { icon: "🎨", topics: ["mausac", "quanao", "phukien", "dovat", "vatlieu", "khac", "sodem", "trangtu", "sothich", "giaitri", "extra"] },
 };
 
 const CreateFlashcardSetPage = () => {
@@ -70,24 +46,25 @@ const CreateFlashcardSetPage = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [systemVocabs, setSystemVocabs] = useState([]);
   const [systemLoading, setSystemLoading] = useState(false);
+  const [apiError, setApiError] = useState(null);
 
-  // 🔥 Lọc các SavedVocabulary trùng lặp theo vocabulary (chỉ giữ bản ghi mới nhất)
+  // --- Bảo vệ savedVocabularies (luôn là mảng) ---
+  const safeSavedVocabularies = Array.isArray(savedVocabularies) ? savedVocabularies : [];
+
   const uniqueSavedVocabularies = useMemo(() => {
-    const seen = new Map(); // key = vocabulary UUID, value = object
-    // savedVocabularies đã được backend sắp xếp theo saved_at giảm dần (mới nhất trước)
-    for (const item of savedVocabularies) {
+    const seen = new Map();
+    for (const item of safeSavedVocabularies) {
       if (!seen.has(item.vocabulary)) {
         seen.set(item.vocabulary, item);
       }
     }
     return Array.from(seen.values());
-  }, [savedVocabularies]);
+  }, [safeSavedVocabularies]);
 
   useEffect(() => {
     fetchSavedVocabularies();
   }, [fetchSavedVocabularies]);
 
-  // Đồng bộ selectedItems: loại bỏ những camera item không còn trong danh sách unique
   useEffect(() => {
     const uniqueCameraIds = new Set(uniqueSavedVocabularies.map(v => v.id));
     setSelectedItems((prev) =>
@@ -97,13 +74,15 @@ const CreateFlashcardSetPage = () => {
     );
   }, [uniqueSavedVocabularies]);
 
+  // ============ SỬA Ở ĐÂY ============
   useEffect(() => {
     if (activeTab === "library" && selectedTopic) {
       const fetchSystemWords = async () => {
         setSystemLoading(true);
+        setApiError(null);
         try {
           const topicData = GROUP_MAPPING[selectedTopic];
-          const topicList = topicData || [];
+          const topicList = topicData?.topics || [];
           if (topicList.length === 0) {
             setSystemVocabs([]);
             return;
@@ -112,12 +91,27 @@ const CreateFlashcardSetPage = () => {
             axiosPrivate.get(`/api/vocabularies/?topic=${topic}`)
           );
           const responses = await Promise.all(requests);
-          const allVocabs = responses.flatMap((res) => res.data);
+          // Lấy results từ mỗi response (vì API trả về pagination)
+          const allVocabs = responses.flatMap((res) => {
+            if (res.data && Array.isArray(res.data.results)) {
+              return res.data.results;
+            } else if (Array.isArray(res.data)) {
+              return res.data;
+            }
+            return [];
+          });
           const unique = allVocabs.filter(
             (v, i, self) => self.findIndex((t) => t.id === v.id) === i
           );
           setSystemVocabs(unique);
         } catch (err) {
+          console.error("Lỗi tải từ vựng:", err);
+          if (err.response?.status === 401) {
+            setApiError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+            setTimeout(() => navigate("/login"), 2000);
+          } else {
+            setApiError("Không thể tải từ vựng. Vui lòng thử lại.");
+          }
           setSystemVocabs([]);
         } finally {
           setSystemLoading(false);
@@ -125,7 +119,8 @@ const CreateFlashcardSetPage = () => {
       };
       fetchSystemWords();
     }
-  }, [activeTab, selectedTopic]);
+  }, [activeTab, selectedTopic, navigate]);
+  // =====================================
 
   const toggleSelect = (type, id) => {
     setSelectedItems((prev) => {
@@ -168,11 +163,18 @@ const CreateFlashcardSetPage = () => {
     e.preventDefault();
     if (selectedItems.length < 5) return alert("Cần chọn ít nhất 5 từ.");
     if (!formData.name.trim()) return alert("Vui lòng nhập tên bộ.");
+    setApiError(null);
     try {
       await createFlashcardSet({ ...formData, items: selectedItems });
       navigate("/flashcard");
     } catch (error) {
-      alert("Lỗi khi tạo bộ từ vựng.");
+      console.error("Lỗi tạo bộ:", error);
+      if (error.response?.status === 401) {
+        alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        navigate("/login");
+      } else {
+        alert("Lỗi khi tạo bộ từ vựng.");
+      }
     }
   };
 
@@ -231,11 +233,20 @@ const CreateFlashcardSetPage = () => {
                 <div className="w-10 h-10 bg-[#FEE9E7] rounded-xl flex items-center justify-center text-[#E85A4F]"><Filter size={20} /></div>
                 <div className="text-left">
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[1px]">Chủ đề</p>
-                  <p className="text-[#2D2D2D] font-bold">{GROUP_MAPPING[selectedTopic].icon} {selectedTopic}</p>
+                  <p className="text-[#2D2D2D] font-bold">
+                    {GROUP_MAPPING[selectedTopic]?.icon || "📂"} {selectedTopic}
+                  </p>
                 </div>
               </div>
               <ChevronRight size={20} className="text-gray-300" />
             </button>
+          )}
+
+          {apiError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl p-4 text-sm font-medium flex items-start gap-2">
+              <span className="text-lg">⚠️</span>
+              <span>{apiError}</span>
+            </div>
           )}
         </div>
 
@@ -249,7 +260,7 @@ const CreateFlashcardSetPage = () => {
             ) : (
               uniqueSavedVocabularies.map((v) => (
                 <VocabularyCard
-                  key={v.id}
+                  key={`camera-${v.id}`}
                   word={v.word}
                   meaning={v.meaning}
                   image={v.user_image}
@@ -260,10 +271,12 @@ const CreateFlashcardSetPage = () => {
             )
           ) : systemLoading ? (
             <LoadingSkeleton />
+          ) : systemVocabs.length === 0 ? (
+            <EmptyState msg="Không có từ vựng nào trong chủ đề này." />
           ) : (
             systemVocabs.map((v) => (
               <VocabularyCard
-                key={v.id}
+                key={`system-${v.id}`}
                 word={v.word}
                 meaning={v.meaning}
                 image={v.image_url}
@@ -288,7 +301,7 @@ const CreateFlashcardSetPage = () => {
             <div className="overflow-y-auto p-4 space-y-2 pb-10">
               {Object.keys(GROUP_MAPPING).map((group) => (
                 <button key={group} onClick={() => { setSelectedTopic(group); setIsSheetOpen(false); }} className={`flex items-center gap-4 w-full p-4 rounded-2xl transition-all ${selectedTopic === group ? "bg-[#FEE9E7] border border-[#E85A4F]/20 shadow-sm" : "bg-[#FAFAFA] active:bg-gray-100"}`}>
-                  <span className="text-2xl">{GROUP_MAPPING[group].icon}</span>
+                  <span className="text-2xl">{GROUP_MAPPING[group]?.icon || "📂"}</span>
                   <span className={`flex-1 text-left font-bold ${selectedTopic === group ? "text-[#E85A4F]" : "text-[#4A4A4A]"}`}>{group}</span>
                   {selectedTopic === group && <CheckCircle size={20} className="text-[#E85A4F]" />}
                 </button>
@@ -310,7 +323,7 @@ const CreateFlashcardSetPage = () => {
   );
 };
 
-// Sub-components
+// --- Sub-components ---
 const TabButton = ({ active, onClick, icon, label }) => (
   <button onClick={onClick} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${active ? "bg-white text-[#E85A4F] shadow-sm" : "text-gray-500"}`}>
     {icon} {label}

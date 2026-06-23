@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"; // Thêm useEffect
 import { BrowserRouter as Router, useLocation } from "react-router-dom";
 import Header from "./layouts/Header";
-import Sidebar from "./layouts/Sidebar";
 import Footer from "./layouts/Footer";
 import AppRoutes from "./routers/index";
 import { axiosPrivate } from "./apis/axios";
@@ -9,7 +8,7 @@ import { useAuthStore } from "./store/authStore";
 import "./App.css";
 
 function AppContent() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
 
   const refreshAccessToken = useAuthStore((state) => state.refreshAccessToken);
@@ -55,7 +54,7 @@ function AppContent() {
 
   // --- LOGIC HIỂN THỊ UI ---
   const showHeader = location.pathname === "/";
-  const noFooterRoutes = ["/", "/login", "/signup", "/flashcard/create"];
+  const noFooterRoutes = ["/", "/login", "/signup", "/flashcard/create", "/admin", "/admin/vocabularies", "/admin/lessons", "/admin/kanas", "/admin/users"];
 
   const isFlashcardDetail = /^\/flashcard\/[^/]+$/.test(location.pathname);
 
@@ -76,10 +75,7 @@ function AppContent() {
       )}
 
       <div className="flex flex-1 overflow-hidden">
-        {showHeader && (
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        )}
-
+        {showHeader}
         <main className="flex-1 overflow-y-auto">
           <AppRoutes />
         </main>

@@ -1,21 +1,28 @@
-// KanaPracticePage.jsx
+// CharacterPracticePage.jsx
 import React, { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useKanaStore } from "../../store/kanaStore";
+import { useKanjiStore } from "../../store/kanjiStore";
 import { ChevronLeft, Eye, EyeOff, RotateCcw, Volume2 } from "lucide-react";
 import CustomCanvas from "../../components/Canvas";
 import compareImages from "../../utils/compareImages";
 
-const KanaPracticePage = () => {
-  const { kanaId } = useParams();
+const KanaPracticePage = ({ type }) => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const {
-    currentKana: kana,
-    fetchKanaDetail,
-    kanaProgress,
-    getKanaProgress,
-    loading: storeLoading,
-  } = useKanaStore();
+  const isKanji = type === "kanji";
+
+  // Chọn store theo loại
+  const kanaStore = useKanaStore();
+  const kanjiStore = useKanjiStore();
+  const store = isKanji ? kanjiStore : kanaStore;
+
+  // Lấy dữ liệu đúng theo loại – ĐÂY LÀ PHẦN SỬA QUAN TRỌNG
+  const character = isKanji ? store.currentKanji : store.currentKana;
+  const fetchDetail = isKanji ? store.fetchKanjiDetail : store.fetchKanaDetail;
+  const getProgress = isKanji ? store.getKanjiProgress : store.getKanaProgress;
+  const progress = isKanji ? store.kanjiProgress?.[id] : store.kanaProgress?.[id];
+  const storeLoading = store.loading;
 
   const [currentStroke, setCurrentStroke] = useState(0);
   const [currentDrawnStroke, setCurrentDrawnStroke] = useState(null);
@@ -38,27 +45,31 @@ const KanaPracticePage = () => {
   };
 
   useEffect(() => {
-    if (kanaId) {
-      fetchKanaDetail(kanaId);
-      getKanaProgress(kanaId);
+    if (id) {
+      fetchDetail(id);
+      getProgress(id);
     }
-  }, [kanaId, fetchKanaDetail, getKanaProgress]);
+  }, [id, fetchDetail, getProgress]);
+
+  const strokes = character?.strokes || [];
+  const totalStrokes = strokes.length;
 
   useEffect(() => {
-    const progress = kanaProgress[kanaId];
-    if (progress && kana?.strokes) {
-      const completedCount = progress.completed_strokes.length;
+    if (progress && strokes.length > 0) {
+      const completedCount = progress.completed_strokes?.length || 0;
       if (
         completedCount !== currentStroke &&
-        completedCount <= kana.strokes.length
+        completedCount <= strokes.length
       ) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCurrentStroke(completedCount);
         setCurrentDrawnStroke(null);
       }
     }
-  }, [kanaProgress, kanaId, kana?.strokes, currentStroke]);
+  }, [progress, strokes, currentStroke]);
 
   const removeStyleAndAnimation = (svgString) => {
+    if (!svgString) return "";
     let cleaned = svgString.replace(/<style>[\s\S]*?<\/style>/g, "");
     cleaned = cleaned.replace(/\s*animation:[^;]*;?/g, "");
     cleaned = cleaned.replace(/\s*stroke-dasharray:[^;]*;?/g, "");
@@ -66,14 +77,13 @@ const KanaPracticePage = () => {
     return cleaned;
   };
 
-  const completedStrokeStyle = (fullSvg, strokeIndex) => {
-    if (!fullSvg) return "";
+  const completedStrokeStyle = (strokeSvg) => {
+    if (!strokeSvg) return "";
     const parser = new DOMParser();
-    const doc = parser.parseFromString(fullSvg, "image/svg+xml");
+    const doc = parser.parseFromString(strokeSvg, "image/svg+xml");
     const svg = doc.documentElement;
-    const strokePaths = Array.from(svg.querySelectorAll("path[clip-path]"));
-    if (strokeIndex >= strokePaths.length) return "";
-    const targetStroke = strokePaths[strokeIndex];
+    const path = svg.querySelector("path");
+    if (!path) return "";
     const newSvg = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "svg"
@@ -83,135 +93,46 @@ const KanaPracticePage = () => {
     newSvg.setAttribute("width", "100%");
     newSvg.setAttribute("height", "100%");
     newSvg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-    const clipPathAttr = targetStroke.getAttribute("clip-path");
-    if (clipPathAttr) {
-      const clipPathId = clipPathAttr.replace("url(#", "").replace(")", "");
-      const targetClipPath = svg.querySelector(`#${clipPathId}`);
-      if (targetClipPath) defs.appendChild(targetClipPath.cloneNode(true));
-    }
-    const useHref =
-      targetStroke.querySelector("use")?.getAttribute("href") ||
-      (clipPathAttr
-        ? svg
-            .querySelector(`#${clipPathAttr.replace(/url\(#|\)/g, "")}`)
-            ?.querySelector("use")
-            ?.getAttribute("href")
-        : null);
-    if (useHref) {
-      const outlineId = useHref.replace("#", "");
-      const targetOutline = svg.querySelector(`#${outlineId}`);
-      if (targetOutline) defs.appendChild(targetOutline.cloneNode(true));
-    }
-    newSvg.appendChild(defs);
-    const completedPath = targetStroke.cloneNode(true);
-    completedPath.removeAttribute("style");
-    completedPath.removeAttribute("fill");
-    completedPath.removeAttribute("stroke-dasharray");
-    completedPath.removeAttribute("stroke-dashoffset");
-    completedPath.setAttribute("fill", "none");
-    completedPath.setAttribute("stroke", "#10B981");
-    completedPath.setAttribute("stroke-width", "72");
-    completedPath.setAttribute("stroke-linecap", "round");
-    completedPath.setAttribute("stroke-linejoin", "round");
-    newSvg.appendChild(completedPath);
+    const newPath = path.cloneNode(true);
+    newPath.setAttribute("fill", "none");
+    newPath.setAttribute("stroke", "#10B981");
+    newPath.setAttribute("stroke-width", "40");
+    newPath.setAttribute("stroke-linecap", "round");
+    newPath.setAttribute("stroke-linejoin", "round");
+    newSvg.appendChild(newPath);
     return newSvg.outerHTML;
   };
 
-  const getCurrentDrawnStrokeSvg = (fullSvg, strokeIndex) => {
-    if (!fullSvg) return "";
+  const getCurrentDrawnStrokeSvg = (strokeSvg) => {
+    return completedStrokeStyle(strokeSvg);
+  };
+
+  const getHintSvgForStroke = (strokeSvg) => {
+    if (!strokeSvg) return "";
     const parser = new DOMParser();
-    const doc = parser.parseFromString(fullSvg, "image/svg+xml");
+    const doc = parser.parseFromString(strokeSvg, "image/svg+xml");
     const svg = doc.documentElement;
-    const strokePaths = Array.from(svg.querySelectorAll("path[clip-path]"));
-    if (strokeIndex >= strokePaths.length) return "";
-    const targetStroke = strokePaths[strokeIndex];
-    const newSvg = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg"
-    );
+    const path = svg.querySelector("path");
+    if (!path) return "";
+    const newSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     newSvg.setAttribute("viewBox", "0 0 1024 1024");
     newSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     newSvg.setAttribute("width", "100%");
     newSvg.setAttribute("height", "100%");
     newSvg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-    const clipPathAttr = targetStroke.getAttribute("clip-path");
-    if (clipPathAttr) {
-      const clipPathId = clipPathAttr.replace("url(#", "").replace(")", "");
-      const targetClipPath = svg.querySelector(`#${clipPathId}`);
-      if (targetClipPath) defs.appendChild(targetClipPath.cloneNode(true));
-    }
-    const useHref =
-      targetStroke.querySelector("use")?.getAttribute("href") ||
-      (clipPathAttr
-        ? svg
-            .querySelector(`#${clipPathAttr.replace(/url\(#|\)/g, "")}`)
-            ?.querySelector("use")
-            ?.getAttribute("href")
-        : null);
-    if (useHref) {
-      const outlineId = useHref.replace("#", "");
-      const targetOutline = svg.querySelector(`#${outlineId}`);
-      if (targetOutline) defs.appendChild(targetOutline.cloneNode(true));
-    }
-    newSvg.appendChild(defs);
-    const drawnPath = targetStroke.cloneNode(true);
-    drawnPath.removeAttribute("style");
-    drawnPath.removeAttribute("fill");
-    drawnPath.removeAttribute("stroke-dasharray");
-    drawnPath.removeAttribute("stroke-dashoffset");
-    drawnPath.setAttribute("fill", "none");
-    drawnPath.setAttribute("stroke", "#10B981");
-    drawnPath.setAttribute("stroke-width", "72");
-    drawnPath.setAttribute("stroke-linecap", "round");
-    drawnPath.setAttribute("stroke-linejoin", "round");
-    newSvg.appendChild(drawnPath);
-    return newSvg.outerHTML;
-  };
-
-  const getHintSvgForStroke = (fullSvg, strokeIndex) => {
-    if (!fullSvg) return "";
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(fullSvg, "image/svg+xml");
-    const svg = doc.documentElement;
-    const strokePaths = Array.from(svg.querySelectorAll("path[clip-path]"));
-    if (strokeIndex >= strokePaths.length) return "";
-    const targetStroke = strokePaths[strokeIndex];
-    const clipPathAttr = targetStroke.getAttribute("clip-path");
-    if (!clipPathAttr) return "";
-    const clipPathId = clipPathAttr.replace("url(#", "").replace(")", "");
-    const targetClipPath = svg.querySelector(`#${clipPathId}`);
-    const useHref = targetClipPath?.querySelector("use")?.getAttribute("href");
-    const outlineId = useHref ? useHref.replace("#", "") : null;
-    const targetOutline = outlineId ? svg.querySelector(`#${outlineId}`) : null;
-    const newSvg = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg"
-    );
-    newSvg.setAttribute("viewBox", "0 0 1024 1024");
-    newSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-    if (targetClipPath) defs.appendChild(targetClipPath.cloneNode(true));
-    if (targetOutline) defs.appendChild(targetOutline.cloneNode(true));
-    newSvg.appendChild(defs);
-    const newStroke = targetStroke.cloneNode(true);
-    newStroke.removeAttribute("style");
-    newStroke.removeAttribute("fill");
-    newStroke.setAttribute("fill", "none");
-    newStroke.setAttribute("stroke", "#3B82F6");
-    newStroke.setAttribute("stroke-width", "138");
-    newStroke.setAttribute("stroke-linecap", "round");
-    newStroke.setAttribute("stroke-linejoin", "round");
-    newStroke.setAttribute("stroke-dasharray", "12000");
-    newStroke.setAttribute("stroke-dashoffset", "12000");
-    newStroke.style.animation = "draw 3s linear infinite";
-    newSvg.appendChild(newStroke);
-    const style = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "style"
-    );
-    style.textContent = `@keyframes draw { from { stroke-dashoffset: 12000; } to { stroke-dashoffset: 0; } }`;
+    const newPath = path.cloneNode(true);
+    newPath.setAttribute("fill", "none");
+    newPath.setAttribute("stroke", "#3B82F6");
+    newPath.setAttribute("stroke-width", "30");
+    newPath.setAttribute("stroke-linecap", "round");
+    newPath.setAttribute("stroke-linejoin", "round");
+    const length = 12000;
+    newPath.setAttribute("stroke-dasharray", length);
+    newPath.setAttribute("stroke-dashoffset", length);
+    newPath.style.animation = "draw 3s linear infinite";
+    newSvg.appendChild(newPath);
+    const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+    style.textContent = `@keyframes draw { from { stroke-dashoffset: ${length}; } to { stroke-dashoffset: 0; } }`;
     newSvg.appendChild(style);
     return newSvg.outerHTML;
   };
@@ -229,15 +150,28 @@ const KanaPracticePage = () => {
   const handleResetLesson = () => {
     if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
     setAutoResetPending(false);
-    useKanaStore.setState((state) => ({
-      kanaProgress: {
-        ...state.kanaProgress,
-        [kanaId]: {
-          completed_strokes: [],
-          completed: false,
+    // Cập nhật store tương ứng
+    if (isKanji) {
+      useKanjiStore.setState((state) => ({
+        kanjiProgress: {
+          ...state.kanjiProgress,
+          [id]: {
+            completed_strokes: [],
+            completed: false,
+          },
         },
-      },
-    }));
+      }));
+    } else {
+      useKanaStore.setState((state) => ({
+        kanaProgress: {
+          ...state.kanaProgress,
+          [id]: {
+            completed_strokes: [],
+            completed: false,
+          },
+        },
+      }));
+    }
     setCurrentStroke(0);
     setCurrentDrawnStroke(null);
     canvasRef.current?.clear();
@@ -252,28 +186,39 @@ const KanaPracticePage = () => {
       const isCorrect = await compareImages(userImageData, templateSvg);
       canvasRef.current?.clear();
 
-      const currentProgress = kanaProgress[kanaId]?.completed_strokes || [];
+      const currentProgress = progress?.completed_strokes || [];
       let newCompletedStrokes = [...currentProgress];
 
       if (isCorrect) {
         if (!currentProgress.includes(currentStroke)) {
           newCompletedStrokes = [...currentProgress, currentStroke];
         }
-      } else {
-        // Không làm gì hoặc có thể thêm logic khác nếu cần
       }
 
-      const isNowCompleted = newCompletedStrokes.length === kana.strokes.length;
+      const isNowCompleted = newCompletedStrokes.length === totalStrokes;
 
-      useKanaStore.setState((state) => ({
-        kanaProgress: {
-          ...state.kanaProgress,
-          [kanaId]: {
-            completed_strokes: newCompletedStrokes,
-            completed: isNowCompleted,
+      // Cập nhật store tương ứng
+      if (isKanji) {
+        useKanjiStore.setState((state) => ({
+          kanjiProgress: {
+            ...state.kanjiProgress,
+            [id]: {
+              completed_strokes: newCompletedStrokes,
+              completed: isNowCompleted,
+            },
           },
-        },
-      }));
+        }));
+      } else {
+        useKanaStore.setState((state) => ({
+          kanaProgress: {
+            ...state.kanaProgress,
+            [id]: {
+              completed_strokes: newCompletedStrokes,
+              completed: isNowCompleted,
+            },
+          },
+        }));
+      }
 
       if (isCorrect) {
         setCurrentDrawnStroke(currentStroke);
@@ -287,7 +232,7 @@ const KanaPracticePage = () => {
       if (isNowCompleted) {
         setAutoResetPending(true);
         showTemporaryHint(
-          `🎉 Hoàn thành chữ ${kana.character}! Tự động reset sau 2 giây.`
+          `🎉 Hoàn thành ${character.character}! Tự động reset sau 2 giây.`
         );
         if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
         resetTimeoutRef.current = setTimeout(() => {
@@ -305,8 +250,8 @@ const KanaPracticePage = () => {
   };
 
   const playAudio = () => {
-    if (kana?.audio_url) {
-      const audio = new Audio(kana.audio_url);
+    if (character?.audio_url) {
+      const audio = new Audio(character.audio_url);
       audio.play().catch((err) => {
         console.error("Không thể phát âm thanh:", err);
         showTemporaryHint("Không thể phát âm thanh, hãy thử lại sau.");
@@ -339,20 +284,23 @@ const KanaPracticePage = () => {
     };
   }, []);
 
-  if (storeLoading && !kana) {
+  if (storeLoading && !character) {
     return (
       <div className="min-h-screen bg-[#FAF9F8] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E85A4F] mx-auto"></div>
-          <p className="mt-4 text-[#8E8D8A]">Đang tải bài học...</p>
+          <p className="mt-4 text-[#8E8D8A]">Đang tải dữ liệu...</p>
         </div>
       </div>
     );
   }
-  if (!kana) return null;
+  if (!character) return null;
 
-  const progress = kanaProgress[kanaId];
-  const currentStrokeData = kana.strokes?.[currentStroke];
+  const characterDisplay = character.character || "";
+  const subInfo = isKanji
+    ? `${character.meaning || ""}${character.onyomi ? ` · ${character.onyomi}` : ""}${character.kunyomi ? ` · ${character.kunyomi}` : ""}`
+    : character.romanji || "";
+  const bgSvg = character.svg_content;
 
   return (
     <div className="min-h-screen bg-[#FAF9F8] font-sans pb-28">
@@ -380,10 +328,10 @@ const KanaPracticePage = () => {
           </button>
           <div className="flex flex-col">
             <h1 className="text-2xl font-black text-[#474747]">
-              {kana.character}
+              {characterDisplay}
             </h1>
             <p className="text-xs text-[#E85A4F] font-bold uppercase tracking-wider">
-              {kana.romanji}
+              {subInfo || (isKanji ? "Kanji" : "Kana")}
             </p>
           </div>
         </div>
@@ -397,11 +345,11 @@ const KanaPracticePage = () => {
               <div className="absolute h-full w-[1px] border-l border-dashed border-gray-200" />
             </div>
 
-            {showGuide && !autoResetPending && kana.svg_content && (
+            {showGuide && !autoResetPending && bgSvg && (
               <div
                 className="absolute inset-0 p-10 pointer-events-none"
                 dangerouslySetInnerHTML={{
-                  __html: bgSvgStyle(kana.svg_content),
+                  __html: bgSvgStyle(bgSvg),
                 }}
               />
             )}
@@ -411,7 +359,9 @@ const KanaPracticePage = () => {
                 key={`completed-${strokeIndex}`}
                 className="absolute inset-0 p-10 pointer-events-none"
                 dangerouslySetInnerHTML={{
-                  __html: completedStrokeStyle(kana.svg_content, strokeIndex),
+                  __html: completedStrokeStyle(
+                    strokes[strokeIndex]?.svg
+                  ),
                 }}
               />
             ))}
@@ -421,8 +371,7 @@ const KanaPracticePage = () => {
                 className="absolute inset-0 p-10 pointer-events-none"
                 dangerouslySetInnerHTML={{
                   __html: getCurrentDrawnStrokeSvg(
-                    kana.svg_content,
-                    currentDrawnStroke
+                    strokes[currentDrawnStroke]?.svg
                   ),
                 }}
               />
@@ -430,14 +379,13 @@ const KanaPracticePage = () => {
 
             {showGuide &&
               !autoResetPending &&
-              kana.svg_content &&
-              currentStrokeData && (
+              strokes.length > 0 &&
+              strokes[currentStroke] && (
                 <div
                   className="absolute inset-0 p-10 pointer-events-none"
                   dangerouslySetInnerHTML={{
                     __html: getHintSvgForStroke(
-                      kana.svg_content,
-                      currentStroke
+                      strokes[currentStroke]?.svg
                     ),
                   }}
                 />
@@ -449,7 +397,7 @@ const KanaPracticePage = () => {
                 width={500}
                 height={500}
                 disabled={autoResetPending}
-                templateSvg={currentStrokeData?.svg}
+                templateSvg={strokes[currentStroke]?.svg}
                 onStrokeComplete={handleStrokeComplete}
               />
             </div>
@@ -498,7 +446,7 @@ const KanaPracticePage = () => {
               Xóa nét
             </button>
             <button
-              onClick={playAudio} // Gắn hàm playAudio vào đây
+              onClick={playAudio}
               className="flex items-center justify-center gap-2 py-3 bg-linear-to-r from-[#E85A4F] to-[#E98074] rounded-xl font-medium text-white active:scale-95 transition-transform shadow-md hover:shadow-lg"
             >
               <Volume2 className="w-5 h-5" />

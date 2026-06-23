@@ -1,9 +1,8 @@
-/* eslint-disable react-hooks/immutability */
-// KanaTestPage.jsx - ĐÃ SỬA ĐỂ DÙNG strokeSvg ĐÃ GỘP
-
+/* eslint-disable react-hooks/purity */
+// src/pages/KanjiTestPage.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useKanaStore } from "../../store/kanaStore";
+import { useKanjiStore } from "../../store/kanjiStore";
 import { ChevronLeft, Eye, EyeOff, CheckCircle, XCircle } from "lucide-react";
 
 // ================== CUSTOM CANVAS (giữ nguyên) ==================
@@ -106,7 +105,7 @@ const CustomCanvas = React.forwardRef(
   }
 );
 
-// ================== HÀM SO SÁNH NÉT VẼ & XỬ LÝ SVG (ĐÃ SỬA) ==================
+// ================== HÀM SO SÁNH NÉT VẼ & XỬ LÝ SVG ==================
 const compareImages = (userImageDataURL, templateSvgString) => {
   return new Promise((resolve) => {
     const imgUser = new Image();
@@ -232,7 +231,6 @@ const removeStyleAndAnimation = (svgString) => {
   return cleaned;
 };
 
-// Nền mờ toàn bộ chữ (vẫn dùng svg_content)
 const bgSvgStyle = (svgString) => {
   if (!svgString) return "";
   let cleaned = removeStyleAndAnimation(svgString);
@@ -243,8 +241,6 @@ const bgSvgStyle = (svgString) => {
     .replace(/<svg/g, '<svg style="opacity:0.6"');
 };
 
-// ===== CÁC HÀM XỬ LÝ SVG DÙNG strokeSvg ĐÃ GỘP =====
-// Nét đã hoàn thành (màu xanh, stroke-width 40)
 const completedStrokeStyle = (strokeSvg) => {
   if (!strokeSvg) return "";
   const parser = new DOMParser();
@@ -268,7 +264,6 @@ const completedStrokeStyle = (strokeSvg) => {
   return newSvg.outerHTML;
 };
 
-// Hint động (màu xanh, stroke-width 30, dash animation)
 const getHintSvgForStroke = (strokeSvg) => {
   if (!strokeSvg) return "";
   const parser = new DOMParser();
@@ -300,7 +295,7 @@ const getHintSvgForStroke = (strokeSvg) => {
 };
 
 // ================== MAIN COMPONENT ==================
-const KanaTestPage = () => {
+const KanjiTestPage = () => {
   const { lessonId } = useParams();
   const navigate = useNavigate();
 
@@ -308,10 +303,10 @@ const KanaTestPage = () => {
     lessons,
     fetchLessons,
     completeLesson,
-    fetchKanaDetail,
-    currentKana: kana,
+    fetchKanjiDetail,
+    currentKanji: kanji,
     loading: storeLoading,
-  } = useKanaStore();
+  } = useKanjiStore();
 
   const [lesson, setLesson] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -339,38 +334,38 @@ const KanaTestPage = () => {
 
   // Tạo câu hỏi
   useEffect(() => {
-    if (lesson?.kanas?.length > 0 && questions.length === 0) {
-      generateQuestions(lesson.kanas);
+    if (lesson?.kanjis?.length > 0 && questions.length === 0) {
+      // eslint-disable-next-line react-hooks/immutability
+      generateQuestions(lesson.kanjis);
     }
   }, [lesson]);
 
-  const generateQuestions = (kanas) => {
+  const generateQuestions = (kanjis) => {
     const totalQuestions = 10;
-    if (!kanas || kanas.length === 0) return;
+    if (!kanjis || kanjis.length === 0) return;
 
-    let selectedKanas = [];
-    while (selectedKanas.length < totalQuestions) {
-      for (let k of kanas) {
-        if (selectedKanas.length < totalQuestions) selectedKanas.push(k);
+    let selectedKanjis = [];
+    while (selectedKanjis.length < totalQuestions) {
+      for (let k of kanjis) {
+        if (selectedKanjis.length < totalQuestions) selectedKanjis.push(k);
       }
     }
 
-    for (let i = selectedKanas.length - 1; i > 0; i--) {
-      // eslint-disable-next-line react-hooks/purity
+    for (let i = selectedKanjis.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [selectedKanas[i], selectedKanas[j]] = [
-        selectedKanas[j],
-        selectedKanas[i],
+      [selectedKanjis[i], selectedKanjis[j]] = [
+        selectedKanjis[j],
+        selectedKanjis[i],
       ];
     }
 
-    const kanaUsage = new Map();
-    for (let k of kanas) {
-      kanaUsage.set(k.id, { count: 0, usedTypes: new Set() });
+    const kanjiUsage = new Map();
+    for (let k of kanjis) {
+      kanjiUsage.set(k.id, { count: 0, usedTypes: new Set() });
     }
 
-    const newQuestions = selectedKanas.map((kanaItem) => {
-      const usage = kanaUsage.get(kanaItem.id);
+    const newQuestions = selectedKanjis.map((kanjiItem) => {
+      const usage = kanjiUsage.get(kanjiItem.id);
       usage.count++;
 
       let type = null;
@@ -378,10 +373,10 @@ const KanaTestPage = () => {
 
       if (usage.usedTypes.has("writing")) {
         type = "multiple";
-        subType = Math.random() < 0.5 ? "chooseRomaji" : "chooseKana";
+        subType = Math.random() < 0.5 ? "chooseRomaji" : "chooseKanji";
       } else if (
         usage.usedTypes.has("chooseRomaji") &&
-        usage.usedTypes.has("chooseKana")
+        usage.usedTypes.has("chooseKanji")
       ) {
         type = "writing";
       } else {
@@ -391,8 +386,8 @@ const KanaTestPage = () => {
         } else {
           type = "multiple";
           if (!usage.usedTypes.has("chooseRomaji")) subType = "chooseRomaji";
-          else if (!usage.usedTypes.has("chooseKana")) subType = "chooseKana";
-          else subType = Math.random() < 0.5 ? "chooseRomaji" : "chooseKana";
+          else if (!usage.usedTypes.has("chooseKanji")) subType = "chooseKanji";
+          else subType = Math.random() < 0.5 ? "chooseRomaji" : "chooseKanji";
         }
       }
 
@@ -401,38 +396,48 @@ const KanaTestPage = () => {
 
       if (type === "writing") {
         return {
-          id: kanaItem.id,
+          id: kanjiItem.id,
           type: "writing",
-          question: `Hãy viết chữ "${kanaItem.romanji}" vào khung bên dưới.`,
-          kana: kanaItem,
-          totalStrokes: kanaItem.total_strokes || kanaItem.strokes?.length || 1,
+          question: `Hãy viết chữ "${kanjiItem.meaning}" vào khung bên dưới.`,
+          kanji: kanjiItem,
+          totalStrokes:
+            kanjiItem.total_strokes || kanjiItem.strokes?.length || 1,
         };
       } else {
         if (subType === "chooseRomaji") {
-          const correct = kanaItem.romanji;
-          const options = getRandomWrongOptions(correct, kanas, "romanji", 3);
+          // Ưu tiên onyomi, nếu không có thì dùng kunyomi
+          const correct = kanjiItem.onyomi || kanjiItem.kunyomi || "";
+          const field = kanjiItem.onyomi ? "onyomi" : "kunyomi";
+          const options = getRandomWrongOptions(correct, kanjis, field, 3);
           return {
-            id: kanaItem.id,
+            id: kanjiItem.id,
             type: "multiple",
             subType: "chooseRomaji",
-            question: `Chữ "${kanaItem.character}" đọc là gì?`,
-            display: kanaItem.character,
+            question: `Chữ "${kanjiItem.meaning}" đọc là gì?`,
+            display: kanjiItem.meaning,
             correctAnswer: correct,
             options: [correct, ...options].sort(() => Math.random() - 0.5),
-            kana: kanaItem,
+            kanji: kanjiItem,
           };
         } else {
-          const correct = kanaItem.character;
-          const options = getRandomWrongOptions(correct, kanas, "character", 3);
+          // chooseKanji
+          // Lấy âm đọc (onyomi) để hỏi, nếu không có thì dùng kunyomi
+          const reading = kanjiItem.onyomi || kanjiItem.kunyomi || "";
+          const correct = kanjiItem.character;
+          const options = getRandomWrongOptions(
+            correct,
+            kanjis,
+            "character",
+            3
+          );
           return {
-            id: kanaItem.id,
+            id: kanjiItem.id,
             type: "multiple",
-            subType: "chooseKana",
-            question: `Âm "${kanaItem.romanji}" viết bằng chữ gì?`,
-            display: kanaItem.romanji,
+            subType: "chooseKanji",
+            question: `Âm "${reading}" viết bằng chữ gì?`,
             correctAnswer: correct,
             options: [correct, ...options].sort(() => Math.random() - 0.5),
-            kana: kanaItem,
+            kanji: kanjiItem,
           };
         }
       }
@@ -446,14 +451,14 @@ const KanaTestPage = () => {
     setWritingStrokeProgress({});
   };
 
-  const getRandomWrongOptions = (correct, kanas, field, count = 3) => {
-    const others = kanas
+  const getRandomWrongOptions = (correct, kanjis, field, count = 3) => {
+    const others = kanjis
       .filter((k) => k[field] !== correct)
       .map((k) => k[field]);
     let result = [...new Set(others)];
     if (result.length < count) {
-      const allPossibleKanas = lessons.flatMap((l) => l.kanas || []);
-      const backupOptions = allPossibleKanas
+      const allPossibleKanjis = lessons.flatMap((l) => l.kanjis || []);
+      const backupOptions = allPossibleKanjis
         .filter((k) => k[field] !== correct && !result.includes(k[field]))
         .map((k) => k[field]);
       const additional = backupOptions.sort(() => Math.random() - 0.5);
@@ -464,13 +469,13 @@ const KanaTestPage = () => {
     return result.sort(() => Math.random() - 0.5).slice(0, count);
   };
 
-  // Fetch kana detail khi chuyển sang câu viết
+  // Fetch kanji detail khi chuyển sang câu viết
   useEffect(() => {
     const currentQ = questions[currentIndex];
-    if (currentQ?.type === "writing" && currentQ.kana?.id) {
-      fetchKanaDetail(currentQ.kana.id);
+    if (currentQ?.type === "writing" && currentQ.kanji?.id) {
+      fetchKanjiDetail(currentQ.kanji.id);
     }
-  }, [currentIndex, questions, fetchKanaDetail]);
+  }, [currentIndex, questions, fetchKanjiDetail]);
 
   const showTemporaryHint = (text) => {
     setDynamicHint(text);
@@ -548,7 +553,7 @@ const KanaTestPage = () => {
   };
 
   const restartTest = () => {
-    if (lesson) generateQuestions(lesson.kanas);
+    if (lesson) generateQuestions(lesson.kanjis);
   };
 
   useEffect(() => {
@@ -589,7 +594,7 @@ const KanaTestPage = () => {
                 </span>
               </p>
               <button
-                onClick={() => navigate(`/kana-lesson/${lessonId}`)}
+                onClick={() => navigate(`/kanji-lesson/${lessonId}`)}
                 className="w-full bg-[#E85A4F] hover:bg-[#d94a3f] text-white font-bold py-4 rounded-2xl text-lg transition-all active:scale-95"
               >
                 Về bài học
@@ -620,7 +625,7 @@ const KanaTestPage = () => {
                   Làm lại bài kiểm tra
                 </button>
                 <button
-                  onClick={() => navigate(`/kana-lesson/${lessonId}`)}
+                  onClick={() => navigate(`/kanji-lesson/${lessonId}`)}
                   className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 rounded-2xl text-lg transition-all"
                 >
                   Về bài học
@@ -639,8 +644,7 @@ const KanaTestPage = () => {
   const isWriting = currentQ.type === "writing";
   const strokesDone = writingStrokeProgress[currentIndex] || 0;
   const totalStrokes = currentQ.totalStrokes || 1;
-  // Lấy SVG của nét hiện tại từ kana.strokes (đã gộp)
-  const currentTemplateSvg = kana?.strokes?.[strokesDone]?.svg || "";
+  const currentTemplateSvg = kanji?.strokes?.[strokesDone]?.svg || "";
 
   return (
     <div className="min-h-screen bg-[#FAF9F8] font-sans pb-20">
@@ -695,7 +699,6 @@ const KanaTestPage = () => {
           </div>
 
           {!isWriting ? (
-            // Trắc nghiệm
             <div className="space-y-3">
               {currentQ.options.map((opt, idx) => (
                 <button
@@ -718,7 +721,6 @@ const KanaTestPage = () => {
               ))}
             </div>
           ) : (
-            // Viết chữ
             <div className="space-y-6">
               <div className="text-center">
                 <span className="inline-block bg-white px-5 py-2 rounded-full border text-sm">
@@ -730,36 +732,36 @@ const KanaTestPage = () => {
               </div>
 
               <div className="relative w-full aspect-square bg-gray-50 rounded-2xl border border-dashed border-gray-300 overflow-hidden">
-                {showGuide && kana?.svg_content && (
+                {showGuide && kanji?.svg_content && (
                   <div
                     className="absolute inset-0 p-10 pointer-events-none"
                     dangerouslySetInnerHTML={{
-                      __html: bgSvgStyle(kana.svg_content),
+                      __html: bgSvgStyle(kanji.svg_content),
                     }}
                   />
                 )}
 
-                {kana?.strokes &&
+                {kanji?.strokes &&
                   Array.from({ length: strokesDone }).map((_, idx) => (
                     <div
                       key={`completed-${idx}`}
                       className="absolute inset-0 p-10 pointer-events-none"
                       dangerouslySetInnerHTML={{
-                        __html: completedStrokeStyle(kana.strokes[idx]?.svg),
+                        __html: completedStrokeStyle(kanji.strokes[idx]?.svg),
                       }}
                     />
                   ))}
 
-                {showGuide &&
-                  kana?.strokes &&
-                  strokesDone < totalStrokes && (
-                    <div
-                      className="absolute inset-0 p-10 pointer-events-none"
-                      dangerouslySetInnerHTML={{
-                        __html: getHintSvgForStroke(kana.strokes[strokesDone]?.svg),
-                      }}
-                    />
-                  )}
+                {showGuide && kanji?.strokes && strokesDone < totalStrokes && (
+                  <div
+                    className="absolute inset-0 p-10 pointer-events-none"
+                    dangerouslySetInnerHTML={{
+                      __html: getHintSvgForStroke(
+                        kanji.strokes[strokesDone]?.svg
+                      ),
+                    }}
+                  />
+                )}
 
                 <div className="absolute inset-0 p-10">
                   <CustomCanvas
@@ -804,4 +806,4 @@ const KanaTestPage = () => {
   );
 };
 
-export default KanaTestPage;
+export default KanjiTestPage;

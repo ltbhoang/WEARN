@@ -57,9 +57,11 @@ const GroupDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedWord, setSelectedWord] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [fetchingDetail, setFetchingDetail] = useState(false);
 
   const formatWordItem = (word) => ({
     id: word.id || word.class_name,
+    class_name: word.class_name, // 👈 giữ class_name để gọi chi tiết
     ja: word.word,
     reading: word.romaji || word.pronunciation,
     vi: word.meaning,
@@ -94,7 +96,6 @@ const GroupDetailPage = () => {
         setWordsByTopic(newWordsByTopic);
       } catch (err) {
         console.error("Lỗi fetch gộp:", err);
-        // Không gọi fallback, để tránh nhiều request
         setWordsByTopic({});
       } finally {
         setLoading(false);
@@ -151,7 +152,35 @@ const GroupDetailPage = () => {
     }
   };
 
-  const handleWordClick = (word) => setSelectedWord(word);
+  // ========== HÀM XỬ LÝ CLICK: FETCH CHI TIẾT ==========
+  const handleWordClick = async (word) => {
+    // Nếu đã có đầy đủ example (tức là đã fetch trước đó) thì hiển thị luôn
+    if (word.example && word.exampleTranslation) {
+      setSelectedWord(word);
+      return;
+    }
+    setFetchingDetail(true);
+    try {
+      // Gọi API chi tiết theo class_name
+      const response = await axiosPrivate.get(`/api/vocabularies/${word.class_name}/`);
+      const detail = response.data;
+      // Gộp dữ liệu chi tiết vào word
+      const fullWord = {
+        ...word,
+        example: detail.example_sentence || word.example || "",
+        exampleTranslation: detail.example_translation || word.exampleTranslation || "",
+        audio_url: detail.audio_url || word.audio_url,
+      };
+      setSelectedWord(fullWord);
+    } catch (err) {
+      console.error("Lỗi fetch chi tiết từ vựng:", err);
+      // Fallback: hiển thị với dữ liệu hiện có
+      setSelectedWord(word);
+    } finally {
+      setFetchingDetail(false);
+    }
+  };
+
   const closeModal = () => {
     setSelectedWord(null);
     resetCurrentVocabulary();
@@ -281,7 +310,7 @@ const GroupDetailPage = () => {
           }}
         />
       )}
-      {actionLoading && (
+      {(actionLoading || fetchingDetail) && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[60]">
           <Loader2 className="w-8 h-8 text-white animate-spin" />
         </div>

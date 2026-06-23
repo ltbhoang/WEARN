@@ -6,13 +6,13 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
   const [vocabulary, setVocabulary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedLabel, setSelectedLabel] = useState("");
+  const [selectedKey, setSelectedKey] = useState(""); // 👈 thêm state key
   const [selectedConfidence, setSelectedConfidence] = useState(0);
   const [error, setError] = useState(null);
   const [fetchingVocab, setFetchingVocab] = useState(false);
   const [maskImageUrl, setMaskImageUrl] = useState(null);
   const [maskLoadError, setMaskLoadError] = useState(false);
   
-  // Ảnh gốc tạm thời từ base64 (hiển thị ngay, không lỗi 404)
   const [localPreviewUrl, setLocalPreviewUrl] = useState(null);
 
   const AI_URL = "https://lily-prescribe-avenue.ngrok-free.dev/predict-base64";
@@ -21,13 +21,13 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
     month: "long",
   });
 
-  // Tạo local preview từ base64 khi component mount
   useEffect(() => {
     if (rawImageDataUrl) {
       setLocalPreviewUrl(rawImageDataUrl);
     }
   }, [rawImageDataUrl]);
 
+  // Gọi AI service
   useEffect(() => {
     const detect = async () => {
       if (!rawImageDataUrl) return;
@@ -49,6 +49,7 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
           setPredictions(data.predictions);
           const first = data.predictions[0];
           setSelectedLabel(first.label);
+          setSelectedKey(first.key || ""); // 👈 lưu key
           setSelectedConfidence(first.confidence);
 
           if (data.mask_url) {
@@ -80,30 +81,22 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
     detect();
   }, [rawImageDataUrl]);
 
+  // Fetch vocabulary từ database dựa trên key
   useEffect(() => {
-    if (!selectedLabel) return;
+    if (!selectedKey) return; // 👈 thay vì !selectedLabel
 
     const fetchVocab = async () => {
       setFetchingVocab(true);
       try {
-        const tryFetch = async (className) => {
-          try {
-            const response = await axiosPrivate.get("/api/vocabularies/", {
-              params: { class_name: className },
-            });
-            const data = response.data;
-            return data.length ? data[0] : null;
-          } catch (err) {
-            console.error(`Error fetching ${className}:`, err);
-            return null;
-          }
-        };
-
-        let vocab = await tryFetch(selectedLabel);
-        if (!vocab) {
-          vocab = await tryFetch(`extra_${selectedLabel}`);
+        const className = `imagenet_${selectedKey}`; // 👈 tạo class_name đúng
+        const response = await axiosPrivate.get("/api/vocabularies/", {
+          params: { class_name: className },
+        });
+        const data = response.data;
+        setVocabulary(data.length ? data[0] : null);
+        if (!data.length) {
+          console.warn(`Không tìm thấy từ vựng cho class_name: ${className}`);
         }
-        setVocabulary(vocab);
       } catch (err) {
         console.error("Vocab error:", err);
         setVocabulary(null);
@@ -116,7 +109,7 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
     };
 
     fetchVocab();
-  }, [selectedLabel]);
+  }, [selectedKey]); // 👈 phụ thuộc vào key
 
   const handleSaveClick = () => {
     if (vocabulary?.id) {
@@ -139,8 +132,6 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
   }
 
   const isConfidenceValid = selectedConfidence >= 40;
-  
-  // 🔄 Ưu tiên mask nếu có, nếu không thì dùng ảnh gốc base64
   const displayImageUrl = (maskImageUrl && !maskLoadError) ? maskImageUrl : localPreviewUrl;
 
   return (
@@ -166,7 +157,6 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
             </button>
           )}
 
-          {/* ẢNH: dùng local preview base64 thay vì URL của Django */}
           <div className="w-44 h-48 flex items-center justify-center drop-shadow-xl">
             {displayImageUrl ? (
               <img 
@@ -191,7 +181,6 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
             </div>
           )}
 
-          {/* Nội dung */}
           <div className="w-full text-center flex flex-col items-center justify-center mt-4">
             {loading ? (
               <p className="text-white font-semibold text-lg animate-pulse">🔍 Đang nhận diện...</p>
@@ -226,6 +215,7 @@ const CaptureReviewModal = ({ imageUrl, rawImageDataUrl, onSave, onCancel }) => 
                   key={idx}
                   onClick={() => {
                     setSelectedLabel(p.label);
+                    setSelectedKey(p.key || ""); // 👈 cập nhật key khi chọn chip
                     setSelectedConfidence(p.confidence);
                   }}
                   className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${selectedLabel === p.label ? "bg-[#FF6550] text-white shadow-sm" : "bg-white text-gray-400 border border-gray-100"}`}

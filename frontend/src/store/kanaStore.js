@@ -2,18 +2,23 @@ import { create } from "zustand";
 import { axiosPrivate } from "../apis/axios";
 
 export const useKanaStore = create((set, get) => ({
-  lessons: [], 
-  currentKana: null, 
-  kanaProgress: {}, 
+  lessons: [],
+  currentKana: null,
+  kanaProgress: {},
   loading: false,
   error: null,
 
+  // Sửa fetchLessons để lấy tất cả (page_size lớn)
   fetchLessons: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosPrivate.get("/api/lessons/");
-      set({ lessons: response.data, loading: false });
-      return response.data;
+      const response = await axiosPrivate.get("/api/lessons/", {
+        params: { page_size: 20 }, // Lấy nhiều hơn
+      });
+      // Nếu API trả về { count, results, ... } thì lấy results
+      const lessonsData = response.data.results || response.data || [];
+      set({ lessons: lessonsData, loading: false });
+      return lessonsData;
     } catch (err) {
       set({
         error: err.response?.data?.message || "Không thể tải danh sách bài học",
@@ -68,7 +73,7 @@ export const useKanaStore = create((set, get) => ({
   completeStroke: async (kanaId, strokeIndex, userSvg) => {
     try {
       const response = await axiosPrivate.post("/api/complete-stroke/", {
-        kana_id: parseInt(kanaId), 
+        kana_id: parseInt(kanaId),
         stroke_index: strokeIndex,
         user_svg: userSvg,
       });

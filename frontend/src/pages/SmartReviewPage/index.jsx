@@ -408,7 +408,6 @@ const SmartReviewPage = () => {
         : "Chúc mừng! Bạn không còn từ yếu nào để luyện tập.";
       return (
         <div className="min-h-screen bg-[#FAF9F8] flex flex-col items-center justify-center p-6 text-center">
-          <div className="text-6xl mb-4">🎉</div>
           <h2 className="text-xl font-bold text-gray-800">Chúc mừng!</h2>
           <p className="text-gray-500 mt-2">{message}</p>
           {mode === "smart" && (

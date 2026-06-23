@@ -1,8 +1,9 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 // KanaLessonDetailPage.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useKanaStore } from "../../store/kanaStore";
-import { ChevronLeft, CheckCircle } from "lucide-react";
+import { ChevronLeft, CheckCircle, Home, LayoutGrid, Camera, GraduationCap, User } from "lucide-react";
 
 const KanaLessonDetailPage = () => {
   const { lessonId } = useParams();
@@ -13,7 +14,6 @@ const KanaLessonDetailPage = () => {
   useEffect(() => {
     if (lessons.length > 0) {
       const found = lessons.find((l) => String(l.id) === lessonId);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLesson(found || null);
     }
   }, [lessons, lessonId]);
@@ -41,9 +41,14 @@ const KanaLessonDetailPage = () => {
     );
   }
 
+  // Xác định loại bài học
+  const isKanjiLesson = lesson.kanjis && lesson.kanjis.length > 0;
+  const items = isKanjiLesson ? lesson.kanjis : lesson.kanas;
+  const itemType = isKanjiLesson ? "Kanji" : "Kana";
+
   return (
     <div className="min-h-screen bg-[#FAF9F8] font-sans pb-28">
-      {/* Header với style mới */}
+      {/* Header */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-10">
         <div className="px-6 py-4 flex items-center gap-4 max-w-2xl mx-auto">
           <button
@@ -59,7 +64,7 @@ const KanaLessonDetailPage = () => {
       </header>
 
       <main className="px-6 max-w-2xl mx-auto py-6 space-y-6">
-        {/* Card trạng thái - gradient nhẹ */}
+        {/* Card trạng thái */}
         <div className="bg-white rounded-2xl shadow-md border border-[#E0E0E0] p-5 flex justify-between items-center transition-all hover:shadow-lg">
           <span className="text-[#474747] font-bold text-lg">Trạng thái</span>
           {lesson.user_completed ? (
@@ -74,34 +79,50 @@ const KanaLessonDetailPage = () => {
           )}
         </div>
 
-        {/* Card danh sách chữ cái */}
+        {/* Card danh sách Kana hoặc Kanji */}
         <div className="bg-white rounded-2xl shadow-md border border-[#E0E0E0] p-5 transition-all hover:shadow-xl">
           <h2 className="text-xl font-black text-[#474747] mb-4 flex items-center gap-2">
-            <span className="bg-gradient-to-r from-[#E85A4F] to-[#E98074] w-1 h-6 rounded-full"></span>
-            Danh sách chữ cái
+            <span className="bg-linear-to-r from-[#E85A4F] to-[#E98074] w-1 h-6 rounded-full"></span>
+            Danh sách {itemType}
           </h2>
           <div className="grid grid-cols-4 sm:grid-cols-5 gap-4">
-            {lesson.kanas?.map((kana) => (
+            {items?.map((item) => (
               <div
-                key={kana.id}
-                onClick={() => navigate(`/kana-practice/${kana.id}`)}
+                key={item.id}
+                onClick={() => {
+                  if (isKanjiLesson) {
+                    // Nếu là Kanji, điều hướng đến trang luyện Kanji (nếu có)
+                    navigate(`/kanji-practice/${item.id}`);
+                  } else {
+                    navigate(`/kana-practice/${item.id}`);
+                  }
+                }}
                 className="aspect-square rounded-xl bg-white border border-gray-200 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 hover:shadow-lg hover:border-[#E85A4F] group"
               >
                 <span className="text-3xl font-black text-[#474747] group-hover:text-[#E85A4F] transition-colors">
-                  {kana.character}
+                  {item.character}
                 </span>
                 <span className="text-xs text-[#8E8D8A] mt-1 font-medium">
-                  {kana.romanji}
+                  {isKanjiLesson ? (item.meaning || item.onyomi || "") : item.romanji}
                 </span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Nút KIỂM TRA gradient */}
+        {/* Nút KIỂM TRA */}
         <div className="flex justify-center pt-4">
           <button
-            onClick={() => navigate(`/kana-test/${lesson.id}`)} // nếu có route test
+            onClick={() => 
+            {
+              if (isKanjiLesson) {
+                    // Nếu là Kanji, điều hướng đến trang luyện Kanji (nếu có)
+                    navigate(`/kanji-test/${lesson.id}`);
+                  } else {
+                    navigate(`/kana-test/${lesson.id}`);
+                  }
+            }
+            }
             className="bg-gradient-to-r from-[#E85A4F] to-[#E98074] text-white font-black py-4 px-10 rounded-full shadow-lg transition-all hover:shadow-xl hover:scale-105 text-lg tracking-wide"
           >
             KIỂM TRA
@@ -109,7 +130,7 @@ const KanaLessonDetailPage = () => {
         </div>
       </main>
 
-      {/* Bottom Navigation giống Dashboard (nếu cần đồng bộ toàn app) */}
+      {/* Bottom Navigation */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-[#D8C3A5]/20 px-4 py-2 shadow-2xl">
         <nav className="flex items-center justify-around max-w-md mx-auto">
           <button
@@ -150,8 +171,5 @@ const KanaLessonDetailPage = () => {
     </div>
   );
 };
-
-// Import các icon cần thiết cho bottom nav (nếu chưa có thì thêm vào đầu file)
-import { Home, LayoutGrid, Camera, GraduationCap, User } from "lucide-react";
 
 export default KanaLessonDetailPage;
