@@ -21,7 +21,6 @@ const SmartReviewPage = () => {
   const navigate = useNavigate();
   const {
     flashcardSets,
-    dueVocabularies,
     fetchDueVocabularies,
     fetchAllLearnedVocabularies,
     loading: storeLoading,
@@ -57,7 +56,6 @@ const SmartReviewPage = () => {
     if (!words || words.length === 0) return [];
     const selected = words.slice(0, limit);
     const indices = selected.map((_, i) => i);
-    // Shuffle
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [indices[i], indices[j]] = [indices[j], indices[i]];
@@ -108,18 +106,17 @@ const SmartReviewPage = () => {
     return questionList.sort(() => 0.5 - Math.random());
   };
 
-  // Lấy dữ liệu từ store theo mode
+  // Lấy dữ liệu từ store theo mode – dùng response trực tiếp
   const loadWords = async (selectedMode = mode) => {
     setLoading(true);
     try {
       let words = [];
       if (selectedMode === "smart") {
-        await fetchDueVocabularies();
-        words = dueVocabularies;
+        const data = await fetchDueVocabularies(); // trả về danh sách
+        words = data || [];
       } else if (selectedMode === "free") {
-        // Lấy tất cả từ đã học, sắp xếp theo ease_factor tăng dần (ưu tiên từ khó)
-        const response = await fetchAllLearnedVocabularies({ sort: "ease_factor" });
-        words = response || [];
+        const data = await fetchAllLearnedVocabularies({ sort: "ease_factor" });
+        words = data || [];
       }
       setDueWords(words);
       const qs = generateQuestions(words, questionCount);
@@ -183,7 +180,6 @@ const SmartReviewPage = () => {
     }
   };
 
-  // Gửi kết quả lên backend (dùng store)
   const submitReview = async (vocabularyId, grade) => {
     try {
       await submitReviewStore(vocabularyId, grade);
@@ -208,7 +204,6 @@ const SmartReviewPage = () => {
       setShowFeedback({ ok: false, msg: `Sai rồi! Đáp án đúng: ${currentQ.correctMeaning}` });
     }
 
-    // Chỉ gửi review khi ở chế độ smart
     if (mode === "smart") {
       submitReview(currentQ.id, grade);
     }
@@ -226,7 +221,6 @@ const SmartReviewPage = () => {
     newAnswers[currentIndex] = { isCorrect: false, answer: "Bỏ qua" };
     setUserAnswers(newAnswers);
 
-    // Chỉ gửi review khi ở chế độ smart
     if (mode === "smart") {
       submitReview(currentQ.id, 1);
     }
@@ -300,6 +294,7 @@ const SmartReviewPage = () => {
                 setMode("free");
                 setStarted(false);
                 setCountdown(null);
+                setIsFinished(false);
                 loadWords("free");
               }}
               className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3.5 rounded-xl text-base transition-all"
@@ -348,6 +343,7 @@ const SmartReviewPage = () => {
                 setMode("free");
                 setStarted(false);
                 setCountdown(null);
+                setIsFinished(false);
                 loadWords("free");
               }}
               className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-xl"
@@ -405,6 +401,7 @@ const SmartReviewPage = () => {
                     setMode("smart");
                     setStarted(false);
                     setCountdown(null);
+                    setIsFinished(false);
                     loadWords("smart");
                   }}
                   className={`px-4 py-2 rounded-full font-semibold transition-all flex items-center gap-2 ${
@@ -421,6 +418,7 @@ const SmartReviewPage = () => {
                     setMode("free");
                     setStarted(false);
                     setCountdown(null);
+                    setIsFinished(false);
                     loadWords("free");
                   }}
                   className={`px-4 py-2 rounded-full font-semibold transition-all flex items-center gap-2 ${
