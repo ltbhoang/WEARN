@@ -11,7 +11,6 @@ import {
   FastForward,
   RotateCcw,
   Brain,
-  List,
   Calendar,
   AlertCircle,
 } from "lucide-react";
@@ -22,7 +21,6 @@ const SmartReviewPage = () => {
   const navigate = useNavigate();
   const {
     fetchDueVocabularies,
-    fetchAllLearnedVocabularies,
     loading: storeLoading,
     submitReview: submitReviewStore,
   } = useFlashcardStore();
@@ -41,11 +39,10 @@ const SmartReviewPage = () => {
   const [showFeedback, setShowFeedback] = useState(null);
   const [questionCount, setQuestionCount] = useState(10);
   const [dueWords, setDueWords] = useState([]);
+  // Chế độ: 'smart' (hôm nay) hoặc 'upcoming' (3 ngày tới)
   const [mode, setMode] = useState(() => {
     return localStorage.getItem("review_mode") || "smart";
   });
-  // Thêm state để hiển thị danh sách từ trước khi bắt đầu
-  const [showWordList, setShowWordList] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("review_mode", mode);
@@ -112,27 +109,16 @@ const SmartReviewPage = () => {
     try {
       let words = [];
       if (selectedMode === "smart") {
-        // Lấy từ quá hạn hoặc hôm nay (days_until_due <= 0)
         const data = await fetchDueVocabularies({ days_ahead: 0 });
-        words = data || [];
-        // Lọc những từ có days_until_due <= 0 (đảm bảo)
-        words = words.filter(w => w.days_until_due !== undefined && w.days_until_due <= 0);
+        words = (data || []).filter(w => w.days_until_due !== undefined && w.days_until_due <= 0);
       } else if (selectedMode === "upcoming") {
-        // Lấy từ sẽ đến hạn trong 3 ngày tới (days_until_due > 0 và <= 3)
         const data = await fetchDueVocabularies({ days_ahead: 3 });
-        words = data || [];
-        words = words.filter(w => w.days_until_due !== undefined && w.days_until_due > 0 && w.days_until_due <= 3);
-      } else if (selectedMode === "free") {
-        // Lấy tất cả từ đã học (có LearningProgress)
-        const data = await fetchAllLearnedVocabularies({ sort: "ease_factor" });
-        words = data || [];
+        words = (data || []).filter(w => w.days_until_due !== undefined && w.days_until_due > 0 && w.days_until_due <= 3);
       }
       setDueWords(words);
       const qs = generateQuestions(words, questionCount);
       setQuestions(qs);
       setUserAnswers(new Array(qs.length).fill(null));
-      // Tự động hiển thị danh sách từ nếu có
-      setShowWordList(true);
     } catch (error) {
       console.error("Error loading words:", error);
       setDueWords([]);
@@ -142,15 +128,14 @@ const SmartReviewPage = () => {
     }
   };
 
-  // Tải dữ liệu khi mode hoặc flashcardSets thay đổi (chỉ khi chưa bắt đầu)
+  // Tải dữ liệu khi mode hoặc started/isFinished thay đổi
   useEffect(() => {
     if (!started && !isFinished) {
       loadWords(mode);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, started, isFinished]);
 
-  // Countdown logic
+  // Countdown
   useEffect(() => {
     if (countdown === null) return;
     if (countdown > 0) {
@@ -161,7 +146,6 @@ const SmartReviewPage = () => {
   }, [countdown]);
 
   const handleStart = () => {
-    setShowWordList(false); // Ẩn danh sách khi bắt đầu
     setCountdown(3);
   };
 
@@ -202,6 +186,7 @@ const SmartReviewPage = () => {
     }
   };
 
+  // Xử lý trả lời – chỉ gửi submitReview nếu là chế độ smart
   const handleAnswer = (isCorrect, answerValue) => {
     if (showFeedback) return;
     const currentQ = questions[currentIndex];
@@ -218,8 +203,10 @@ const SmartReviewPage = () => {
       setShowFeedback({ ok: false, msg: `Sai rồi! Đáp án đúng: ${currentQ.correctMeaning}` });
     }
 
-    // Gửi kết quả cho tất cả các chế độ (không chỉ smart) để cập nhật SM2
-    submitReview(currentQ.id, grade);
+    // CHỈ gửi kết quả khi mode === 'smart'
+    if (mode === 'smart') {
+      submitReview(currentQ.id, grade);
+    }
 
     setTimeout(() => {
       setShowFeedback(null);
@@ -234,12 +221,15 @@ const SmartReviewPage = () => {
     newAnswers[currentIndex] = { isCorrect: false, answer: "Bỏ qua" };
     setUserAnswers(newAnswers);
 
-    submitReview(currentQ.id, 1); // grade 1 cho bỏ qua
+    // CHỈ gửi kết quả khi mode === 'smart'
+    if (mode === 'smart') {
+      submitReview(currentQ.id, 1);
+    }
 
     moveToNextQuestion();
   };
 
-  // Ôn tiếp những từ chưa hỏi trong danh sách dueWords (áp dụng cho smart và upcoming)
+  // Ôn tiếp những từ còn lại
   const continueWithRemaining = () => {
     const askedIds = questions.map((q) => q.id);
     const remainingWords = dueWords.filter((w) => !askedIds.includes(w.id));
@@ -271,9 +261,8 @@ const SmartReviewPage = () => {
           </div>
           <h2 className="text-2xl font-black text-[#474747] mb-2">Kết thúc ôn tập</h2>
           <p className="text-[#8E8D8A] text-sm mb-6">
-            {mode === "smart" && "Bạn đã hoàn thành phiên ôn thông minh"}
+            {mode === "smart" && "Bạn đã hoàn thành phiên ôn thông minh hôm nay"}
             {mode === "upcoming" && "Bạn đã ôn các từ sẽ đến hạn trong 3 ngày tới"}
-            {mode === "free" && "Bạn đã ôn lại tất cả từ đã học"}
           </p>
 
           <div className="bg-gray-50 rounded-xl p-4 mb-6 grid grid-cols-3 gap-2">
@@ -312,7 +301,7 @@ const SmartReviewPage = () => {
                 mode === "smart" ? "bg-[#E85A4F] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              <Brain className="w-4 h-4 inline mr-2" /> Ôn thông minh (SM‑2)
+              <Brain className="w-4 h-4 inline mr-2" /> Ôn hôm nay
             </button>
             <button
               onClick={() => {
@@ -326,21 +315,7 @@ const SmartReviewPage = () => {
                 mode === "upcoming" ? "bg-[#E85A4F] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              <Calendar className="w-4 h-4 inline mr-2" /> Luyện tập (3 ngày tới)
-            </button>
-            <button
-              onClick={() => {
-                setMode("free");
-                setStarted(false);
-                setCountdown(null);
-                setIsFinished(false);
-                loadWords("free");
-              }}
-              className={`w-full py-3.5 rounded-xl text-base font-bold transition-all ${
-                mode === "free" ? "bg-[#E85A4F] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              <List className="w-4 h-4 inline mr-2" /> Ôn tất cả từ đã học
+              <Calendar className="w-4 h-4 inline mr-2" /> 3 ngày tới
             </button>
             <button
               onClick={() => navigate("/flashcard")}
@@ -363,13 +338,13 @@ const SmartReviewPage = () => {
         </div>
       );
     }
+
+    // Trường hợp không có từ nào
     if (dueWords.length === 0) {
-      let message =
+      const message =
         mode === "smart"
-          ? "Hôm nay không có từ nào cần ôn. Bạn có thể chọn chế độ khác."
-          : mode === "upcoming"
-          ? "Không có từ nào sẽ đến hạn trong 3 ngày tới."
-          : "Bạn chưa có từ nào trong hệ thống học tập.";
+          ? "Hôm nay không có từ nào cần ôn. Bạn có thể chuyển sang chế độ 3 ngày tới."
+          : "Không có từ nào sẽ đến hạn trong 3 ngày tới. Bạn có thể chuyển sang ôn hôm nay.";
       return (
         <div className="min-h-screen bg-[#FAF9F8] flex flex-col items-center justify-center p-6 text-center">
           <h2 className="text-xl font-bold text-gray-800">Thông báo</h2>
@@ -385,7 +360,7 @@ const SmartReviewPage = () => {
               }}
               className="w-full py-3 bg-[#E85A4F] text-white rounded-xl font-semibold"
             >
-              Ôn thông minh
+              Ôn hôm nay
             </button>
             <button
               onClick={() => {
@@ -397,19 +372,7 @@ const SmartReviewPage = () => {
               }}
               className="w-full py-3 bg-blue-500 text-white rounded-xl font-semibold"
             >
-              Luyện tập (3 ngày)
-            </button>
-            <button
-              onClick={() => {
-                setMode("free");
-                setStarted(false);
-                setCountdown(null);
-                setIsFinished(false);
-                loadWords("free");
-              }}
-              className="w-full py-3 bg-purple-500 text-white rounded-xl font-semibold"
-            >
-              Ôn tất cả
+              3 ngày tới
             </button>
             <button
               onClick={() => navigate("/flashcard")}
@@ -422,7 +385,7 @@ const SmartReviewPage = () => {
       );
     }
 
-    // Hiển thị danh sách từ và nút bắt đầu
+    // Có từ, hiển thị danh sách và nút bắt đầu
     return (
       <div className="min-h-screen bg-[#FAF9F8] flex flex-col items-center justify-center p-6">
         <motion.div
@@ -494,23 +457,6 @@ const SmartReviewPage = () => {
                   <Calendar className="w-4 h-4" />
                   3 ngày tới
                 </button>
-                <button
-                  onClick={() => {
-                    setMode("free");
-                    setStarted(false);
-                    setCountdown(null);
-                    setIsFinished(false);
-                    loadWords("free");
-                  }}
-                  className={`px-4 py-2 rounded-full font-semibold transition-all flex items-center gap-2 ${
-                    mode === "free"
-                      ? "bg-purple-500 text-white shadow-md"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  <List className="w-4 h-4" />
-                  Tất cả
-                </button>
               </div>
 
               {/* Số lượng câu hỏi */}
@@ -530,42 +476,39 @@ const SmartReviewPage = () => {
                 ))}
               </div>
 
-              {/* Danh sách từ (nếu có) */}
-              {showWordList && dueWords.length > 0 && (
-                <div className="w-full bg-white rounded-xl shadow-md p-4 mb-4 border border-gray-200 max-h-60 overflow-y-auto">
-                  <h3 className="font-bold text-gray-700 mb-2 text-sm flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-[#E85A4F]" />
-                    Danh sách từ sẽ ôn ({dueWords.length})
-                  </h3>
-                  <div className="space-y-1">
-                    {dueWords.slice(0, 15).map((w) => (
-                      <div key={w.id} className="flex justify-between text-sm border-b border-gray-50 py-1">
-                        <span className="font-medium">{w.word}</span>
-                        <span className="text-gray-500">{w.meaning}</span>
-                        {w.days_until_due !== undefined && (
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            w.days_until_due <= 0 ? 'bg-red-100 text-red-600' :
-                            w.days_until_due <= 2 ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-blue-100 text-blue-600'
-                          }`}>
-                            {w.days_until_due <= 0 ? 'Quá hạn' : `${w.days_until_due} ngày`}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                    {dueWords.length > 15 && (
-                      <div className="text-xs text-gray-400 text-center pt-1">
-                        +{dueWords.length - 15} từ khác
-                      </div>
-                    )}
-                  </div>
+              {/* Danh sách từ */}
+              <div className="w-full bg-white rounded-xl shadow-md p-4 mb-4 border border-gray-200 max-h-60 overflow-y-auto">
+                <h3 className="font-bold text-gray-700 mb-2 text-sm flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-[#E85A4F]" />
+                  Danh sách từ sẽ ôn ({dueWords.length})
+                </h3>
+                <div className="space-y-1">
+                  {dueWords.slice(0, 15).map((w) => (
+                    <div key={w.id} className="flex justify-between text-sm border-b border-gray-50 py-1">
+                      <span className="font-medium">{w.word}</span>
+                      <span className="text-gray-500">{w.meaning}</span>
+                      {w.days_until_due !== undefined && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          w.days_until_due <= 0 ? 'bg-red-100 text-red-600' :
+                          w.days_until_due <= 2 ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-blue-100 text-blue-600'
+                        }`}>
+                          {w.days_until_due <= 0 ? 'Quá hạn' : `${w.days_until_due} ngày`}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {dueWords.length > 15 && (
+                    <div className="text-xs text-gray-400 text-center pt-1">
+                      +{dueWords.length - 15} từ khác
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               <p className="text-gray-400 text-xs mb-6 text-center">
                 {mode === "smart" && `Có ${dueWords.length} từ cần ôn hôm nay`}
                 {mode === "upcoming" && `Có ${dueWords.length} từ sẽ đến hạn trong 3 ngày tới`}
-                {mode === "free" && `Có ${dueWords.length} từ đã học`}
               </p>
 
               <button
@@ -595,9 +538,7 @@ const SmartReviewPage = () => {
             <ChevronLeft className="w-5 h-5 text-[#474747]" />
           </button>
           <h1 className="text-xl font-black text-[#474747]">
-            {mode === "smart" && "Ôn thông minh (Hôm nay)"}
-            {mode === "upcoming" && "Luyện tập (3 ngày tới)"}
-            {mode === "free" && "Ôn tất cả từ đã học"}
+            {mode === "smart" ? "Ôn thông minh (Hôm nay)" : "Luyện tập (3 ngày tới)"}
           </h1>
           <div className="flex-1"></div>
           <button
