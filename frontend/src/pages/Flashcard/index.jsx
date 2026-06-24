@@ -16,13 +16,19 @@ import { useFlashcardStore } from "../../store/flashcardStore";
 const FlashcardSetsPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const { flashcardSets, fetchFlashcardSets, loading } = useFlashcardStore();
+  const {
+    flashcardSets,
+    dueVocabularies,
+    fetchFlashcardSets,
+    fetchDueVocabularies,
+    loading,
+  } = useFlashcardStore();
 
   useEffect(() => {
     fetchFlashcardSets();
-  }, [fetchFlashcardSets]);
+    fetchDueVocabularies(); // Lấy danh sách từ cần ôn hôm nay
+  }, [fetchFlashcardSets, fetchDueVocabularies]);
 
-  // Luôn chuyển đến trang ôn tập thông minh (tại đó có 2 chế độ)
   const handleSmartReview = () => {
     navigate("/flashcard/smart-review");
   };
@@ -41,6 +47,8 @@ const FlashcardSetsPage = () => {
       year: "numeric",
     });
   };
+
+  const dueCount = dueVocabularies?.length || 0;
 
   if (loading) {
     return (
@@ -77,6 +85,11 @@ const FlashcardSetsPage = () => {
               title="Ôn tập thông minh"
             >
               <Sparkles className="w-6 h-6" />
+              {dueCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#E85A4F] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {dueCount}
+                </span>
+              )}
             </button>
 
             <button
@@ -118,6 +131,14 @@ const FlashcardSetsPage = () => {
               từ đã nhớ
             </span>
           </div>
+          {dueCount > 0 && (
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-[#E85A4F]" />
+              <span className="text-sm text-[#4A4A4A] font-semibold">
+                {dueCount} từ cần ôn
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
