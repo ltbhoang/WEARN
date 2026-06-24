@@ -11,14 +11,14 @@ const CaptureReviewModal = ({
   const [vocabulary, setVocabulary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedLabel, setSelectedLabel] = useState("");
-  const [selectedKey, setSelectedKey] = useState(""); // 👈 thêm state key
+  const [selectedKey, setSelectedKey] = useState("");
   const [selectedConfidence, setSelectedConfidence] = useState(0);
   const [error, setError] = useState(null);
   const [fetchingVocab, setFetchingVocab] = useState(false);
   const [maskImageUrl, setMaskImageUrl] = useState(null);
   const [maskLoadError, setMaskLoadError] = useState(false);
-
   const [localPreviewUrl, setLocalPreviewUrl] = useState(null);
+  const [imageBase64, setImageBase64] = useState(null);
 
   const AI_URL = "https://lily-prescribe-avenue.ngrok-free.dev/predict-base64";
   const today = new Date().toLocaleDateString("vi-VN", {
@@ -26,67 +26,80 @@ const CaptureReviewModal = ({
     month: "long",
   });
 
+  // ---- Lưu và khôi phục ảnh từ localStorage ----
   useEffect(() => {
+    // Nếu có ảnh mới từ prop, lưu vào state và localStorage
     if (rawImageDataUrl) {
+      setImageBase64(rawImageDataUrl);
+      localStorage.setItem("captured_image_base64", rawImageDataUrl);
       setLocalPreviewUrl(rawImageDataUrl);
+    } else {
+      // Nếu không có ảnh mới, thử lấy từ localStorage
+      const saved = localStorage.getItem("captured_image_base64");
+      if (saved) {
+        setImageBase64(saved);
+        setLocalPreviewUrl(saved);
+      }
     }
   }, [rawImageDataUrl]);
 
-  // Gọi AI service
+  // ---- Gọi AI detect khi có ảnh ----
   useEffect(() => {
-    const detect = async () => {
-      if (!rawImageDataUrl) return;
-      try {
-        setError(null);
-        setLoading(true);
-        setMaskImageUrl(null);
-        setMaskLoadError(false);
+    if (imageBase64) {
+      detect(imageBase64);
+    }
+  }, [imageBase64]);
 
-        const res = await fetch(AI_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image_base64: rawImageDataUrl }),
-        });
-        if (!res.ok) throw new Error(`AI service error: HTTP ${res.status}`);
-        const data = await res.json();
+  const detect = async (base64) => {
+    try {
+      setError(null);
+      setLoading(true);
+      setMaskImageUrl(null);
+      setMaskLoadError(false);
 
-        if (data.success && data.predictions.length) {
-          setPredictions(data.predictions);
-          const first = data.predictions[0];
-          setSelectedLabel(first.label);
-          setSelectedKey(first.key || ""); // 👈 lưu key
-          setSelectedConfidence(first.confidence);
+      const res = await fetch(AI_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_base64: base64 }),
+      });
+      if (!res.ok) throw new Error(`AI service error: HTTP ${res.status}`);
+      const data = await res.json();
 
-          if (data.mask_url) {
-            console.log("✅ mask_url nhận được:", data.mask_url);
-            const img = new Image();
-            img.onload = () => {
-              console.log("✅ Ảnh mask tải thành công");
-              setMaskImageUrl(data.mask_url);
-            };
-            img.onerror = (err) => {
-              console.error("❌ Ảnh mask tải thất bại:", err);
-              setMaskLoadError(true);
-            };
-            img.src = data.mask_url;
-          } else {
-            console.warn("⚠️ Không có mask_url trong response");
+      if (data.success && data.predictions.length) {
+        setPredictions(data.predictions);
+        const first = data.predictions[0];
+        setSelectedLabel(first.label);
+        setSelectedKey(first.key || "");
+        setSelectedConfidence(first.confidence);
+
+        if (data.mask_url) {
+          console.log("✅ mask_url nhận được:", data.mask_url);
+          const img = new Image();
+          img.onload = () => {
+            console.log("✅ Ảnh mask tải thành công");
+            setMaskImageUrl(data.mask_url);
+          };
+          img.onerror = (err) => {
+            console.error("❌ Ảnh mask tải thất bại:", err);
             setMaskLoadError(true);
-          }
+          };
+          img.src = data.mask_url;
         } else {
-          throw new Error(data.error || "No predictions");
+          console.warn("⚠️ Không có mask_url trong response");
+          setMaskLoadError(true);
         }
-      } catch (err) {
-        console.error("AI error:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      } else {
+        throw new Error(data.error || "No predictions");
       }
-    };
-    detect();
-  }, [rawImageDataUrl]);
+    } catch (err) {
+      console.error("AI error:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Fetch vocabulary từ database dựa trên key
+  // ---- Fetch vocabulary ----
   useEffect(() => {
     if (!selectedKey) return;
 
@@ -98,7 +111,6 @@ const CaptureReviewModal = ({
           params: { class_name: className },
         });
         const data = response.data;
-        // Lấy mảng kết quả từ data.results (nếu có), fallback data
         const vocabList = data.results || data;
         if (Array.isArray(vocabList) && vocabList.length) {
           setVocabulary(vocabList[0]);
@@ -120,22 +132,33 @@ const CaptureReviewModal = ({
     fetchVocab();
   }, [selectedKey]);
 
+  // ---- Lưu ----
   const handleSaveClick = () => {
     if (vocabulary?.id) {
       console.log("💾 Lưu với maskImageUrl:", maskImageUrl);
       onSave(vocabulary.id, maskImageUrl);
+      // Sau khi lưu, có thể xóa ảnh khỏi localStorage nếu muốn
+      // localStorage.removeItem("captured_image_base64");
     } else {
       console.warn("⚠️ Không có vocabulary.id để lưu");
     }
   };
 
+  // ---- Xóa ảnh và reset ----
+  const handleCancel = () => {
+    // Có thể xóa localStorage nếu không muốn giữ ảnh sau khi hủy
+    // localStorage.removeItem("captured_image_base64");
+    onCancel();
+  };
+
+  // ---- Render ----
   if (error) {
     return (
       <div className="fixed inset-0 bg-[#F8F9FA] z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl p-6 text-center shadow-xl max-w-sm w-full">
           <p className="text-red-500 font-medium">❌ Lỗi: {error}</p>
           <button
-            onClick={onCancel}
+            onClick={handleCancel}
             className="mt-4 px-6 py-2 bg-gray-200 rounded-full text-sm font-medium"
           >
             Đóng
@@ -145,7 +168,7 @@ const CaptureReviewModal = ({
     );
   }
 
-  const isConfidenceValid = selectedConfidence >= 40;
+  const isConfidenceValid = selectedConfidence >= 20;
   const displayImageUrl =
     maskImageUrl && !maskLoadError ? maskImageUrl : localPreviewUrl;
 
@@ -155,7 +178,7 @@ const CaptureReviewModal = ({
         {/* TOP BAR */}
         <div className="flex items-center gap-4 mb-4 mt-2">
           <button
-            onClick={onCancel}
+            onClick={handleCancel}
             className="w-11 h-11 flex items-center justify-center bg-white rounded-full shadow-sm text-gray-700 active:scale-95 transition"
           >
             <svg
@@ -261,7 +284,7 @@ const CaptureReviewModal = ({
           </div>
         </div>
 
-        {/* CHIPS */}
+        {/* CHIPS
         {predictions.length > 0 && (
           <div className="px-2 mb-3 mt-1">
             <div className="flex flex-wrap gap-2 justify-center">
@@ -270,7 +293,7 @@ const CaptureReviewModal = ({
                   key={idx}
                   onClick={() => {
                     setSelectedLabel(p.label);
-                    setSelectedKey(p.key || ""); // 👈 cập nhật key khi chọn chip
+                    setSelectedKey(p.key || "");
                     setSelectedConfidence(p.confidence);
                   }}
                   className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
@@ -284,7 +307,7 @@ const CaptureReviewModal = ({
               ))}
             </div>
           </div>
-        )}
+        )} */}
 
         {/* BOTTOM BUTTONS */}
         <div className="flex flex-col gap-3 w-full mt-2 pb-10">
@@ -310,7 +333,7 @@ const CaptureReviewModal = ({
 
           <div className="flex gap-4">
             <button
-              onClick={onCancel}
+              onClick={handleCancel}
               className="flex-1 py-3.5 rounded-full bg-[#FFF0E8] text-[#FF6550] font-extrabold text-base active:scale-[0.98] transition flex items-center justify-center gap-1.5"
             >
               <svg
@@ -335,7 +358,7 @@ const CaptureReviewModal = ({
               Quét lại
             </button>
             <button
-              onClick={onCancel}
+              onClick={handleCancel}
               className="flex-1 py-3.5 rounded-full bg-white border-2 border-gray-100 text-gray-700 font-extrabold text-base shadow-sm active:scale-[0.98] transition flex items-center justify-center gap-1.5"
             >
               <svg
