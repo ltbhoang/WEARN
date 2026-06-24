@@ -300,7 +300,7 @@ export const useFlashcardStore = create((set, get) => ({
       set({ reviewResult: response.data, loading: false });
       set((state) => ({
         dueVocabularies: state.dueVocabularies.filter(
-          (item) => item.vocabulary_id !== vocabularyId
+          (item) => item.id !== vocabularyId
         ),
       }));
       return response.data;
