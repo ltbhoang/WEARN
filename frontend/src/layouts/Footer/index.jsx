@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Home, LayoutGrid, Camera, GraduationCap, User,
-  AlertTriangle, CheckCircle2, XCircle
+  CheckCircle2, XCircle
 } from "lucide-react";
 import CameraWeb from "../../components/CameraWeb";
 import CaptureReviewModal from "../../components/CaptureReviewModal";
@@ -25,45 +25,27 @@ const Footer = () => {
   const handleOpenCamera = () => setShowCamera(true);
   const handleCloseCamera = () => setShowCamera(false);
 
-  // ---- Không upload nữa, chỉ lưu base64 ----
   const handleCapture = (imageDataUrl) => {
     setRawImageDataUrl(imageDataUrl);
     setShowCamera(false);
     setShowReview(true);
   };
 
-  // ---- Lưu base64 vào localStorage ----
-  const saveImageToLocalStorage = (collectionId, vocabularyId, imageBase64) => {
-    if (!imageBase64) return;
-    const key = `saved_${collectionId}_${vocabularyId}`;
-    localStorage.setItem(key, imageBase64);
-    // Cũng có thể lưu vào mảng cho collection để hiển thị nhiều ảnh
-    const collectionKey = `collection_${collectionId}_images`;
-    const existing = JSON.parse(localStorage.getItem(collectionKey) || '[]');
-    // Kiểm tra nếu đã có ảnh này (theo vocab) thì thay thế
-    // Vì mỗi vocab chỉ có 1 ảnh, ta có thể lưu object { vocabId, image }
-    // Đơn giản là lưu object
+  // Lưu ảnh vào localStorage (URL hoặc base64)
+  const saveImageToLocalStorage = (collectionId, vocabularyId, imageData) => {
+    if (!imageData) return;
     const imageMap = JSON.parse(localStorage.getItem(`collection_${collectionId}_map`) || '{}');
-    imageMap[vocabularyId] = imageBase64;
+    imageMap[vocabularyId] = imageData;
     localStorage.setItem(`collection_${collectionId}_map`, JSON.stringify(imageMap));
   };
 
-  // ---- Xóa ảnh khỏi localStorage ----
-  const removeImageFromLocalStorage = (collectionId, vocabularyId) => {
-    const key = `saved_${collectionId}_${vocabularyId}`;
-    localStorage.removeItem(key);
-    const imageMap = JSON.parse(localStorage.getItem(`collection_${collectionId}_map`) || '{}');
-    delete imageMap[vocabularyId];
-    localStorage.setItem(`collection_${collectionId}_map`, JSON.stringify(imageMap));
-  };
-
-  // ---- Lưu ----
-  const handleSave = async (vocabularyId, maskUrl, imageBase64) => {
+  // ---- Lưu vocabulary ----
+  const handleSave = async (vocabularyId, imageData) => {
     if (!vocabularyId) {
       showToast("Không có từ vựng để lưu. Vui lòng chọn kết quả khác.", "error");
       return;
     }
-    if (!imageBase64) {
+    if (!imageData) {
       showToast("Không có ảnh để lưu. Vui lòng thử lại.", "error");
       return;
     }
@@ -83,22 +65,25 @@ const Footer = () => {
         collectionId = createRes.data.id;
       }
 
-      // Lưu saved-vocabulary (không gửi user_image)
+      // Xác định user_image: chỉ gửi nếu imageData là URL hợp lệ
+      const userImage = (imageData && imageData.startsWith('http')) ? imageData : null;
+
+      // Lưu saved-vocabulary, kèm user_image nếu có
       await axiosPrivate.post("/api/saved-vocabularies/", {
         collection: collectionId,
         vocabulary: vocabularyId,
-        // user_image không gửi nữa
+        user_image: userImage, // thêm trường user_image
       });
 
-      // Lưu ảnh vào localStorage
-      saveImageToLocalStorage(collectionId, vocabularyId, imageBase64);
+      // Lưu ảnh vào localStorage (dùng để hiển thị nhanh)
+      saveImageToLocalStorage(collectionId, vocabularyId, imageData);
       showToast("Đã lưu vào bộ sưu tập của bạn!", "success");
       setShowReview(false);
       setRawImageDataUrl(null);
     } catch (err) {
-      if (err.response?.status === 400 && err.response.data?.non_field_errors) {
-        // Duplicate: vẫn lưu ảnh mới vào localStorage
-        saveImageToLocalStorage(collectionId, vocabularyId, imageBase64);
+      if (err.response?.status === 400 && err.response?.data?.non_field_errors) {
+        // Duplicate: cập nhật ảnh mới
+        saveImageToLocalStorage(collectionId, vocabularyId, imageData);
         showToast("Đã cập nhật ảnh mới cho từ vựng này!", "success");
         setShowReview(false);
         setRawImageDataUrl(null);
@@ -112,7 +97,6 @@ const Footer = () => {
     }
   };
 
-  // ---- Hủy ----
   const handleCancel = () => {
     setShowReview(false);
     setRawImageDataUrl(null);
@@ -149,16 +133,16 @@ const Footer = () => {
       </footer>
 
       {showCamera && <CameraWeb onCapture={handleCapture} onClose={handleCloseCamera} />}
+
       {showReview && rawImageDataUrl && (
         <CaptureReviewModal
           imageUrl={null}
           rawImageDataUrl={rawImageDataUrl}
-          onSave={(vocabularyId, maskUrl, imageBase64) => {
-            handleSave(vocabularyId, maskUrl, imageBase64);
-          }}
+          onSave={(vocabularyId, imageData) => handleSave(vocabularyId, imageData)}
           onCancel={handleCancel}
         />
       )}
+
       {toast.show && (
         <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[70] px-1 w-full max-w-sm animate-bounce-short">
           <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md ${toast.type === "success" ? "bg-gradient-to-r from-emerald-500/95 to-teal-600/95 text-white" : "bg-gradient-to-r from-rose-500/95 to-red-600/95 text-white"}`}>

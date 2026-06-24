@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Search,
   Loader2,
+  ImageOff,
 } from "lucide-react";
 
 const WEEKLY_PALETTE = [
@@ -22,25 +23,33 @@ const WEEKLY_PALETTE = [
 const CollectionPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const { collections, fetchCollections, loading } = useDataStore();
+  const {
+    collections,
+    fetchCollections,
+    fetchCollectionDetail,
+    collectionDetails,
+    loading,
+  } = useDataStore();
 
-  // Bảo vệ: collections là mảng
   const safeCollections = Array.isArray(collections) ? collections : [];
 
   useEffect(() => {
     fetchCollections();
   }, [fetchCollections]);
 
-  // Lấy danh sách ảnh base64 từ localStorage cho một collection
-  const getImagesForCollection = (collectionId) => {
-    try {
-      const map = JSON.parse(localStorage.getItem(`collection_${collectionId}_map`) || '{}');
-      // Lấy tối đa 4 ảnh (object values)
-      return Object.values(map).slice(0, 4);
-    } catch {
-      return [];
+  // Khi có collections, fetch detail cho từng collection (nếu chưa có)
+  useEffect(() => {
+    const fetchDetails = async () => {
+      for (const col of safeCollections) {
+        if (!collectionDetails[col.id]) {
+          await fetchCollectionDetail(col.id);
+        }
+      }
+    };
+    if (safeCollections.length > 0) {
+      fetchDetails();
     }
-  };
+  }, [safeCollections, collectionDetails, fetchCollectionDetail]);
 
   const getThemeByDate = (dateString) => {
     const date = new Date(dateString);
@@ -51,6 +60,23 @@ const CollectionPage = () => {
   const filteredCollections = safeCollections.filter((col) =>
     col.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Lấy danh sách ảnh đại diện (tối đa 4) từ collectionDetails
+  const getPreviewImages = (collectionId) => {
+    const detail = collectionDetails[collectionId];
+    if (!detail) return [];
+    const images = (detail.saved_vocabularies || [])
+      .map(item => item.user_image)
+      .filter(url => url);
+    return images.slice(0, 4);
+  };
+
+  // Lấy số từ vựng thực tế từ detail
+  const getVocabCount = (collectionId) => {
+    const detail = collectionDetails[collectionId];
+    if (!detail) return 0;
+    return detail.saved_vocabularies?.length || 0;
+  };
 
   return (
     <div className="min-h-screen bg-[#FAF9F8] pb-40 font-sans text-[#2D2D2D]">
@@ -64,7 +90,6 @@ const CollectionPage = () => {
               Bạn đã học được {safeCollections.length} bộ từ rồi!
             </p>
           </div>
-          
           <div className="relative w-20 h-20 ml-2">
             <div className="absolute bottom-0 left-0 w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl transform rotate-12 z-10 border border-white">
               🎃
@@ -102,8 +127,11 @@ const CollectionPage = () => {
         ) : (
           filteredCollections.map((col) => {
             const folderTheme = getThemeByDate(col.date_key || col.created_at);
-            const images = getImagesForCollection(col.id);
-            
+            const images = getPreviewImages(col.id);
+            const count = getVocabCount(col.id);
+            const displayImages = images.slice(0, 4);
+            const remaining = images.length - 4;
+
             return (
               <section key={col.id} className="space-y-4">
                 <h2 className="text-xl font-bold text-[#474747] ml-2">
@@ -122,30 +150,54 @@ const CollectionPage = () => {
                         style={{ color: folderTheme.main }}
                       />
                       <span className="text-lg font-bold text-[#555]">
-                         {col.vocab_count || 0} từ vựng
+                        {count} từ vựng
                       </span>
                     </div>
                     <ChevronRight className="w-6 h-6 text-[#C7C7C7]" />
                   </div>
 
-                  {/* Hiển thị tối đa 4 ảnh base64 từ localStorage */}
+                  {/* Hiển thị ảnh từ user_image (URL) */}
                   <div className="flex gap-3 overflow-hidden mb-4">
-                    {images.slice(0, 3).map((img, idx) => (
-                      <div key={idx} className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-sm shrink-0">
-                        <img src={img} alt="vocab" className="w-full h-full object-cover" />
+                    {displayImages.length > 0 ? (
+                      displayImages.map((imgUrl, idx) => (
+                        <div
+                          key={idx}
+                          className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-sm shrink-0 bg-white/20"
+                        >
+                          <img
+                            src={imgUrl}
+                            alt="vocab"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Nếu ảnh lỗi, hiển thị placeholder
+                              e.target.onerror = null;
+                              e.target.style.display = 'none';
+                              const parent = e.target.parentElement;
+                              const fallback = document.createElement('div');
+                              fallback.className = 'w-full h-full flex items-center justify-center text-[#8E8D8A] bg-gray-100';
+                              fallback.textContent = '📷';
+                              parent.appendChild(fallback);
+                            }}
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex items-center gap-2 text-[#8E8D8A] bg-white/50 px-4 py-2 rounded-xl">
+                        <ImageOff className="w-5 h-5" />
+                        <span className="text-sm font-medium">Chưa có ảnh</span>
                       </div>
-                    ))}
-                    {images.length > 4 && (
-                      <div className="w-16 h-16 rounded-2xl bg-white/50 backdrop-blur flex items-center justify-center text-xs font-bold text-[#8E8D8A]">
-                        +{images.length - 4}
+                    )}
+                    {remaining > 0 && (
+                      <div className="w-16 h-16 rounded-2xl bg-white/50 backdrop-blur flex items-center justify-center text-xs font-bold text-[#8E8D8A] border-2 border-dashed border-white/60">
+                        +{remaining}
                       </div>
                     )}
                   </div>
 
                   <div className="flex gap-4">
-                     <div className="text-xs text-[#8E8D8A] font-medium">
-                       Ngày tạo: {new Date(col.date_key || col.created_at).toLocaleDateString('vi-VN')}
-                     </div>
+                    <div className="text-xs text-[#8E8D8A] font-medium">
+                      Ngày tạo: {new Date(col.date_key || col.created_at).toLocaleDateString('vi-VN')}
+                    </div>
                   </div>
                 </div>
               </section>

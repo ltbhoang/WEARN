@@ -15,10 +15,9 @@ const CaptureReviewModal = ({
   const [selectedConfidence, setSelectedConfidence] = useState(0);
   const [error, setError] = useState(null);
   const [fetchingVocab, setFetchingVocab] = useState(false);
-  const [maskImageUrl, setMaskImageUrl] = useState(null);
-  const [maskLoadError, setMaskLoadError] = useState(false);
   const [localPreviewUrl, setLocalPreviewUrl] = useState(null);
   const [imageBase64, setImageBase64] = useState(null);
+  const [remoteImageUrl, setRemoteImageUrl] = useState(null); // URL từ WaveSpeed (segment)
 
   const AI_URL = "https://lily-prescribe-avenue.ngrok-free.dev/predict-base64";
   const today = new Date().toLocaleDateString("vi-VN", {
@@ -52,8 +51,7 @@ const CaptureReviewModal = ({
     try {
       setError(null);
       setLoading(true);
-      setMaskImageUrl(null);
-      setMaskLoadError(false);
+      setRemoteImageUrl(null); // reset URL cũ
 
       const res = await fetch(AI_URL, {
         method: "POST",
@@ -70,21 +68,12 @@ const CaptureReviewModal = ({
         setSelectedKey(first.key || "");
         setSelectedConfidence(first.confidence);
 
-        if (data.mask_url) {
-          console.log("✅ mask_url nhận được:", data.mask_url);
-          const img = new Image();
-          img.onload = () => {
-            console.log("✅ Ảnh mask tải thành công");
-            setMaskImageUrl(data.mask_url);
-          };
-          img.onerror = (err) => {
-            console.error("❌ Ảnh mask tải thất bại:", err);
-            setMaskLoadError(true);
-          };
-          img.src = data.mask_url;
+        // Nếu có image_url từ WaveSpeed (segment), lưu lại
+        if (data.image_url) {
+          setRemoteImageUrl(data.image_url);
+          console.log("📸 Nhận được ảnh segment từ WaveSpeed:", data.image_url);
         } else {
-          console.warn("⚠️ Không có mask_url trong response");
-          setMaskLoadError(true);
+          console.warn("⚠️ Không có image_url từ server, dùng ảnh gốc");
         }
       } else {
         throw new Error(data.error || "No predictions");
@@ -133,12 +122,10 @@ const CaptureReviewModal = ({
   // ---- Lưu ----
   const handleSaveClick = () => {
     if (vocabulary?.id) {
-      // Lấy base64 từ localStorage (có thể từ state để đảm bảo)
-      const savedBase64 = localStorage.getItem("captured_image_base64") || imageBase64;
-      console.log("💾 Lưu với maskImageUrl:", maskImageUrl);
-      // Truyền vocabulary id, mask URL, và base64
-      onSave(vocabulary.id, maskImageUrl, savedBase64);
-      // Không xóa localStorage ngay, để giữ ảnh cho lần xem lại
+      // Ưu tiên dùng remoteImageUrl (URL segment từ WaveSpeed), nếu có
+      const imageToSave = remoteImageUrl || localStorage.getItem("captured_image_base64") || imageBase64;
+      console.log("💾 Lưu với:", imageToSave ? (typeof imageToSave === 'string' && imageToSave.startsWith('http') ? 'URL' : 'base64') : 'không có');
+      onSave(vocabulary.id, imageToSave);
     } else {
       console.warn("⚠️ Không có vocabulary.id để lưu");
     }
@@ -146,8 +133,6 @@ const CaptureReviewModal = ({
 
   // ---- Xóa ảnh và reset ----
   const handleCancel = () => {
-    // Có thể xóa localStorage nếu muốn reset hoàn toàn
-    // localStorage.removeItem("captured_image_base64");
     onCancel();
   };
 
@@ -169,8 +154,8 @@ const CaptureReviewModal = ({
   }
 
   const isConfidenceValid = selectedConfidence >= 20;
-  const displayImageUrl =
-    maskImageUrl && !maskLoadError ? maskImageUrl : localPreviewUrl;
+  // Hiển thị ảnh: ưu tiên remoteImageUrl (segment), ngược lại dùng localPreviewUrl (ảnh gốc)
+  const displayImageUrl = remoteImageUrl || localPreviewUrl;
 
   return (
     <div className="fixed inset-0 bg-[#F9F9F6] z-50 flex flex-col p-6 font-sans select-none overflow-hidden">
@@ -223,9 +208,11 @@ const CaptureReviewModal = ({
                 alt="Object"
                 className="max-w-full max-h-full object-contain rounded-[2rem] border-4 border-white bg-white/10 shadow-inner"
                 onError={(e) => {
-                  console.error("Lỗi hiển thị ảnh:", e.target.src);
-                  if (maskImageUrl && e.target.src === maskImageUrl)
-                    setMaskLoadError(true);
+                  // Nếu remoteImageUrl bị lỗi, fallback về ảnh gốc
+                  if (remoteImageUrl) {
+                    console.warn("⚠️ Ảnh segment bị lỗi, fallback về ảnh gốc");
+                    setRemoteImageUrl(null);
+                  }
                 }}
               />
             ) : (
@@ -234,12 +221,6 @@ const CaptureReviewModal = ({
               </div>
             )}
           </div>
-
-          {!loading && maskLoadError && (
-            <div className="absolute top-6 left-6 bg-amber-500/80 text-white text-xs font-bold px-3 py-1 rounded-full">
-              ⚠️ Hiển thị ảnh gốc (mask lỗi)
-            </div>
-          )}
 
           <div className="w-full text-center flex flex-col items-center justify-center mt-4">
             {loading ? (

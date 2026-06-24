@@ -4,8 +4,11 @@ import { axiosPrivate } from "../apis/axios";
 export const useDataStore = create((set, get) => ({
   // ========== STATE ==========
   collections: [],
-  // Cache vocabularies theo collectionId: { [collectionId]: vocabArray }
+  // Cache vocabularies theo collectionId: { [collectionId]: vocabArray } (giữ lại để tương thích)
   vocabulariesByCollection: {},
+  // Cache chi tiết collection: { [collectionId]: fullData } 
+  // (bao gồm saved_vocabularies với user_image, vocab_count, v.v.)
+  collectionDetails: {},
   // Cache vocabularies theo topic: { [topic]: vocabArray }
   vocabulariesByTopic: {},
   streakData: null,
@@ -43,7 +46,6 @@ export const useDataStore = create((set, get) => ({
     try {
       const response = await axiosPrivate.get("/api/collections/");
       const data = response.data;
-      // Lấy mảng từ data.results (phân trang) hoặc fallback data
       const collections = data.results || (Array.isArray(data) ? data : []);
       set({
         collections: collections,
@@ -54,16 +56,17 @@ export const useDataStore = create((set, get) => ({
       set({
         error: "Không thể lấy danh sách bộ sưu tập",
         loadingStates: { ...get().loadingStates, collections: false },
-        collections: [], // Reset về mảng rỗng để tránh lỗi
+        collections: [],
       });
     }
   },
 
+  // --- Collection Detail (lấy full detail, bao gồm saved_vocabularies) ---
   fetchCollectionDetail: async (id, force = false) => {
-    const cached = get().vocabulariesByCollection[id];
+    const cached = get().collectionDetails[id];
     if (!force && cached) {
-      console.log(`🟢 Dùng cache cho collection ${id}`);
-      return { vocabularies: cached };
+      console.log(`🟢 Dùng cache detail cho collection ${id}`);
+      return cached;
     }
     set((state) => ({
       loadingStates: {
@@ -74,18 +77,24 @@ export const useDataStore = create((set, get) => ({
     }));
     try {
       const response = await axiosPrivate.get(`/api/collections/${id}/`);
-      const vocabularies = response.data.vocabularies || [];
+      const data = response.data; // data bao gồm saved_vocabularies, vocab_count, ...
+      
+      // Cập nhật cả collectionDetails và vocabulariesByCollection (để tương thích)
       set((state) => ({
+        collectionDetails: {
+          ...state.collectionDetails,
+          [id]: data,
+        },
         vocabulariesByCollection: {
           ...state.vocabulariesByCollection,
-          [id]: vocabularies,
+          [id]: data.saved_vocabularies || [],
         },
         loadingStates: {
           ...state.loadingStates,
           detail: { ...state.loadingStates.detail, [id]: false },
         },
       }));
-      return response.data;
+      return data;
     } catch (err) {
       set({
         error: err.message,
@@ -94,10 +103,44 @@ export const useDataStore = create((set, get) => ({
           detail: { ...get().loadingStates.detail, [id]: false },
         },
       });
+      return null;
     }
   },
 
-  getVocabulariesByCollection: (id) => get().vocabulariesByCollection[id] || [],
+  // --- Helper: lấy danh sách ảnh preview (tối đa limit) từ collection detail ---
+  getPreviewImages: (collectionId, limit = 4) => {
+    const detail = get().collectionDetails[collectionId];
+    if (!detail) return [];
+    const savedVocabs = detail.saved_vocabularies || [];
+    return savedVocabs
+      .map((item) => item.user_image)
+      .filter((url) => url) // bỏ null/undefined
+      .slice(0, limit);
+  },
+
+  // --- Helper: lấy số lượng từ vựng thực tế của collection ---
+  getVocabCount: (collectionId) => {
+    const detail = get().collectionDetails[collectionId];
+    if (!detail) return 0;
+    return detail.saved_vocabularies?.length || 0;
+  },
+
+  // --- Helper: lấy toàn bộ saved_vocabularies với user_image của collection ---
+  getSavedVocabularies: (collectionId) => {
+    const detail = get().collectionDetails[collectionId];
+    if (!detail) return [];
+    return detail.saved_vocabularies || [];
+  },
+
+  // --- Lấy danh sách vocabulary (chỉ thông tin từ, không có ảnh) (cũ) ---
+  getVocabulariesByCollection: (id) => {
+    // Nếu có collectionDetails thì lấy từ đó, ngược lại lấy từ cache cũ
+    const detail = get().collectionDetails[id];
+    if (detail) {
+      return detail.saved_vocabularies?.map((item) => item.vocabulary) || [];
+    }
+    return get().vocabulariesByCollection[id] || [];
+  },
 
   // --- Vocabulary theo topic ---
   fetchVocabulariesByTopic: async (topic, force = false) => {
@@ -121,7 +164,6 @@ export const useDataStore = create((set, get) => ({
         `/api/vocabularies/?topic=${topic}`
       );
       const data = response.data;
-      // Lấy mảng từ data.results (phân trang) hoặc fallback data
       const list = data.results || (Array.isArray(data) ? data : []);
       set((state) => ({
         vocabulariesByTopic: { ...state.vocabulariesByTopic, [topic]: list },
@@ -155,7 +197,7 @@ export const useDataStore = create((set, get) => ({
       const response = await axiosPrivate.post("/api/vocabularies/", vocabData);
       const newVocab = response.data;
       const collectionId = vocabData.collection;
-      // Cập nhật cache theo collection
+      // Cập nhật cache theo collection (nếu có)
       const currentCollectionVocabs =
         get().vocabulariesByCollection[collectionId] || [];
       set({
@@ -175,6 +217,7 @@ export const useDataStore = create((set, get) => ({
           },
         });
       }
+      // Refresh streak nếu cần
       get().refreshStreakIfNeeded();
       return newVocab;
     } catch (err) {
@@ -221,6 +264,7 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
+  // --- Xóa item ---
   removeItem: async (type, id) => {
     try {
       await axiosPrivate.delete(`/api/${type}/${id}/`);
@@ -232,10 +276,14 @@ export const useDataStore = create((set, get) => ({
             delete newCache[id];
             return newCache;
           })(),
+          collectionDetails: (() => {
+            const newDetails = { ...state.collectionDetails };
+            delete newDetails[id];
+            return newDetails;
+          })(),
         }));
       } else if (type === "vocabularies") {
-        // Xóa từ khỏi cache (cần tìm topic/collection chứa nó)
-        // Đơn giản là clear cache theo topic? Có thể fetch lại collection detail sau.
+        // Xóa từ vựng khỏi cache (có thể fetch lại collection detail sau)
         console.warn("Xóa từ vựng, cần đồng bộ cache thủ công");
         get().refreshStreakIfNeeded();
       }
@@ -244,10 +292,12 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
+  // --- Reset cache ---
   resetCache: () => {
     set({
       collections: [],
       vocabulariesByCollection: {},
+      collectionDetails: {},
       vocabulariesByTopic: {},
       streakData: null,
       lastFetched: { collections: 0, streak: 0, topics: {} },
