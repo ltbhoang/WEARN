@@ -8,6 +8,7 @@ export const useFlashcardStore = create((set, get) => ({
   reviewItems: [],
   savedVocabularies: [],
   dueVocabularies: [],
+  upcomingStats: null, // <-- THÊM
   reviewResult: null,
   loading: false,
   error: null,
@@ -25,7 +26,6 @@ export const useFlashcardStore = create((set, get) => ({
       } else if (data && data.results && Array.isArray(data.results)) {
         sets = data.results;
       } else {
-        // Fallback an toàn: thử lấy từ Object.values nếu có thể
         const values = Object.values(data || {});
         if (values.length > 0 && Array.isArray(values[0])) {
           sets = values[0];
@@ -37,7 +37,7 @@ export const useFlashcardStore = create((set, get) => ({
         error:
           err.response?.data?.message || "Không thể lấy danh sách bộ flashcard",
         loading: false,
-        flashcardSets: [], // Reset về mảng rỗng
+        flashcardSets: [],
       });
     }
   },
@@ -139,7 +139,7 @@ export const useFlashcardStore = create((set, get) => ({
         error:
           err.response?.data?.message || "Không thể lấy danh sách từ đã lưu",
         loading: false,
-        savedVocabularies: [], // quan trọng
+        savedVocabularies: [],
       });
     }
   },
@@ -275,11 +275,13 @@ export const useFlashcardStore = create((set, get) => ({
     }
   },
 
-  fetchDueVocabularies: async () => {
+  // --- CẬP NHẬT fetchDueVocabularies để nhận params ---
+  fetchDueVocabularies: async (params = {}) => {
     set({ loading: true, error: null });
     try {
       const response = await axiosPrivate.get(
-        "/api/flashcard-sets/due_vocabularies/"
+        "/api/flashcard-sets/due_vocabularies/",
+        { params }
       );
       set({ dueVocabularies: response.data, loading: false });
       return response.data;
@@ -289,6 +291,17 @@ export const useFlashcardStore = create((set, get) => ({
           err.response?.data?.message || "Không thể lấy danh sách từ cần ôn",
         loading: false,
       });
+    }
+  },
+
+  // --- THÊM ACTION LẤY THỐNG KÊ ---
+  fetchUpcomingStats: async () => {
+    try {
+      const response = await axiosPrivate.get("/api/flashcard-sets/upcoming_stats/");
+      set({ upcomingStats: response.data });
+      return response.data;
+    } catch (err) {
+      console.error("Lỗi lấy thống kê:", err);
     }
   },
 
@@ -354,8 +367,7 @@ export const useFlashcardStore = create((set, get) => ({
     }
   },
 
-  // --- HELPER FUNCTIONS (đã sửa) ---
-
+  // --- HELPER FUNCTIONS ---
   getUnmemorizedVocabularies: () => {
     const { flashcardSets } = get();
     if (!Array.isArray(flashcardSets)) return [];
@@ -417,7 +429,6 @@ export const useFlashcardStore = create((set, get) => ({
   },
 
   // --- RESET & CLEAR ---
-
   fetchAllLearnedVocabularies: async (params = {}) => {
     set({ loading: true, error: null });
     try {

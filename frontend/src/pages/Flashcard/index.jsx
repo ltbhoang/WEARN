@@ -165,39 +165,11 @@ const FlashcardSetsPage = () => {
                 <ChevronRight className="w-5 h-5 text-[#8E8D8A] flex-shrink-0" />
               </div>
 
-              {/* Progress bar */}
-              <div className="mb-3">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-[#8E8D8A]">Hoàn thành</span>
-                  <span className="font-medium text-[#E85A4F]">
-                    {Math.round(
-                      ((set.memorized_count || 0) / (set.item_count || 1)) * 100
-                    )}
-                    %
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#E85A4F] rounded-full"
-                    style={{
-                      width: `${
-                        ((set.memorized_count || 0) / (set.item_count || 1)) *
-                        100
-                      }%`,
-                    }}
-                  />
-                </div>
-              </div>
-
               {/* Thông tin chi tiết */}
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1 text-[#8E8D8A]">
                   <BookOpen className="w-4 h-4" />
                   <span>{set.item_count || 0} từ</span>
-                </div>
-                <div className="flex items-center gap-1 text-[#8E8D8A]">
-                  <Star className="w-4 h-4" />
-                  <span>{set.memorized_count || 0} đã học</span>
                 </div>
                 <div className="flex items-center gap-1 text-[#8E8D8A]">
                   <Clock className="w-4 h-4" />
