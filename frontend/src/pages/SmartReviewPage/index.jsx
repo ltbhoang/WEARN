@@ -12,7 +12,7 @@ import {
   FastForward,
   RotateCcw,
   Brain,
-  Activity,
+  List,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFlashcardStore } from "../../store/flashcardStore";
@@ -23,6 +23,7 @@ const SmartReviewPage = () => {
     flashcardSets,
     dueVocabularies,
     fetchDueVocabularies,
+    fetchAllLearnedVocabularies,
     loading: storeLoading,
     submitReview: submitReviewStore,
   } = useFlashcardStore();
@@ -42,7 +43,7 @@ const SmartReviewPage = () => {
   const [questionCount, setQuestionCount] = useState(10);
   const [dueWords, setDueWords] = useState([]);
 
-  // Chế độ: 'smart' hoặc 'weak'
+  // Chế độ: 'smart' hoặc 'free'
   const [mode, setMode] = useState(() => {
     return localStorage.getItem("review_mode") || "smart";
   });
@@ -107,20 +108,25 @@ const SmartReviewPage = () => {
     return questionList.sort(() => 0.5 - Math.random());
   };
 
-  // Lấy dữ liệu từ store
-  const loadDueWords = async () => {
+  // Lấy dữ liệu từ store theo mode
+  const loadWords = async (selectedMode = mode) => {
     setLoading(true);
     try {
-      // Fetch dữ liệu từ store
-      await fetchDueVocabularies();
-      // Lấy dữ liệu từ store sau khi fetch
-      const words = dueVocabularies;
+      let words = [];
+      if (selectedMode === "smart") {
+        await fetchDueVocabularies();
+        words = dueVocabularies;
+      } else if (selectedMode === "free") {
+        // Lấy tất cả từ đã học, sắp xếp theo ease_factor tăng dần (ưu tiên từ khó)
+        const response = await fetchAllLearnedVocabularies({ sort: "ease_factor" });
+        words = response || [];
+      }
       setDueWords(words);
       const qs = generateQuestions(words, questionCount);
       setQuestions(qs);
       setUserAnswers(new Array(qs.length).fill(null));
     } catch (error) {
-      console.error("Error fetching due vocabularies:", error);
+      console.error("Error loading words:", error);
       setDueWords([]);
       setQuestions([]);
     } finally {
@@ -131,7 +137,7 @@ const SmartReviewPage = () => {
   // Tạo câu hỏi khi flashcardSets, mode, questionCount thay đổi (chỉ khi chưa bắt đầu)
   useEffect(() => {
     if (!started && !isFinished) {
-      loadDueWords();
+      loadWords(mode);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flashcardSets, questionCount, mode, started, isFinished]);
@@ -202,7 +208,10 @@ const SmartReviewPage = () => {
       setShowFeedback({ ok: false, msg: `Sai rồi! Đáp án đúng: ${currentQ.correctMeaning}` });
     }
 
-    submitReview(currentQ.id, grade);
+    // Chỉ gửi review khi ở chế độ smart
+    if (mode === "smart") {
+      submitReview(currentQ.id, grade);
+    }
 
     setTimeout(() => {
       setShowFeedback(null);
@@ -216,36 +225,22 @@ const SmartReviewPage = () => {
     const newAnswers = [...userAnswers];
     newAnswers[currentIndex] = { isCorrect: false, answer: "Bỏ qua" };
     setUserAnswers(newAnswers);
-    submitReview(currentQ.id, 1);
+
+    // Chỉ gửi review khi ở chế độ smart
+    if (mode === "smart") {
+      submitReview(currentQ.id, 1);
+    }
+
     moveToNextQuestion();
   };
 
-  // Ôn tiếp những từ chưa hỏi trong danh sách dueWords
+  // Ôn tiếp những từ chưa hỏi trong danh sách dueWords (chỉ áp dụng cho smart)
   const continueWithRemaining = () => {
     const askedIds = questions.map((q) => q.id);
     const remainingWords = dueWords.filter((w) => !askedIds.includes(w.id));
     if (remainingWords.length === 0) return;
     const qs = generateQuestions(remainingWords, 100);
     if (qs.length === 0) return;
-    setQuestions(qs);
-    setUserAnswers(new Array(qs.length).fill(null));
-    setCurrentIndex(0);
-    setIsFinished(false);
-    setStarted(false);
-    setCountdown(3);
-  };
-
-  // Luyện lại từ sai trong phiên hiện tại
-  const switchToWeakReview = () => {
-    const wrongIds = userAnswers
-      .map((ans, idx) => (ans && !ans.isCorrect ? questions[idx]?.id : null))
-      .filter((id) => id);
-    if (wrongIds.length === 0) return;
-    const wrongWords = dueWords.filter((w) => wrongIds.includes(w.id));
-    if (wrongWords.length === 0) return;
-    const qs = generateQuestions(wrongWords, 100);
-    if (qs.length === 0) return;
-    setMode("weak");
     setQuestions(qs);
     setUserAnswers(new Array(qs.length).fill(null));
     setCurrentIndex(0);
@@ -271,7 +266,9 @@ const SmartReviewPage = () => {
           </div>
           <h2 className="text-2xl font-black text-[#474747] mb-2">Kết thúc ôn tập</h2>
           <p className="text-[#8E8D8A] text-sm mb-6">
-            {mode === "smart" ? "Bạn đã hoàn thành phiên học thông minh" : "Bạn đã luyện xong các từ yếu"}
+            {mode === "smart"
+              ? "Bạn đã hoàn thành phiên học thông minh"
+              : "Bạn đã ôn lại tất cả từ vựng đã học"}
           </p>
 
           <div className="bg-gray-50 rounded-xl p-4 mb-6 grid grid-cols-3 gap-2">
@@ -290,7 +287,7 @@ const SmartReviewPage = () => {
           </div>
 
           <div className="space-y-3">
-            {remainingCount > 0 && (
+            {mode === "smart" && remainingCount > 0 && (
               <button
                 onClick={continueWithRemaining}
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3.5 rounded-xl text-base transition-all"
@@ -298,14 +295,17 @@ const SmartReviewPage = () => {
                 Ôn tiếp {remainingCount} từ còn lại trong hôm nay
               </button>
             )}
-            {mode === "smart" && wrongCount > 0 && (
-              <button
-                onClick={switchToWeakReview}
-                className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3.5 rounded-xl text-base transition-all"
-              >
-                🔁 Luyện lại {wrongCount} từ chưa thuộc
-              </button>
-            )}
+            <button
+              onClick={() => {
+                setMode("free");
+                setStarted(false);
+                setCountdown(null);
+                loadWords("free");
+              }}
+              className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3.5 rounded-xl text-base transition-all"
+            >
+              <List className="w-4 h-4 inline mr-2" /> Ôn lại tất cả từ đã học
+            </button>
             <button
               onClick={() => window.location.reload()}
               className="w-full bg-[#E85A4F] hover:bg-[#d94a3f] text-white font-bold py-3.5 rounded-xl text-base transition-all"
@@ -334,10 +334,10 @@ const SmartReviewPage = () => {
       );
     }
     if (dueWords.length === 0) {
-      const message =
+      let message =
         mode === "smart"
-          ? "Hôm nay bạn đã ôn hết từ vựng cần nhắc lại. Hãy quay lại ngày mai."
-          : "Chúc mừng! Bạn không còn từ yếu nào để luyện tập.";
+          ? "Hôm nay bạn đã ôn hết từ vựng cần nhắc lại. Hãy chuyển sang ôn tất cả từ đã học."
+          : "Bạn chưa có từ vựng nào để ôn. Hãy thêm từ vào bộ flashcard.";
       return (
         <div className="min-h-screen bg-[#FAF9F8] flex flex-col items-center justify-center p-6 text-center">
           <h2 className="text-xl font-bold text-gray-800">Chúc mừng!</h2>
@@ -345,15 +345,20 @@ const SmartReviewPage = () => {
           {mode === "smart" && (
             <button
               onClick={() => {
-                setMode("weak");
-                window.location.reload();
+                setMode("free");
+                setStarted(false);
+                setCountdown(null);
+                loadWords("free");
               }}
               className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-xl"
             >
-              Chuyển sang luyện từ yếu
+              Ôn lại tất cả từ đã học
             </button>
           )}
-          <button onClick={() => navigate("/flashcard")} className="mt-4 px-6 py-2 bg-[#E85A4F] text-white rounded-xl">
+          <button
+            onClick={() => navigate("/flashcard")}
+            className="mt-4 px-6 py-2 bg-[#E85A4F] text-white rounded-xl"
+          >
             Về trang chính
           </button>
         </div>
@@ -396,7 +401,12 @@ const SmartReviewPage = () => {
             <>
               <div className="flex gap-3 mb-4">
                 <button
-                  onClick={() => setMode("smart")}
+                  onClick={() => {
+                    setMode("smart");
+                    setStarted(false);
+                    setCountdown(null);
+                    loadWords("smart");
+                  }}
                   className={`px-4 py-2 rounded-full font-semibold transition-all flex items-center gap-2 ${
                     mode === "smart"
                       ? "bg-[#E85A4F] text-white shadow-md"
@@ -407,15 +417,20 @@ const SmartReviewPage = () => {
                   Ôn thông minh (SM‑2)
                 </button>
                 <button
-                  onClick={() => setMode("weak")}
+                  onClick={() => {
+                    setMode("free");
+                    setStarted(false);
+                    setCountdown(null);
+                    loadWords("free");
+                  }}
                   className={`px-4 py-2 rounded-full font-semibold transition-all flex items-center gap-2 ${
-                    mode === "weak"
+                    mode === "free"
                       ? "bg-[#E85A4F] text-white shadow-md"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
-                  <Activity className="w-4 h-4" />
-                  Luyện từ yếu
+                  <List className="w-4 h-4" />
+                  Ôn tất cả
                 </button>
               </div>
 
@@ -437,7 +452,7 @@ const SmartReviewPage = () => {
               <p className="text-gray-400 text-xs mb-6">
                 {mode === "smart"
                   ? `Có ${dueWords.length} từ vựng đã đến lịch cần ôn tập`
-                  : `Có ${dueWords.length} từ yếu cần luyện tập`}
+                  : `Có ${dueWords.length} từ vựng đã học (sắp xếp theo độ khó)`}
               </p>
               <button
                 onClick={handleStart}
@@ -465,7 +480,7 @@ const SmartReviewPage = () => {
             <ChevronLeft className="w-5 h-5 text-[#474747]" />
           </button>
           <h1 className="text-xl font-black text-[#474747]">
-            {mode === "smart" ? "Ôn tập thông minh" : "Luyện từ yếu"}
+            {mode === "smart" ? "Ôn tập thông minh" : "Ôn lại tất cả từ đã học"}
           </h1>
           <div className="flex-1"></div>
           <button

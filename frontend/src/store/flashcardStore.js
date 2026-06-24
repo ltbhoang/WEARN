@@ -278,7 +278,9 @@ export const useFlashcardStore = create((set, get) => ({
   fetchDueVocabularies: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosPrivate.get("/api/flashcard-sets/due_vocabularies/");
+      const response = await axiosPrivate.get(
+        "/api/flashcard-sets/due_vocabularies/"
+      );
       set({ dueVocabularies: response.data, loading: false });
       return response.data;
     } catch (err) {
@@ -415,6 +417,25 @@ export const useFlashcardStore = create((set, get) => ({
   },
 
   // --- RESET & CLEAR ---
+
+  fetchAllLearnedVocabularies: async (params = {}) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosPrivate.get(
+        "/api/flashcard-sets/all_learned_vocabularies/",
+        { params }
+      );
+      set({ allLearnedVocabularies: response.data, loading: false });
+      return response.data;
+    } catch (err) {
+      set({
+        error:
+          err.response?.data?.message || "Không thể lấy danh sách từ đã học",
+        loading: false,
+      });
+      throw err;
+    }
+  },
 
   resetCurrentSet: () => {
     set({ currentSet: null, reviewItems: [] });
