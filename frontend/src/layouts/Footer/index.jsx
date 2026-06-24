@@ -12,12 +12,8 @@ const Footer = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showCamera, setShowCamera] = useState(false);
-  const [capturedImageUrl, setCapturedImageUrl] = useState(null);
   const [rawImageDataUrl, setRawImageDataUrl] = useState(null);
-  const [maskImageUrl, setMaskImageUrl] = useState(null);
   const [showReview, setShowReview] = useState(false);
-  const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
-  const [pendingPayload, setPendingPayload] = useState(null);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
   const showToast = (message, type = "success") => {
@@ -29,47 +25,48 @@ const Footer = () => {
   const handleOpenCamera = () => setShowCamera(true);
   const handleCloseCamera = () => setShowCamera(false);
 
-  const handleCapture = async (imageDataUrl) => {
-    try {
-      setRawImageDataUrl(imageDataUrl);
-      const uploadRes = await axiosPrivate.post("/api/upload-temp-image/", { image_base64: imageDataUrl });
-      setCapturedImageUrl(uploadRes.data.image_url);
-      setMaskImageUrl(null);
-      setShowCamera(false);
-      setShowReview(true);
-    } catch (err) {
-      if (err.response?.status === 401) showToast("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.", "error");
-      else showToast("Không thể tải ảnh lên server. Vui lòng thử lại.", "error");
-      setShowCamera(false);
-    }
+  // ---- Không upload nữa, chỉ lưu base64 ----
+  const handleCapture = (imageDataUrl) => {
+    setRawImageDataUrl(imageDataUrl);
+    setShowCamera(false);
+    setShowReview(true);
   };
 
-  const handleReplaceImage = async (collectionId, vocabularyId, newImageUrl) => {
-    try {
-      const findRes = await axiosPrivate.get("/api/saved-vocabularies/", { params: { collection: collectionId, vocabulary: vocabularyId } });
-      const existingItem = findRes.data.find(item => item.collection === collectionId && item.vocabulary === vocabularyId);
-      if (existingItem) {
-        await axiosPrivate.patch(`/api/saved-vocabularies/${existingItem.id}/`, { user_image: newImageUrl });
-        showToast("Đã cập nhật ảnh thành công!", "success");
-        setShowReview(false);
-        setCapturedImageUrl(null);
-        setRawImageDataUrl(null);
-        setMaskImageUrl(null);
-      } else {
-        showToast("Không tìm thấy bản ghi cũ để cập nhật.", "error");
-      }
-    } catch {
-      showToast("Cập nhật thất bại. Vui lòng thử lại.", "error");
-    } finally {
-      setShowReplaceConfirm(false);
-      setPendingPayload(null);
-    }
+  // ---- Lưu base64 vào localStorage ----
+  const saveImageToLocalStorage = (collectionId, vocabularyId, imageBase64) => {
+    if (!imageBase64) return;
+    const key = `saved_${collectionId}_${vocabularyId}`;
+    localStorage.setItem(key, imageBase64);
+    // Cũng có thể lưu vào mảng cho collection để hiển thị nhiều ảnh
+    const collectionKey = `collection_${collectionId}_images`;
+    const existing = JSON.parse(localStorage.getItem(collectionKey) || '[]');
+    // Kiểm tra nếu đã có ảnh này (theo vocab) thì thay thế
+    // Vì mỗi vocab chỉ có 1 ảnh, ta có thể lưu object { vocabId, image }
+    // Đơn giản là lưu object
+    const imageMap = JSON.parse(localStorage.getItem(`collection_${collectionId}_map`) || '{}');
+    imageMap[vocabularyId] = imageBase64;
+    localStorage.setItem(`collection_${collectionId}_map`, JSON.stringify(imageMap));
   };
 
-  const handleSave = async (vocabularyId, imageToSave = null) => {
-    const finalImage = imageToSave || capturedImageUrl;
-    if (!vocabularyId) { showToast("Không có từ vựng để lưu. Vui lòng chọn kết quả khác.", "error"); return; }
-    if (!finalImage) { showToast("Không có ảnh để lưu. Vui lòng thử lại.", "error"); return; }
+  // ---- Xóa ảnh khỏi localStorage ----
+  const removeImageFromLocalStorage = (collectionId, vocabularyId) => {
+    const key = `saved_${collectionId}_${vocabularyId}`;
+    localStorage.removeItem(key);
+    const imageMap = JSON.parse(localStorage.getItem(`collection_${collectionId}_map`) || '{}');
+    delete imageMap[vocabularyId];
+    localStorage.setItem(`collection_${collectionId}_map`, JSON.stringify(imageMap));
+  };
+
+  // ---- Lưu ----
+  const handleSave = async (vocabularyId, maskUrl, imageBase64) => {
+    if (!vocabularyId) {
+      showToast("Không có từ vựng để lưu. Vui lòng chọn kết quả khác.", "error");
+      return;
+    }
+    if (!imageBase64) {
+      showToast("Không có ảnh để lưu. Vui lòng thử lại.", "error");
+      return;
+    }
 
     const today = new Date().toISOString().slice(0, 10);
     const [year, month, day] = today.split("-");
@@ -77,6 +74,7 @@ const Footer = () => {
     let collectionId = null;
 
     try {
+      // Tìm hoặc tạo collection
       const getColRes = await axiosPrivate.get("/api/collections/", { params: { date_key: today } });
       if (getColRes.data.length > 0) {
         collectionId = getColRes.data[0].id;
@@ -84,29 +82,40 @@ const Footer = () => {
         const createRes = await axiosPrivate.post("/api/collections/", { date_key: today, title: displayTitle });
         collectionId = createRes.data.id;
       }
-      await axiosPrivate.post("/api/saved-vocabularies/", { collection: collectionId, vocabulary: vocabularyId, user_image: finalImage });
+
+      // Lưu saved-vocabulary (không gửi user_image)
+      await axiosPrivate.post("/api/saved-vocabularies/", {
+        collection: collectionId,
+        vocabulary: vocabularyId,
+        // user_image không gửi nữa
+      });
+
+      // Lưu ảnh vào localStorage
+      saveImageToLocalStorage(collectionId, vocabularyId, imageBase64);
       showToast("Đã lưu vào bộ sưu tập của bạn!", "success");
       setShowReview(false);
-      setCapturedImageUrl(null);
       setRawImageDataUrl(null);
-      setMaskImageUrl(null);
     } catch (err) {
       if (err.response?.status === 400 && err.response.data?.non_field_errors) {
-        setPendingPayload({ collectionId, vocabularyId, newImageUrl: finalImage });
-        setShowReplaceConfirm(true);
+        // Duplicate: vẫn lưu ảnh mới vào localStorage
+        saveImageToLocalStorage(collectionId, vocabularyId, imageBase64);
+        showToast("Đã cập nhật ảnh mới cho từ vựng này!", "success");
+        setShowReview(false);
+        setRawImageDataUrl(null);
       } else {
-        const errorMsg = err.response?.data?.collection?.[0] || err.response?.data?.vocabulary?.[0] || err.response?.data?.detail || "Lỗi không xác định";
+        const errorMsg = err.response?.data?.collection?.[0] ||
+                         err.response?.data?.vocabulary?.[0] ||
+                         err.response?.data?.detail ||
+                         "Lỗi không xác định";
         showToast(`Lưu thất bại: ${errorMsg}`, "error");
       }
     }
   };
 
-  const handleCancel = async () => {
-    if (capturedImageUrl) await axiosPrivate.post("/api/delete-temp-image/", { image_url: capturedImageUrl }).catch(() => {});
+  // ---- Hủy ----
+  const handleCancel = () => {
     setShowReview(false);
-    setCapturedImageUrl(null);
     setRawImageDataUrl(null);
-    setMaskImageUrl(null);
   };
 
   const isActive = (path) => {
@@ -140,29 +149,15 @@ const Footer = () => {
       </footer>
 
       {showCamera && <CameraWeb onCapture={handleCapture} onClose={handleCloseCamera} />}
-      {showReview && capturedImageUrl && rawImageDataUrl && (
+      {showReview && rawImageDataUrl && (
         <CaptureReviewModal
-          imageUrl={capturedImageUrl}
+          imageUrl={null}
           rawImageDataUrl={rawImageDataUrl}
-          onSave={(vocabularyId, maskUrl) => {
-            if (maskUrl) setMaskImageUrl(maskUrl);
-            handleSave(vocabularyId, maskUrl || capturedImageUrl);
+          onSave={(vocabularyId, maskUrl, imageBase64) => {
+            handleSave(vocabularyId, maskUrl, imageBase64);
           }}
           onCancel={handleCancel}
         />
-      )}
-      {showReplaceConfirm && pendingPayload && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center">
-            <div className="mx-auto w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 mb-4"><AlertTriangle className="w-7 h-7" /></div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Từ vựng đã tồn tại</h3>
-            <p className="text-sm text-gray-500 mb-6">Bạn đã lưu từ vựng này trong hôm nay rồi. Bạn có muốn <span className="font-semibold text-gray-700">thay thế hình ảnh cũ</span> bằng ảnh mới này không?</p>
-            <div className="flex gap-3">
-              <button onClick={() => { setShowReplaceConfirm(false); setPendingPayload(null); setShowReview(false); setCapturedImageUrl(null); setRawImageDataUrl(null); setMaskImageUrl(null); }} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-2xl font-bold">Hủy bỏ</button>
-              <button onClick={() => handleReplaceImage(pendingPayload.collectionId, pendingPayload.vocabularyId, pendingPayload.newImageUrl)} className="flex-1 py-3 bg-gradient-to-r from-[#E85A4F] to-[#E98074] text-white rounded-2xl font-bold shadow-lg">Thay thế</button>
-            </div>
-          </div>
-        </div>
       )}
       {toast.show && (
         <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[70] px-1 w-full max-w-sm animate-bounce-short">

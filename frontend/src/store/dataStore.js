@@ -27,7 +27,7 @@ export const useDataStore = create((set, get) => ({
   // --- Collections ---
   fetchCollections: async (force = false) => {
     const now = Date.now();
-    const CACHE_TTL = 5 * 60 * 1000;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 phút
     if (
       !force &&
       get().collections.length > 0 &&
@@ -43,7 +43,7 @@ export const useDataStore = create((set, get) => ({
     try {
       const response = await axiosPrivate.get("/api/collections/");
       const data = response.data;
-      // Lấy mảng từ data.results hoặc fallback data
+      // Lấy mảng từ data.results (phân trang) hoặc fallback data
       const collections = data.results || (Array.isArray(data) ? data : []);
       set({
         collections: collections,
@@ -54,6 +54,7 @@ export const useDataStore = create((set, get) => ({
       set({
         error: "Không thể lấy danh sách bộ sưu tập",
         loadingStates: { ...get().loadingStates, collections: false },
+        collections: [], // Reset về mảng rỗng để tránh lỗi
       });
     }
   },
@@ -98,7 +99,7 @@ export const useDataStore = create((set, get) => ({
 
   getVocabulariesByCollection: (id) => get().vocabulariesByCollection[id] || [],
 
-  // --- Vocabulary theo topic (dùng trong CreateFlashcardSetPage) ---
+  // --- Vocabulary theo topic ---
   fetchVocabulariesByTopic: async (topic, force = false) => {
     const now = Date.now();
     const CACHE_TTL = 10 * 60 * 1000; // 10 phút
@@ -120,8 +121,10 @@ export const useDataStore = create((set, get) => ({
         `/api/vocabularies/?topic=${topic}`
       );
       const data = response.data;
+      // Lấy mảng từ data.results (phân trang) hoặc fallback data
+      const list = data.results || (Array.isArray(data) ? data : []);
       set((state) => ({
-        vocabulariesByTopic: { ...state.vocabulariesByTopic, [topic]: data },
+        vocabulariesByTopic: { ...state.vocabulariesByTopic, [topic]: list },
         lastFetched: {
           ...state.lastFetched,
           topics: { ...state.lastFetched.topics, [topic]: now },
@@ -131,7 +134,7 @@ export const useDataStore = create((set, get) => ({
           topics: { ...state.loadingStates.topics, [topic]: false },
         },
       }));
-      return data;
+      return list;
     } catch (err) {
       set({
         error: err.message,
@@ -180,10 +183,10 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // --- Các action khác giữ nguyên (streak, remove, reset) ---
+  // --- Streak ---
   fetchStreak: async (force = false) => {
     const now = Date.now();
-    const CACHE_TTL = 60 * 1000;
+    const CACHE_TTL = 60 * 1000; // 1 phút
     if (
       !force &&
       get().streakData &&

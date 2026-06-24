@@ -28,13 +28,11 @@ const CaptureReviewModal = ({
 
   // ---- Lưu và khôi phục ảnh từ localStorage ----
   useEffect(() => {
-    // Nếu có ảnh mới từ prop, lưu vào state và localStorage
     if (rawImageDataUrl) {
       setImageBase64(rawImageDataUrl);
       localStorage.setItem("captured_image_base64", rawImageDataUrl);
       setLocalPreviewUrl(rawImageDataUrl);
     } else {
-      // Nếu không có ảnh mới, thử lấy từ localStorage
       const saved = localStorage.getItem("captured_image_base64");
       if (saved) {
         setImageBase64(saved);
@@ -135,10 +133,12 @@ const CaptureReviewModal = ({
   // ---- Lưu ----
   const handleSaveClick = () => {
     if (vocabulary?.id) {
+      // Lấy base64 từ localStorage (có thể từ state để đảm bảo)
+      const savedBase64 = localStorage.getItem("captured_image_base64") || imageBase64;
       console.log("💾 Lưu với maskImageUrl:", maskImageUrl);
-      onSave(vocabulary.id, maskImageUrl);
-      // Sau khi lưu, có thể xóa ảnh khỏi localStorage nếu muốn
-      // localStorage.removeItem("captured_image_base64");
+      // Truyền vocabulary id, mask URL, và base64
+      onSave(vocabulary.id, maskImageUrl, savedBase64);
+      // Không xóa localStorage ngay, để giữ ảnh cho lần xem lại
     } else {
       console.warn("⚠️ Không có vocabulary.id để lưu");
     }
@@ -146,7 +146,7 @@ const CaptureReviewModal = ({
 
   // ---- Xóa ảnh và reset ----
   const handleCancel = () => {
-    // Có thể xóa localStorage nếu không muốn giữ ảnh sau khi hủy
+    // Có thể xóa localStorage nếu muốn reset hoàn toàn
     // localStorage.removeItem("captured_image_base64");
     onCancel();
   };
@@ -283,31 +283,6 @@ const CaptureReviewModal = ({
             )}
           </div>
         </div>
-
-        {/* CHIPS
-        {predictions.length > 0 && (
-          <div className="px-2 mb-3 mt-1">
-            <div className="flex flex-wrap gap-2 justify-center">
-              {predictions.map((p, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    setSelectedLabel(p.label);
-                    setSelectedKey(p.key || "");
-                    setSelectedConfidence(p.confidence);
-                  }}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    selectedLabel === p.label
-                      ? "bg-[#FF6550] text-white shadow-sm"
-                      : "bg-white text-gray-400 border border-gray-100"
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )} */}
 
         {/* BOTTOM BUTTONS */}
         <div className="flex flex-col gap-3 w-full mt-2 pb-10">

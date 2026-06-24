@@ -24,12 +24,23 @@ const CollectionPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { collections, fetchCollections, loading } = useDataStore();
 
-  // 👇 Bảo vệ: luôn đảm bảo collections là mảng
+  // Bảo vệ: collections là mảng
   const safeCollections = Array.isArray(collections) ? collections : [];
 
   useEffect(() => {
     fetchCollections();
   }, [fetchCollections]);
+
+  // Lấy danh sách ảnh base64 từ localStorage cho một collection
+  const getImagesForCollection = (collectionId) => {
+    try {
+      const map = JSON.parse(localStorage.getItem(`collection_${collectionId}_map`) || '{}');
+      // Lấy tối đa 4 ảnh (object values)
+      return Object.values(map).slice(0, 4);
+    } catch {
+      return [];
+    }
+  };
 
   const getThemeByDate = (dateString) => {
     const date = new Date(dateString);
@@ -91,6 +102,7 @@ const CollectionPage = () => {
         ) : (
           filteredCollections.map((col) => {
             const folderTheme = getThemeByDate(col.date_key || col.created_at);
+            const images = getImagesForCollection(col.id);
             
             return (
               <section key={col.id} className="space-y-4">
@@ -116,16 +128,16 @@ const CollectionPage = () => {
                     <ChevronRight className="w-6 h-6 text-[#C7C7C7]" />
                   </div>
 
-                  {/* Hiển thị tối đa 4 ảnh */}
+                  {/* Hiển thị tối đa 4 ảnh base64 từ localStorage */}
                   <div className="flex gap-3 overflow-hidden mb-4">
-                    {col.images && col.images.slice(0, 3).map((img, idx) => (
+                    {images.slice(0, 3).map((img, idx) => (
                       <div key={idx} className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-sm shrink-0">
                         <img src={img} alt="vocab" className="w-full h-full object-cover" />
                       </div>
                     ))}
-                    {col.vocab_count > 4 && (
+                    {images.length > 4 && (
                       <div className="w-16 h-16 rounded-2xl bg-white/50 backdrop-blur flex items-center justify-center text-xs font-bold text-[#8E8D8A]">
-                        +{col.vocab_count - 4}
+                        +{images.length - 4}
                       </div>
                     )}
                   </div>
