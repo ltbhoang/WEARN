@@ -2,13 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDataStore } from "../../store/dataStore";
-import {
-  Copy,
-  MoreVertical,
-  Search,
-  Loader2,
-  ImageOff,
-} from "lucide-react";
+import { Copy, MoreVertical, Search, Loader2, ImageOff } from "lucide-react";
 
 const WEEKLY_PALETTE = [
   { main: "#E85A4F", bg: "#FEE9E7" },
@@ -67,12 +61,13 @@ const CollectionPage = () => {
   );
 
   // Lấy danh sách ảnh đại diện (tối đa 4) từ collectionDetails
+  // Lấy danh sách ảnh đại diện (tối đa 4) từ collectionDetails
   const getPreviewImages = (collectionId) => {
     const detail = collectionDetails[collectionId];
     if (!detail) return [];
-    const images = (detail.saved_vocabularies || [])
-      .map((item) => item.user_image)
-      .filter((url) => url);
+    // Đọc từ vocabularies (fallback saved_vocabularies)
+    const list = detail.vocabularies || detail.saved_vocabularies || [];
+    const images = list.map((item) => item.user_image).filter((url) => url);
     return images.slice(0, 4);
   };
 
@@ -80,7 +75,8 @@ const CollectionPage = () => {
   const getVocabCount = (collectionId) => {
     const detail = collectionDetails[collectionId];
     if (!detail) return 0;
-    return detail.saved_vocabularies?.length || 0;
+    const list = detail.vocabularies || detail.saved_vocabularies || [];
+    return list.length;
   };
 
   // ---- Xóa collection ----
@@ -100,12 +96,12 @@ const CollectionPage = () => {
     if (!collectionToDelete) return;
     setDeleting(true);
     try {
-      await removeItem('collections', collectionToDelete.id);
+      await removeItem("collections", collectionToDelete.id);
       // Store đã xóa khỏi state, UI tự động cập nhật
       closeDeleteModal();
     } catch (err) {
-      console.error('Lỗi xóa collection:', err);
-      alert('Xóa thất bại! Vui lòng thử lại.');
+      console.error("Lỗi xóa collection:", err);
+      alert("Xóa thất bại! Vui lòng thử lại.");
       setDeleting(false);
     }
   };
@@ -209,12 +205,12 @@ const CollectionPage = () => {
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               e.target.onerror = null;
-                              e.target.style.display = 'none';
+                              e.target.style.display = "none";
                               const parent = e.target.parentElement;
-                              const fallback = document.createElement('div');
+                              const fallback = document.createElement("div");
                               fallback.className =
-                                'w-full h-full flex items-center justify-center text-[#8E8D8A] bg-gray-100';
-                              fallback.textContent = '📷';
+                                "w-full h-full flex items-center justify-center text-[#8E8D8A] bg-gray-100";
+                              fallback.textContent = "📷";
                               parent.appendChild(fallback);
                             }}
                           />
@@ -235,10 +231,10 @@ const CollectionPage = () => {
 
                   <div className="flex gap-4">
                     <div className="text-xs text-[#8E8D8A] font-medium">
-                      Ngày tạo:{' '}
-                      {new Date(col.date_key || col.created_at).toLocaleDateString(
-                        'vi-VN'
-                      )}
+                      Ngày tạo:{" "}
+                      {new Date(
+                        col.date_key || col.created_at
+                      ).toLocaleDateString("vi-VN")}
                     </div>
                   </div>
                 </div>
@@ -256,7 +252,7 @@ const CollectionPage = () => {
               Xóa bộ sưu tập?
             </h3>
             <p className="text-[#8E8D8A] mb-6">
-              Bạn có chắc muốn xóa bộ sưu tập{' '}
+              Bạn có chắc muốn xóa bộ sưu tập{" "}
               <span className="font-semibold text-[#474747]">
                 "{collectionToDelete?.title}"
               </span>
@@ -275,7 +271,7 @@ const CollectionPage = () => {
                 className="flex-1 py-2.5 rounded-full bg-red-500 text-white font-bold active:scale-[0.98] transition disabled:opacity-50"
                 disabled={deleting}
               >
-                {deleting ? 'Đang xóa...' : 'Xóa'}
+                {deleting ? "Đang xóa..." : "Xóa"}
               </button>
             </div>
           </div>

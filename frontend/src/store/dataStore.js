@@ -6,7 +6,7 @@ export const useDataStore = create((set, get) => ({
   collections: [],
   // Cache vocabularies theo collectionId: { [collectionId]: vocabArray } (giữ lại để tương thích)
   vocabulariesByCollection: {},
-  // Cache chi tiết collection: { [collectionId]: fullData } 
+  // Cache chi tiết collection: { [collectionId]: fullData }
   // (bao gồm saved_vocabularies với user_image, vocab_count, v.v.)
   collectionDetails: {},
   // Cache vocabularies theo topic: { [topic]: vocabArray }
@@ -77,17 +77,18 @@ export const useDataStore = create((set, get) => ({
     }));
     try {
       const response = await axiosPrivate.get(`/api/collections/${id}/`);
-      const data = response.data; // data bao gồm saved_vocabularies, vocab_count, ...
-      
-      // Cập nhật cả collectionDetails và vocabulariesByCollection (để tương thích)
+      const data = response.data;
+      // API trả về vocabularies, không phải saved_vocabularies
+      const vocabularies = data.vocabularies || data.saved_vocabularies || [];
+
       set((state) => ({
         collectionDetails: {
           ...state.collectionDetails,
-          [id]: data,
+          [id]: data, // data chứa vocabularies
         },
         vocabulariesByCollection: {
           ...state.vocabulariesByCollection,
-          [id]: data.saved_vocabularies || [],
+          [id]: vocabularies,
         },
         loadingStates: {
           ...state.loadingStates,
@@ -106,7 +107,6 @@ export const useDataStore = create((set, get) => ({
       return null;
     }
   },
-
   // --- Helper: lấy danh sách ảnh preview (tối đa limit) từ collection detail ---
   getPreviewImages: (collectionId, limit = 4) => {
     const detail = get().collectionDetails[collectionId];
