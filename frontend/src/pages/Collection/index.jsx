@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useDataStore } from "../../store/dataStore";
 import {
   Copy,
-  ChevronRight,
+  MoreVertical,
   Search,
   Loader2,
   ImageOff,
@@ -23,12 +23,17 @@ const WEEKLY_PALETTE = [
 const CollectionPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [collectionToDelete, setCollectionToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
   const {
     collections,
     fetchCollections,
     fetchCollectionDetail,
     collectionDetails,
     loading,
+    removeItem,
   } = useDataStore();
 
   const safeCollections = Array.isArray(collections) ? collections : [];
@@ -66,8 +71,8 @@ const CollectionPage = () => {
     const detail = collectionDetails[collectionId];
     if (!detail) return [];
     const images = (detail.saved_vocabularies || [])
-      .map(item => item.user_image)
-      .filter(url => url);
+      .map((item) => item.user_image)
+      .filter((url) => url);
     return images.slice(0, 4);
   };
 
@@ -76,6 +81,33 @@ const CollectionPage = () => {
     const detail = collectionDetails[collectionId];
     if (!detail) return 0;
     return detail.saved_vocabularies?.length || 0;
+  };
+
+  // ---- Xóa collection ----
+  const openDeleteModal = (col, e) => {
+    e.stopPropagation(); // không chuyển hướng sang chi tiết
+    setCollectionToDelete(col);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setCollectionToDelete(null);
+    setDeleting(false);
+  };
+
+  const handleDeleteCollection = async () => {
+    if (!collectionToDelete) return;
+    setDeleting(true);
+    try {
+      await removeItem('collections', collectionToDelete.id);
+      // Store đã xóa khỏi state, UI tự động cập nhật
+      closeDeleteModal();
+    } catch (err) {
+      console.error('Lỗi xóa collection:', err);
+      alert('Xóa thất bại! Vui lòng thử lại.');
+      setDeleting(false);
+    }
   };
 
   return (
@@ -153,7 +185,14 @@ const CollectionPage = () => {
                         {count} từ vựng
                       </span>
                     </div>
-                    <ChevronRight className="w-6 h-6 text-[#C7C7C7]" />
+                    {/* Nút 3 chấm thay cho ChevronRight */}
+                    <button
+                      onClick={(e) => openDeleteModal(col, e)}
+                      className="p-2 hover:bg-black/5 rounded-full transition-colors"
+                      aria-label="Xóa bộ sưu tập"
+                    >
+                      <MoreVertical className="w-6 h-6 text-[#C7C7C7]" />
+                    </button>
                   </div>
 
                   {/* Hiển thị ảnh từ user_image (URL) */}
@@ -169,12 +208,12 @@ const CollectionPage = () => {
                             alt="vocab"
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              // Nếu ảnh lỗi, hiển thị placeholder
                               e.target.onerror = null;
                               e.target.style.display = 'none';
                               const parent = e.target.parentElement;
                               const fallback = document.createElement('div');
-                              fallback.className = 'w-full h-full flex items-center justify-center text-[#8E8D8A] bg-gray-100';
+                              fallback.className =
+                                'w-full h-full flex items-center justify-center text-[#8E8D8A] bg-gray-100';
                               fallback.textContent = '📷';
                               parent.appendChild(fallback);
                             }}
@@ -196,7 +235,10 @@ const CollectionPage = () => {
 
                   <div className="flex gap-4">
                     <div className="text-xs text-[#8E8D8A] font-medium">
-                      Ngày tạo: {new Date(col.date_key || col.created_at).toLocaleDateString('vi-VN')}
+                      Ngày tạo:{' '}
+                      {new Date(col.date_key || col.created_at).toLocaleDateString(
+                        'vi-VN'
+                      )}
                     </div>
                   </div>
                 </div>
@@ -205,6 +247,40 @@ const CollectionPage = () => {
           })
         )}
       </main>
+
+      {/* Modal xác nhận xóa */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-fadeIn">
+            <h3 className="text-xl font-bold text-[#474747] mb-2">
+              Xóa bộ sưu tập?
+            </h3>
+            <p className="text-[#8E8D8A] mb-6">
+              Bạn có chắc muốn xóa bộ sưu tập{' '}
+              <span className="font-semibold text-[#474747]">
+                "{collectionToDelete?.title}"
+              </span>
+              ? Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={closeDeleteModal}
+                className="flex-1 py-2.5 rounded-full bg-gray-100 text-gray-700 font-bold active:scale-[0.98] transition disabled:opacity-50"
+                disabled={deleting}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteCollection}
+                className="flex-1 py-2.5 rounded-full bg-red-500 text-white font-bold active:scale-[0.98] transition disabled:opacity-50"
+                disabled={deleting}
+              >
+                {deleting ? 'Đang xóa...' : 'Xóa'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
