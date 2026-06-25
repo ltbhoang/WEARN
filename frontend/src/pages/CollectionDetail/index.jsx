@@ -26,10 +26,8 @@ const WEEKLY_PALETTE = [
 const CollectionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { fetchCollectionDetail, getVocabulariesByCollection, loadingStates } =
-    useDataStore();
+  const { collectionDetails, fetchCollectionDetail, loadingStates } = useDataStore();
 
-  const [collectionInfo, setCollectionInfo] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedItem, setSelectedItem] = useState(null);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
@@ -37,7 +35,10 @@ const CollectionDetail = () => {
   const [deletingItemId, setDeletingItemId] = useState(null);
 
   const isLoading = loadingStates.detail?.[id] || false;
-  const vocabularies = getVocabulariesByCollection(id) || [];
+  const collectionInfo = collectionDetails[id] || null;
+
+  // Lấy danh sách vocabularies từ collectionInfo
+  const vocabularies = collectionInfo?.vocabularies || collectionInfo?.saved_vocabularies || [];
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -45,11 +46,9 @@ const CollectionDetail = () => {
   };
 
   useEffect(() => {
-    const loadData = async () => {
-      const res = await fetchCollectionDetail(id);
-      if (res) setCollectionInfo(res);
-    };
-    loadData();
+    if (id) {
+      fetchCollectionDetail(id);
+    }
   }, [id, fetchCollectionDetail]);
 
   let theme = WEEKLY_PALETTE[new Date().getDay()];
@@ -58,17 +57,18 @@ const CollectionDetail = () => {
     if (!isNaN(date.getDay())) theme = WEEKLY_PALETTE[date.getDay()];
   }
 
+  // Chuẩn hóa dữ liệu từ mỗi item (có thể item là SavedVocabulary hoặc Vocabulary)
   const formattedItems = vocabularies.map((v) => ({
     id: v.id,
-    ja: v.word,
-    reading: v.pronunciation,
-    romaji: "",
-    vi: v.meaning,
-    example: v.example_sentence,
-    exampleTranslation: v.example_translation,
-    img: v.user_image,
+    ja: v.word || v.vocabulary?.word || '',
+    reading: v.pronunciation || v.vocabulary?.pronunciation || '',
+    romaji: '',
+    vi: v.meaning || v.vocabulary?.meaning || '',
+    example: v.example_sentence || v.vocabulary?.example_sentence || '',
+    exampleTranslation: v.example_translation || v.vocabulary?.example_translation || '',
+    img: v.user_image || v.vocabulary?.user_image || null,
     memorized: v.is_memorized || false,
-    audio_url: v.audio_url,
+    audio_url: v.audio_url || v.vocabulary?.audio_url || null,
   }));
 
   const filteredItems = formattedItems.filter((item) => {
@@ -82,14 +82,15 @@ const CollectionDetail = () => {
 
   const handleToggleMemorized = (id) => {
     console.log("Toggle memorized:", id);
+    // Gọi API toggle memorized
   };
 
   const handleDeleteWord = async () => {
     if (!deletingItemId) return;
     try {
       await axiosPrivate.delete(`/api/saved-vocabularies/${deletingItemId}/`);
-      const refreshed = await fetchCollectionDetail(id, true);
-      if (refreshed) setCollectionInfo(refreshed);
+      // Refresh lại dữ liệu
+      await fetchCollectionDetail(id, true);
       setSelectedItem(null);
       setShowDeleteConfirm(false);
       setDeletingItemId(null);
@@ -115,64 +116,38 @@ const CollectionDetail = () => {
   }
 
   return (
-    /* Đổi nền thành màu #F4F4F6 trầm dịu, giảm chói mắt triệt để */
     <div className="min-h-screen bg-[#F4F4F6] font-sans pb-16">
-      
-      {/* Header Section */}
       <header className="px-6 pt-12 pb-4 flex flex-col gap-2 relative">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-transform active:scale-90"
-            style={{ 
-              backgroundColor: theme.main, 
-              opacity: 0.9 
-            }}
+            style={{ backgroundColor: theme.main, opacity: 0.9 }}
           >
             <ChevronLeft className="w-5 h-5 text-white stroke-[3]" />
           </button>
-          
-          <h1 
-            className="text-[36px] font-bold tracking-tight"
-            style={{ color: theme.main }}
-          >
+          <h1 className="text-[36px] font-bold tracking-tight" style={{ color: theme.main }}>
             {collectionInfo?.title || "Hôm nay"}
           </h1>
         </div>
-
         <div className="pl-[52px]">
-          <span 
-            className="px-3 py-1 rounded-lg text-[14px] font-medium"
-            style={{ 
-              backgroundColor: theme.bg, 
-              color: theme.main 
-            }}
-          >
+          <span className="px-3 py-1 rounded-lg text-[14px] font-medium" style={{ backgroundColor: theme.bg, color: theme.main }}>
             {totalWords} từ
           </span>
         </div>
-        
-        {/* Đường kẻ ngang nhạt mờ tự nhiên hơn trên nền mới */}
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gray-200/50" />
       </header>
 
-      {/* Grid danh sách từ vựng */}
       <main className="px-5 mt-6 grid grid-cols-2 gap-x-5 gap-y-6">
         {filteredItems.map((item) => (
           <div
             key={item.id}
-            /* Đổ shadow-sm dịu mắt giúp nổi bật card trắng tinh trên nền xám sữa nhạt */
             className="bg-white rounded-[28px] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] p-3.5 flex flex-col transition-all active:scale-[0.97] cursor-pointer"
             onClick={() => setSelectedItem(item)}
           >
-            {/* Vùng chứa ảnh: đồng bộ nền xám siêu nhạt dịu mắt */}
             <div className="relative w-full aspect-[4/3] rounded-[20px] overflow-hidden bg-[#F8F8FA] flex items-center justify-center p-2">
               {item.img ? (
-                <img 
-                  src={item.img} 
-                  alt={item.ja} 
-                  className="max-w-full max-h-full object-contain mix-blend-multiply" 
-                />
+                <img src={item.img} alt={item.ja} className="max-w-full max-h-full object-contain mix-blend-multiply" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-300">
                   <BookOpen size={28} />
@@ -184,8 +159,6 @@ const CollectionDetail = () => {
                 </div>
               )}
             </div>
-
-            {/* Vùng chữ */}
             <div className="mt-4 px-1 text-left flex flex-col gap-1">
               <div className="text-[23px] font-bold text-[#1C1C1E] tracking-tight leading-snug">
                 {item.ja}
@@ -213,7 +186,6 @@ const CollectionDetail = () => {
         />
       )}
 
-      {/* Modal xác nhận xóa */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[60] flex items-center justify-center p-5">
           <div className="bg-white rounded-[32px] max-w-sm w-full p-6 shadow-2xl text-center border border-gray-50">
@@ -245,7 +217,6 @@ const CollectionDetail = () => {
         </div>
       )}
 
-      {/* Toast thông báo */}
       {toast.show && (
         <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[70] px-4 w-full max-w-sm transition-all duration-300">
           <div

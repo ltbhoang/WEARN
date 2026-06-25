@@ -7,7 +7,7 @@ export const useDataStore = create((set, get) => ({
   // Cache vocabularies theo collectionId: { [collectionId]: vocabArray } (giữ lại để tương thích)
   vocabulariesByCollection: {},
   // Cache chi tiết collection: { [collectionId]: fullData }
-  // (bao gồm saved_vocabularies với user_image, vocab_count, v.v.)
+  // (bao gồm vocabularies với user_image, vocab_count, v.v.)
   collectionDetails: {},
   // Cache vocabularies theo topic: { [topic]: vocabArray }
   vocabulariesByTopic: {},
@@ -61,7 +61,7 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // --- Collection Detail (lấy full detail, bao gồm saved_vocabularies) ---
+  // --- Collection Detail (lấy full detail, bao gồm vocabularies) ---
   fetchCollectionDetail: async (id, force = false) => {
     const cached = get().collectionDetails[id];
     if (!force && cached) {
@@ -78,13 +78,13 @@ export const useDataStore = create((set, get) => ({
     try {
       const response = await axiosPrivate.get(`/api/collections/${id}/`);
       const data = response.data;
-      // API trả về vocabularies, không phải saved_vocabularies
+      // API trả về vocabularies (mảng các object có user_image, word, meaning, ...)
       const vocabularies = data.vocabularies || data.saved_vocabularies || [];
 
       set((state) => ({
         collectionDetails: {
           ...state.collectionDetails,
-          [id]: data, // data chứa vocabularies
+          [id]: { ...data, vocabularies }, // đảm bảo có trường vocabularies
         },
         vocabulariesByCollection: {
           ...state.vocabulariesByCollection,
@@ -107,29 +107,33 @@ export const useDataStore = create((set, get) => ({
       return null;
     }
   },
+
   // --- Helper: lấy danh sách ảnh preview (tối đa limit) từ collection detail ---
   getPreviewImages: (collectionId, limit = 4) => {
     const detail = get().collectionDetails[collectionId];
     if (!detail) return [];
-    const savedVocabs = detail.saved_vocabularies || [];
-    return savedVocabs
+    // Ưu tiên vocabularies, fallback saved_vocabularies
+    const list = detail.vocabularies || detail.saved_vocabularies || [];
+    const images = list
       .map((item) => item.user_image)
       .filter((url) => url) // bỏ null/undefined
       .slice(0, limit);
+    return images;
   },
 
   // --- Helper: lấy số lượng từ vựng thực tế của collection ---
   getVocabCount: (collectionId) => {
     const detail = get().collectionDetails[collectionId];
     if (!detail) return 0;
-    return detail.saved_vocabularies?.length || 0;
+    const list = detail.vocabularies || detail.saved_vocabularies || [];
+    return list.length;
   },
 
-  // --- Helper: lấy toàn bộ saved_vocabularies với user_image của collection ---
-  getSavedVocabularies: (collectionId) => {
+  // --- Helper: lấy toàn bộ vocabularies với user_image của collection ---
+  getVocabulariesWithImages: (collectionId) => {
     const detail = get().collectionDetails[collectionId];
     if (!detail) return [];
-    return detail.saved_vocabularies || [];
+    return detail.vocabularies || detail.saved_vocabularies || [];
   },
 
   // --- Lấy danh sách vocabulary (chỉ thông tin từ, không có ảnh) (cũ) ---
@@ -137,7 +141,21 @@ export const useDataStore = create((set, get) => ({
     // Nếu có collectionDetails thì lấy từ đó, ngược lại lấy từ cache cũ
     const detail = get().collectionDetails[id];
     if (detail) {
-      return detail.saved_vocabularies?.map((item) => item.vocabulary) || [];
+      const list = detail.vocabularies || detail.saved_vocabularies || [];
+      // Nếu mỗi item có trường vocabulary (nested), thì map ra, ngược lại trả về nguyên list
+      // Ở đây giả định list là mảng các object đã có đủ word, meaning, user_image
+      return list.map((item) => {
+        // Nếu item có trường vocabulary (nested), ưu tiên lấy từ đó
+        if (item.vocabulary && typeof item.vocabulary === 'object') {
+          return {
+            ...item.vocabulary,
+            // Giữ lại user_image và các field của saved-vocabulary nếu cần
+            user_image: item.user_image,
+            saved_vocabulary_id: item.id,
+          };
+        }
+        return item;
+      });
     }
     return get().vocabulariesByCollection[id] || [];
   },
