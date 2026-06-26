@@ -122,17 +122,17 @@ const CameraWeb = ({ onCapture, onClose }) => {
 
       <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-4 z-20">
         <button
-          onClick={capture}
+          onClick={triggerFileInput}
           className="px-8 py-3 bg-[#FF6B6B] text-white rounded-full font-bold text-base shadow-lg active:scale-95 transition-transform"
         >
-          📸 Chụp
+          📁 Chọn ảnh
         </button>
         
         <button
-          onClick={triggerFileInput}
+          onClick={capture}
           className="px-5 py-3 bg-blue-600 text-white rounded-full font-bold text-base shadow-lg active:scale-95 transition-transform"
         >
-          📁 Chọn ảnh
+          📸 Chụp
         </button>
         
         <button
