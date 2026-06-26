@@ -8,8 +8,6 @@ import {
   Home,
   Volume2,
   Send,
-  FastForward,
-  RotateCcw,
   Brain,
   Calendar,
   AlertCircle,
@@ -39,7 +37,6 @@ const SmartReviewPage = () => {
   const [showFeedback, setShowFeedback] = useState(null);
   const [questionCount, setQuestionCount] = useState(10);
   const [dueWords, setDueWords] = useState([]);
-  // Chế độ: 'smart' (hôm nay) hoặc 'upcoming' (3 ngày tới)
   const [mode, setMode] = useState(() => {
     return localStorage.getItem("review_mode") || "smart";
   });
@@ -48,25 +45,27 @@ const SmartReviewPage = () => {
     localStorage.setItem("review_mode", mode);
   }, [mode]);
 
-  // Hàm tạo câu hỏi từ danh sách từ
   const generateQuestions = (words, limit = 10) => {
     if (!words || words.length === 0) return [];
     const selected = words.slice(0, limit);
-    const indices = selected.map((_, i) => i);
-    for (let i = indices.length - 1; i > 0; i--) {
+    // Xáo trộn thứ tự
+    for (let i = selected.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [indices[i], indices[j]] = [indices[j], indices[i]];
+      [selected[i], selected[j]] = [selected[j], selected[i]];
     }
-    const essayCount = Math.min(3, selected.length);
-    const essayIndices = new Set(indices.slice(0, essayCount));
-    const mcqIndices = indices.slice(essayCount);
-
     const questionList = [];
     const allMeanings = selected.map((w) => w.meaning).filter((m) => m);
 
-    essayIndices.forEach((idx) => {
-      const w = selected[idx];
-      if (w) {
+    // Tạo câu hỏi: ít nhất 3 essay, còn lại MCQ (có thể điều chỉnh)
+    const essayCount = Math.min(3, selected.length);
+    const essayIndices = new Set();
+    while (essayIndices.size < essayCount) {
+      essayIndices.add(Math.floor(Math.random() * selected.length));
+    }
+
+    selected.forEach((w, idx) => {
+      if (essayIndices.has(idx)) {
+        // Essay
         questionList.push({
           id: w.id,
           type: "essay",
@@ -76,12 +75,8 @@ const SmartReviewPage = () => {
           audioUrl: w.audio_url,
           image: w.image_url,
         });
-      }
-    });
-
-    mcqIndices.forEach((idx) => {
-      const w = selected[idx];
-      if (w) {
+      } else {
+        // MCQ
         let wrongOptions = [];
         const otherMeanings = allMeanings.filter((m) => m !== w.meaning);
         const shuffledOthers = [...otherMeanings].sort(() => 0.5 - Math.random());
@@ -100,10 +95,15 @@ const SmartReviewPage = () => {
         });
       }
     });
-    return questionList.sort(() => 0.5 - Math.random());
+
+    // Xáo trộn thứ tự câu hỏi
+    for (let i = questionList.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questionList[i], questionList[j]] = [questionList[j], questionList[i]];
+    }
+    return questionList;
   };
 
-  // Lấy dữ liệu theo mode
   const loadWords = async (selectedMode = mode) => {
     setLoading(true);
     try {
@@ -128,14 +128,12 @@ const SmartReviewPage = () => {
     }
   };
 
-  // Tải dữ liệu khi mode hoặc started/isFinished thay đổi
   useEffect(() => {
     if (!started && !isFinished) {
       loadWords(mode);
     }
   }, [mode, started, isFinished]);
 
-  // Countdown
   useEffect(() => {
     if (countdown === null) return;
     if (countdown > 0) {
@@ -145,9 +143,7 @@ const SmartReviewPage = () => {
     setStarted(true);
   }, [countdown]);
 
-  const handleStart = () => {
-    setCountdown(3);
-  };
+  const handleStart = () => setCountdown(3);
 
   const playAudio = (url) => {
     if (!url) return;
@@ -156,7 +152,7 @@ const SmartReviewPage = () => {
       audio.pause();
       audio.src = url;
       audio.load();
-      audio.play().catch((e) => console.warn("Lỗi phát âm thanh:", e));
+      audio.play().catch(() => {});
     } catch (err) {
       console.error("Audio error:", err);
     }
@@ -186,7 +182,7 @@ const SmartReviewPage = () => {
     }
   };
 
-  // Xử lý trả lời – chỉ gửi submitReview nếu là chế độ smart
+  // --- SỬA: grade = 5 cho đúng, 0 cho sai ---
   const handleAnswer = (isCorrect, answerValue) => {
     if (showFeedback) return;
     const currentQ = questions[currentIndex];
@@ -196,14 +192,13 @@ const SmartReviewPage = () => {
 
     let grade = 0;
     if (isCorrect) {
-      grade = currentQ.type === "mcq" ? 5 : 4;
+      grade = 5; // Luôn là 5 khi đúng
       setShowFeedback({ ok: true, msg: "Chính xác!" });
     } else {
       grade = 0;
       setShowFeedback({ ok: false, msg: `Sai rồi! Đáp án đúng: ${currentQ.correctMeaning}` });
     }
 
-    // CHỈ gửi kết quả khi mode === 'smart'
     if (mode === 'smart') {
       submitReview(currentQ.id, grade);
     }
@@ -214,22 +209,7 @@ const SmartReviewPage = () => {
     }, 1200);
   };
 
-  const handleSkip = () => {
-    if (showFeedback) return;
-    const currentQ = questions[currentIndex];
-    const newAnswers = [...userAnswers];
-    newAnswers[currentIndex] = { isCorrect: false, answer: "Bỏ qua" };
-    setUserAnswers(newAnswers);
-
-    // CHỈ gửi kết quả khi mode === 'smart'
-    if (mode === 'smart') {
-      submitReview(currentQ.id, 1);
-    }
-
-    moveToNextQuestion();
-  };
-
-  // Ôn tiếp những từ còn lại
+  // Hàm ôn tiếp từ còn lại
   const continueWithRemaining = () => {
     const askedIds = questions.map((q) => q.id);
     const remainingWords = dueWords.filter((w) => !askedIds.includes(w.id));
@@ -272,7 +252,7 @@ const SmartReviewPage = () => {
             </div>
             <div>
               <div className="text-xl font-bold text-red-500">{wrongCount}</div>
-              <div className="text-xs text-gray-500 mt-1">Sai / Bỏ qua</div>
+              <div className="text-xs text-gray-500 mt-1">Sai</div>
             </div>
             <div>
               <div className="text-xl font-bold text-[#E85A4F]">{accuracy}%</div>
@@ -339,7 +319,6 @@ const SmartReviewPage = () => {
       );
     }
 
-    // Trường hợp không có từ nào
     if (dueWords.length === 0) {
       const message =
         mode === "smart"
@@ -385,7 +364,6 @@ const SmartReviewPage = () => {
       );
     }
 
-    // Có từ, hiển thị danh sách và nút bắt đầu
     return (
       <div className="min-h-screen bg-[#FAF9F8] flex flex-col items-center justify-center p-6">
         <motion.div
@@ -421,7 +399,6 @@ const SmartReviewPage = () => {
 
           {countdown === null && (
             <>
-              {/* Chọn chế độ */}
               <div className="flex gap-2 mb-4 flex-wrap justify-center">
                 <button
                   onClick={() => {
@@ -459,7 +436,6 @@ const SmartReviewPage = () => {
                 </button>
               </div>
 
-              {/* Số lượng câu hỏi */}
               <div className="flex gap-2 mb-5">
                 {[10, 15, 20].map((num) => (
                   <button
@@ -476,7 +452,6 @@ const SmartReviewPage = () => {
                 ))}
               </div>
 
-              {/* Danh sách từ */}
               <div className="w-full bg-white rounded-xl shadow-md p-4 mb-4 border border-gray-200 max-h-60 overflow-y-auto">
                 <h3 className="font-bold text-gray-700 mb-2 text-sm flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-[#E85A4F]" />
@@ -507,8 +482,8 @@ const SmartReviewPage = () => {
               </div>
 
               <p className="text-gray-400 text-xs mb-6 text-center">
-                {mode === "smart" && `Có ${dueWords.length} từ cần ôn hôm nay`}
-                {mode === "upcoming" && `Có ${dueWords.length} từ sẽ đến hạn trong 3 ngày tới`}
+                {mode === "smart" && `Có ${dueWords.length} từ cần ôn hôm nay, sẽ chọn tối đa ${questionCount} từ`}
+                {mode === "upcoming" && `Có ${dueWords.length} từ sẽ đến hạn, sẽ chọn tối đa ${questionCount} từ`}
               </p>
 
               <button
@@ -541,13 +516,7 @@ const SmartReviewPage = () => {
             {mode === "smart" ? "Ôn thông minh (Hôm nay)" : "Luyện tập (3 ngày tới)"}
           </h1>
           <div className="flex-1"></div>
-          <button
-            onClick={handleSkip}
-            disabled={!!showFeedback}
-            className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
-          >
-            Bỏ qua <FastForward className="w-3 h-3 inline ml-1" />
-          </button>
+          {/* Đã xóa nút "Bỏ qua" */}
         </div>
       </header>
 
