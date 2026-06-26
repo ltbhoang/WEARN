@@ -56,7 +56,6 @@ const SmartReviewPage = () => {
     const questionList = [];
     const allMeanings = selected.map((w) => w.meaning).filter((m) => m);
 
-    // Tạo câu hỏi: ít nhất 3 essay, còn lại MCQ (có thể điều chỉnh)
     const essayCount = Math.min(3, selected.length);
     const essayIndices = new Set();
     while (essayIndices.size < essayCount) {
@@ -65,7 +64,6 @@ const SmartReviewPage = () => {
 
     selected.forEach((w, idx) => {
       if (essayIndices.has(idx)) {
-        // Essay
         questionList.push({
           id: w.id,
           type: "essay",
@@ -76,7 +74,6 @@ const SmartReviewPage = () => {
           image: w.image_url,
         });
       } else {
-        // MCQ
         let wrongOptions = [];
         const otherMeanings = allMeanings.filter((m) => m !== w.meaning);
         const shuffledOthers = [...otherMeanings].sort(() => 0.5 - Math.random());
@@ -96,7 +93,6 @@ const SmartReviewPage = () => {
       }
     });
 
-    // Xáo trộn thứ tự câu hỏi
     for (let i = questionList.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [questionList[i], questionList[j]] = [questionList[j], questionList[i]];
@@ -128,11 +124,12 @@ const SmartReviewPage = () => {
     }
   };
 
+  // ----- QUAN TRỌNG: thêm questionCount vào dependency -----
   useEffect(() => {
     if (!started && !isFinished) {
       loadWords(mode);
     }
-  }, [mode, started, isFinished]);
+  }, [mode, started, isFinished, questionCount]);
 
   useEffect(() => {
     if (countdown === null) return;
@@ -182,7 +179,6 @@ const SmartReviewPage = () => {
     }
   };
 
-  // --- SỬA: grade = 5 cho đúng, 0 cho sai ---
   const handleAnswer = (isCorrect, answerValue) => {
     if (showFeedback) return;
     const currentQ = questions[currentIndex];
@@ -192,7 +188,7 @@ const SmartReviewPage = () => {
 
     let grade = 0;
     if (isCorrect) {
-      grade = 5; // Luôn là 5 khi đúng
+      grade = 5;
       setShowFeedback({ ok: true, msg: "Chính xác!" });
     } else {
       grade = 0;
@@ -209,7 +205,6 @@ const SmartReviewPage = () => {
     }, 1200);
   };
 
-  // Hàm ôn tiếp từ còn lại
   const continueWithRemaining = () => {
     const askedIds = questions.map((q) => q.id);
     const remainingWords = dueWords.filter((w) => !askedIds.includes(w.id));
@@ -364,6 +359,8 @@ const SmartReviewPage = () => {
       );
     }
 
+    const actualCount = Math.min(questionCount, dueWords.length);
+
     return (
       <div className="min-h-screen bg-[#FAF9F8] flex flex-col items-center justify-center p-6">
         <motion.div
@@ -456,6 +453,11 @@ const SmartReviewPage = () => {
                 <h3 className="font-bold text-gray-700 mb-2 text-sm flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-[#E85A4F]" />
                   Danh sách từ sẽ ôn ({dueWords.length})
+                  {dueWords.length < questionCount && (
+                    <span className="text-xs text-gray-400 font-normal ml-2">
+                      (chỉ có {dueWords.length} từ, sẽ ôn {actualCount} câu)
+                    </span>
+                  )}
                 </h3>
                 <div className="space-y-1">
                   {dueWords.slice(0, 15).map((w) => (
@@ -482,8 +484,13 @@ const SmartReviewPage = () => {
               </div>
 
               <p className="text-gray-400 text-xs mb-6 text-center">
-                {mode === "smart" && `Có ${dueWords.length} từ cần ôn hôm nay, sẽ chọn tối đa ${questionCount} từ`}
-                {mode === "upcoming" && `Có ${dueWords.length} từ sẽ đến hạn, sẽ chọn tối đa ${questionCount} từ`}
+                {mode === "smart" && `Có ${dueWords.length} từ cần ôn hôm nay`}
+                {mode === "upcoming" && `Có ${dueWords.length} từ sẽ đến hạn`}
+                {dueWords.length < questionCount ? (
+                  <span className="block text-xs text-blue-500">• Sẽ ôn {actualCount} câu (vì chỉ có {dueWords.length} từ)</span>
+                ) : (
+                  <span className="block text-xs text-gray-400">• Sẽ ôn {questionCount} câu</span>
+                )}
               </p>
 
               <button
@@ -491,7 +498,7 @@ const SmartReviewPage = () => {
                 disabled={dueWords.length === 0}
                 className="w-full py-3.5 bg-[#E85A4F] hover:bg-[#d94a3f] disabled:bg-gray-300 text-white font-bold rounded-xl text-base shadow-sm transition-all"
               >
-                BẮT ĐẦU ÔN TẬP
+                BẮT ĐẦU ÔN TẬP ({actualCount} câu)
               </button>
             </>
           )}
@@ -516,7 +523,6 @@ const SmartReviewPage = () => {
             {mode === "smart" ? "Ôn thông minh (Hôm nay)" : "Luyện tập (3 ngày tới)"}
           </h1>
           <div className="flex-1"></div>
-          {/* Đã xóa nút "Bỏ qua" */}
         </div>
       </header>
 
