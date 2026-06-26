@@ -124,7 +124,6 @@ const SmartReviewPage = () => {
     }
   };
 
-  // ----- QUAN TRỌNG: thêm questionCount vào dependency -----
   useEffect(() => {
     if (!started && !isFinished) {
       loadWords(mode);
@@ -314,46 +313,53 @@ const SmartReviewPage = () => {
       );
     }
 
+    // ----- SỬA: Thông báo không có từ -> Modal overlay -----
     if (dueWords.length === 0) {
       const message =
         mode === "smart"
           ? "Hôm nay không có từ nào cần ôn. Bạn có thể chuyển sang chế độ 3 ngày tới."
           : "Không có từ nào sẽ đến hạn trong 3 ngày tới. Bạn có thể chuyển sang ôn hôm nay.";
+
       return (
-        <div className="min-h-screen bg-[#FAF9F8] flex flex-col items-center justify-center p-6 text-center">
-          <h2 className="text-xl font-bold text-gray-800">Thông báo</h2>
-          <p className="text-gray-500 mt-2">{message}</p>
-          <div className="flex flex-col gap-3 mt-6 w-full max-w-xs">
-            <button
-              onClick={() => {
-                setMode("smart");
-                setStarted(false);
-                setCountdown(null);
-                setIsFinished(false);
-                loadWords("smart");
-              }}
-              className="w-full py-3 bg-[#E85A4F] text-white rounded-xl font-semibold"
-            >
-              Ôn hôm nay
-            </button>
-            <button
-              onClick={() => {
-                setMode("upcoming");
-                setStarted(false);
-                setCountdown(null);
-                setIsFinished(false);
-                loadWords("upcoming");
-              }}
-              className="w-full py-3 bg-blue-500 text-white rounded-xl font-semibold"
-            >
-              3 ngày tới
-            </button>
-            <button
-              onClick={() => navigate("/flashcard")}
-              className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold"
-            >
-              Về trang chính
-            </button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <div className="w-16 h-16 mx-auto bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8 text-yellow-600" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Không có từ để ôn</h3>
+            <p className="text-gray-500 text-sm mb-6">{message}</p>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setMode("smart");
+                  setStarted(false);
+                  setCountdown(null);
+                  setIsFinished(false);
+                  loadWords("smart");
+                }}
+                className="w-full py-2.5 bg-[#E85A4F] text-white rounded-xl font-semibold hover:bg-[#d94a3f] transition"
+              >
+                Ôn hôm nay
+              </button>
+              <button
+                onClick={() => {
+                  setMode("upcoming");
+                  setStarted(false);
+                  setCountdown(null);
+                  setIsFinished(false);
+                  loadWords("upcoming");
+                }}
+                className="w-full py-2.5 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition"
+              >
+                3 ngày tới
+              </button>
+              <button
+                onClick={() => navigate("/flashcard")}
+                className="w-full py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition"
+              >
+                Về trang chính
+              </button>
+            </div>
           </div>
         </div>
       );
