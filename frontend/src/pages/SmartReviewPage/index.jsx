@@ -314,7 +314,7 @@ const SmartReviewPage = () => {
       );
     }
 
-    // ----- ĐÃ SỬA: Thay modal bằng thông báo trong danh sách từ -----
+    // Trường hợp không có từ – hiển thị thông báo trong khung danh sách
     if (dueWords.length === 0) {
       const message =
         mode === "smart"
@@ -374,7 +374,6 @@ const SmartReviewPage = () => {
               </button>
             </div>
 
-            {/* Khung danh sách từ với thông báo */}
             <div className="w-full bg-white rounded-xl shadow-md p-4 mb-4 border border-gray-200">
               <h3 className="font-bold text-gray-700 mb-2 text-sm flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-[#E85A4F]" />
@@ -405,6 +404,7 @@ const SmartReviewPage = () => {
       );
     }
 
+    // Có từ, hiển thị bình thường
     const actualCount = Math.min(questionCount, dueWords.length);
 
     return (
@@ -499,11 +499,6 @@ const SmartReviewPage = () => {
                 <h3 className="font-bold text-gray-700 mb-2 text-sm flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-[#E85A4F]" />
                   Danh sách từ sẽ ôn ({dueWords.length})
-                  {dueWords.length < questionCount && (
-                    <span className="text-xs text-gray-400 font-normal ml-2">
-                      (chỉ có {dueWords.length} từ, sẽ ôn {actualCount} câu)
-                    </span>
-                  )}
                 </h3>
                 <div className="space-y-1">
                   {dueWords.slice(0, 15).map((w) => (
@@ -535,14 +530,7 @@ const SmartReviewPage = () => {
 
               <p className="text-gray-400 text-xs mb-6 text-center">
                 {mode === "smart" && `Có ${dueWords.length} từ cần ôn hôm nay`}
-                {mode === "upcoming" && `Có ${dueWords.length} từ sẽ đến hạn`}
-                {dueWords.length < questionCount ? (
-                  <span className="block text-xs text-blue-500">
-                    • Sẽ ôn {actualCount} câu (vì chỉ có {dueWords.length} từ)
-                  </span>
-                ) : (
-                  <span className="block text-xs text-gray-400">• Sẽ ôn {questionCount} câu</span>
-                )}
+                {mode === "upcoming" && `Có ${dueWords.length} từ sẽ đến hạn trong 3 ngày tới`}
               </p>
 
               <button
