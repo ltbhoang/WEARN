@@ -1,36 +1,69 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
   Plus,
   BookOpen,
-  ChevronRight,
+  MoreVertical,
   Star,
   Layers,
   Clock,
   Search,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { useFlashcardStore } from "../../store/flashcardStore";
+
+const WEEKLY_PALETTE = [
+  { main: "#E85A4F", bg: "#FEE9E7" },
+  { main: "#E98074", bg: "#FEF0ED" },
+  { main: "#D4A373", bg: "#FEF5E9" },
+  { main: "#A7C4A0", bg: "#F3F9F1" },
+  { main: "#7C9EB2", bg: "#F0F5F9" },
+  { main: "#B185A7", bg: "#F9F2F7" },
+  { main: "#D98C8C", bg: "#FEF2F2" },
+];
 
 const FlashcardSetsPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
+
   const {
     flashcardSets,
     dueVocabularies,
     fetchFlashcardSets,
     fetchDueVocabularies,
+    deleteFlashcardSet,
     loading,
   } = useFlashcardStore();
 
   useEffect(() => {
     fetchFlashcardSets();
-    fetchDueVocabularies(); // Lấy danh sách từ cần ôn hôm nay
+    fetchDueVocabularies();
   }, [fetchFlashcardSets, fetchDueVocabularies]);
+
+  // Đóng menu khi click bên ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSmartReview = () => {
     navigate("/flashcard/smart-review");
+  };
+
+  const handleDelete = async (id, name) => {
+    if (window.confirm(`Bạn có chắc muốn xóa bộ "${name}"?`)) {
+      await deleteFlashcardSet(id);
+      setOpenMenuId(null);
+    }
   };
 
   const filteredSets = flashcardSets.filter(
@@ -145,46 +178,86 @@ const FlashcardSetsPage = () => {
       {/* Danh sách bộ flashcard */}
       <div className="px-6 mt-6 space-y-4">
         {filteredSets.length > 0 ? (
-          filteredSets.map((set) => (
-            <div
-              key={set.id}
-              onClick={() => navigate(`/flashcard/${set.id}`)}
-              className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow border border-gray-100 cursor-pointer"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-[#2D2D2D] mb-1">
-                    {set.name}
-                  </h3>
-                  {set.description && (
-                    <p className="text-sm text-[#8E8D8A] line-clamp-2 mb-2">
-                      {set.description}
-                    </p>
-                  )}
-                </div>
-                <ChevronRight className="w-5 h-5 text-[#8E8D8A] flex-shrink-0" />
-              </div>
+          filteredSets.map((set, index) => {
+            const palette = WEEKLY_PALETTE[index % WEEKLY_PALETTE.length];
+            const isMenuOpen = openMenuId === set.id;
 
-              {/* Thông tin chi tiết */}
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1 text-[#8E8D8A]">
-                  <BookOpen className="w-4 h-4" />
-                  <span>{set.item_count || 0} từ</span>
-                </div>
-                <div className="flex items-center gap-1 text-[#8E8D8A]">
-                  <Clock className="w-4 h-4" />
-                  <span>Tạo: {formatDate(set.created_at)}</span>
-                </div>
-              </div>
+            return (
+              <div
+                key={set.id}
+                onClick={() => navigate(`/flashcard/${set.id}`)}
+                className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow border border-gray-100 cursor-pointer"
+                style={{
+                  borderLeft: `4px solid ${palette.main}`,
+                  borderTop: "1px solid #e5e7eb",
+                  borderRight: "1px solid #e5e7eb",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-[#2D2D2D] mb-1">
+                      {set.name}
+                    </h3>
+                    {set.description && (
+                      <p className="text-sm text-[#8E8D8A] line-clamp-2 mb-2">
+                        {set.description}
+                      </p>
+                    )}
+                  </div>
 
-              {/* Badge mặc định */}
-              {set.name.toLowerCase().includes("mặc định") && (
-                <div className="mt-2 inline-block px-2 py-1 bg-[#FEE9E7] text-[#E85A4F] text-xs rounded-full">
-                  Mặc định
+                  {/* 3 chấm dọc */}
+                  <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuId(isMenuOpen ? null : set.id);
+                      }}
+                      className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-[#8E8D8A] transition-colors"
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                    {isMenuOpen && (
+                      <div
+                        ref={menuRef}
+                        className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-10"
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(set.id, set.name);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Xóa bộ
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          ))
+
+                {/* Thông tin chi tiết */}
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1 text-[#8E8D8A]">
+                    <BookOpen className="w-4 h-4" />
+                    <span>{set.item_count || 0} từ</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[#8E8D8A]">
+                    <Clock className="w-4 h-4" />
+                    <span>Tạo: {formatDate(set.created_at)}</span>
+                  </div>
+                </div>
+
+                {/* Badge mặc định */}
+                {set.name.toLowerCase().includes("mặc định") && (
+                  <div className="mt-2 inline-block px-2 py-1 bg-[#FEE9E7] text-[#E85A4F] text-xs rounded-full">
+                    Mặc định
+                  </div>
+                )}
+              </div>
+            );
+          })
         ) : (
           <div className="text-center py-12">
             <div className="w-24 h-24 bg-[#FEE9E7] rounded-full flex items-center justify-center mx-auto mb-4">
